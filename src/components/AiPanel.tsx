@@ -1,9 +1,9 @@
 import { useRef, useState } from "react"
 import type { Deal } from "../lib/model"
 import { Card } from "./ui"
+import { apiHeaders, CODE_KEY } from "../lib/store"
 
 type Msg = { role: "user" | "assistant"; content: string }
-const CODE_KEY = "dealSchool.accessCode"
 
 const esc = (s: string) => s.replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]!))
 function mdLite(t: string) {
@@ -20,8 +20,8 @@ const REVIEW = {
   pro: "Underwrite the deal in the screener. Give a quick screen, then propose downside, base and upside scenarios over the hold with explicit assumptions, show breakpoints, and ask me to adjust and weight them.",
 }
 
-export default function AiPanel({ deal, onDeal }: { deal: Deal; onDeal: (d: Deal) => void }) {
-  const [route, setRoute] = useState<"learner" | "pro">("learner")
+export default function AiPanel({ deal, onDeal, fixedRoute, title = "Deal School AI", compact = false }: { deal: Deal; onDeal: (d: Deal) => void; fixedRoute?: "learner" | "pro"; title?: string; compact?: boolean }) {
+  const [route, setRoute] = useState<"learner" | "pro">(fixedRoute || "learner")
   const [msgs, setMsgs] = useState<Msg[]>([])
   const [input, setInput] = useState("")
   const [busy, setBusy] = useState(false)
@@ -38,12 +38,12 @@ export default function AiPanel({ deal, onDeal }: { deal: Deal; onDeal: (d: Deal
     try {
       const r = await fetch("/api/deal-school", {
         method: "POST",
-        headers: { "content-type": "application/json", "x-access-code": code },
+        headers: await apiHeaders(),
         body: JSON.stringify({ route, messages: next, deal }),
       })
       if (r.status === 404) throw new Error("The AI server isn't running here. It works once the site is deployed on Vercel, or locally with `vercel dev`.")
       const data = await r.json().catch(() => ({}))
-      if (r.status === 401) { setNeedCode(true); setMsgs(msgs); throw new Error("Enter the access code to use Deal School.") }
+      if (r.status === 401) { setMsgs(msgs); if (data.error === "signin") throw new Error("Your sign in expired. Sign out and back in."); setNeedCode(true); throw new Error("Enter the access code to use Deal School.") }
       if (r.status === 429 || data.error === "rate_limited") throw new Error("Too many requests right now. Wait a minute and try again.")
       if (!r.ok) throw new Error(data.error || `Request failed (${r.status})`)
       setMsgs([...next, { role: "assistant", content: data.text }])
@@ -58,15 +58,15 @@ export default function AiPanel({ deal, onDeal }: { deal: Deal; onDeal: (d: Deal
   const reset = (r = route) => { setMsgs([]); setError(""); setRoute(r) }
 
   return (
-    <Card title="Deal School AI" right={
+    <Card title={title} right={
       <div className="flex flex-wrap items-center gap-2">
-        <select className="w-auto" value={route} onChange={e => reset(e.target.value as any)}>
+        {!fixedRoute && <select className="w-auto" value={route} onChange={e => reset(e.target.value as any)}>
           <option value="learner">Learner route</option><option value="pro">Pro route</option>
-        </select>
+        </select>}
         <button className="btn btn-primary" disabled={busy} onClick={() => ask(REVIEW[route])}>Review this deal</button>
         <button className="btn" onClick={() => reset()}>New chat</button>
       </div>}>
-      <div ref={logRef} className="mb-3 flex max-h-[560px] min-h-[200px] flex-col gap-2 overflow-auto">
+      <div ref={logRef} className={`mb-3 flex ${compact ? "max-h-[420px]" : "max-h-[560px]"} min-h-[160px] flex-col gap-2 overflow-auto`}>
         <div className="max-w-[92%] self-start rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-[13px]">{GREETING[route]}</div>
         {msgs.map((m, i) => m.role === "user"
           ? <div key={i} className="max-w-[92%] self-end rounded-lg bg-brand-600 px-3 py-2 text-[13px] text-white">{m.content}</div>

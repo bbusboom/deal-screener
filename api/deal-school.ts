@@ -1,6 +1,7 @@
 // Vercel serverless function: runs Deal School with the Anthropic API.
 // The API key stays on the server. Set ANTHROPIC_API_KEY in Vercel's environment variables.
 import Anthropic from "@anthropic-ai/sdk"
+import { authorize } from "./_auth.js"
 import { TOOL_DEFS, RULES, COMMON, runTool, type Route } from "../src/lib/agent.js"
 import { norm } from "../src/lib/model.js"
 
@@ -12,8 +13,8 @@ export default async function handler(req: any, res: any) {
   if (req.method !== "POST") return res.status(405).json({ error: "POST only" })
   if (!process.env.ANTHROPIC_API_KEY) return res.status(503).json({ error: "Deal School AI isn't set up yet: add ANTHROPIC_API_KEY in the hosting settings." })
 
-  const code = process.env.DEAL_SCHOOL_ACCESS_CODE
-  if (code && req.headers["x-access-code"] !== code) return res.status(401).json({ error: "access_code" })
+  const auth = await authorize(req)
+  if (!auth.ok) return res.status(auth.status).json({ error: auth.error })
 
   const body = typeof req.body === "string" ? JSON.parse(req.body) : req.body || {}
   const route: Route = body.route === "pro" ? "pro" : "learner"

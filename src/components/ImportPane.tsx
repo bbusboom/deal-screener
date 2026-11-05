@@ -5,9 +5,8 @@ import {
   type Extraction, type ExtractKey, type Candidate, EXTRACT_FIELDS, DOC_LABEL, UNIT_PRIORITY, candidatesFor, fmtField,
 } from "../lib/extract"
 import { Card } from "./ui"
+import { apiHeaders, getCode, CODE_KEY } from "../lib/store"
 
-export const CODE_KEY = "dealSchool.accessCode"
-export const getCode = () => { try { return localStorage.getItem(CODE_KEY) || "" } catch { return "" } }
 
 type Item = { id: number; file: File; status: "reading" | "done" | "error"; error?: string; ex?: Extraction }
 const MAX_BYTES = 3_000_000
@@ -45,10 +44,10 @@ export default function ImportPane({ deal, onApply }: { deal: Deal; onApply: (pa
   async function run(it: Item) {
     try {
       const body = await payloadFor(it.file)
-      const r = await fetch("/api/extract", { method: "POST", headers: { "content-type": "application/json", "x-access-code": getCode() }, body: JSON.stringify(body) })
+      const r = await fetch("/api/extract", { method: "POST", headers: await apiHeaders(), body: JSON.stringify(body) })
       if (r.status === 404) throw new Error("The import server isn't running here. It works on the deployed site.")
       const data = await r.json().catch(() => ({}))
-      if (r.status === 401) { setNeedCode(true); throw new Error("Enter the access code, then click Retry.") }
+      if (r.status === 401) { if (data.error === "signin") throw new Error("Your sign in expired. Sign out and back in."); setNeedCode(true); throw new Error("Enter the access code, then click Retry.") }
       if (r.status === 429 || data.error === "rate_limited") throw new Error("Too many requests right now. Wait a minute and retry.")
       if (!r.ok) throw new Error(data.error || `Import failed (${r.status})`)
       upd(it.id, { status: "done", ex: data.extraction })

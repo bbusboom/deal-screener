@@ -248,3 +248,14 @@ export function memo(d: Deal, p: Projection, mp: number) {
   L.push("", "Screen only. Verify rent roll, T12, taxes after sale and insurance quotes before relying on these numbers.")
   return L.join("\n")
 }
+
+/** Learner practice deal (Maple Court). Lines add up to about $6,400 per unit including reserves. */
+export const PRACTICE: Deal = {
+  ...DEFAULTS,
+  name: "Practice: Maple Court Apartments", price: 3100000, cc: 2, other: 50, vac: 6,
+  tax: 38000, ins: 19000, util: 26000, rm: 24000, pay: 18000, adm: 11000, mgmt: 5, res: 300,
+  ltv: 70, rate: 6.5, amort: 30, ioYrs: 0, loanFee: 0, hold: 7, expG: 3, taxG: 3, insG: 5, exitCap: 6.5, sellCost: 2,
+  minCap: 6, minDscr: 1.25, minCoc: 6, minIrr: 12, minEm: 1.6,
+  rg: [3, 3, 3, 3, 3, 3, 3],
+  units: [{ type: "1 bed / 1 bath", count: 12, rent: 1050 }, { type: "2 bed / 1 bath", count: 12, rent: 1350 }],
+}

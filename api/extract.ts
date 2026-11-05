@@ -1,5 +1,6 @@
 // Vercel serverless function: reads an uploaded document with Claude and returns structured deal data.
 import Anthropic from "@anthropic-ai/sdk"
+import { authorize } from "./_auth.js"
 import { EXTRACTION_TOOL, EXTRACTION_PROMPT } from "../src/lib/extract.js"
 
 const MAX_B64 = 4_000_000   // Vercel request bodies top out around 4.5 MB
@@ -9,8 +10,8 @@ const IMAGE_TYPES = ["image/png", "image/jpeg", "image/webp", "image/gif"]
 export default async function handler(req: any, res: any) {
   if (req.method !== "POST") return res.status(405).json({ error: "POST only" })
   if (!process.env.ANTHROPIC_API_KEY) return res.status(503).json({ error: "Document import isn't set up yet: add ANTHROPIC_API_KEY in the hosting settings." })
-  const code = process.env.DEAL_SCHOOL_ACCESS_CODE
-  if (code && req.headers["x-access-code"] !== code) return res.status(401).json({ error: "access_code" })
+  const auth = await authorize(req)
+  if (!auth.ok) return res.status(auth.status).json({ error: auth.error })
 
   const body = typeof req.body === "string" ? JSON.parse(req.body) : req.body || {}
   const { filename = "document", mediaType = "", data, text } = body

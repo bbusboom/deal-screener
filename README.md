@@ -1,6 +1,6 @@
 # Deal Screener
 
-A multifamily underwriting website with the **Deal School** AI agent built in. Started as a Claude artifact (v0.1 to v0.3), moved to a real web app in v0.4, and added document import in v0.5.
+A multifamily underwriting website with the **Deal School** AI agent built in. Started as a Claude artifact (v0.1 to v0.3), moved to a real web app in v0.4, added document import in v0.5, and accounts with two paths (Learn and Underwrite) in v0.6.
 
 ## What it does
 
@@ -25,6 +25,14 @@ api/extract.ts         Serverless function that reads uploaded documents
 src/lib/extract.ts     What gets pulled from each document type and how it maps to inputs
 ```
 
+## Accounts (Supabase)
+
+1. Create a Supabase project, open SQL Editor, paste `supabase/schema.sql` and run it.
+2. In Vercel, add `VITE_SUPABASE_URL` (the project URL) and `VITE_SUPABASE_ANON_KEY` (the publishable key), then redeploy.
+3. In Supabase, Authentication > URL Configuration: set Site URL to the live site.
+
+Without these variables the site runs without logins and saves deals in the browser.
+
 ## Run it locally
 
 ```
@@ -43,7 +51,6 @@ Set a monthly spend limit in the Anthropic Console, since each AI request is bil
 
 ## Roadmap
 
-- Accounts and saved deals in a database (Supabase)
 - Single family and commercial modes
 - Market data and tax panel
 - Web research for the Pro route

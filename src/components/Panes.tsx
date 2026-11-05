@@ -3,6 +3,7 @@ import {
   usd, pct, xx, monthlyPmt, project, weighted, scenCases, defaultScen, avgGrowth, memo, tests, allPass, TEST_NAMES,
 } from "../lib/model"
 import { Card, Field, NumInput, Row } from "./ui"
+import type { SavedDeal } from "../lib/store"
 import CashFlowChart from "./CashFlowChart"
 
 export interface PaneProps { d: Deal; p: Projection; set: (patch: Partial<Deal>) => void; mp: number }
@@ -308,8 +309,8 @@ export function ScenariosPane({ d, set, metric, setMetric }: PaneProps & { metri
 }
 
 /* ---------- Buy box & deals ---------- */
-export function DealsPane({ d, set, saved, onSave, onOpen, onDelete, onSample, onClear }: PaneProps & {
-  saved: Deal[] | null; onSave: () => void; onOpen: (i: number) => void; onDelete: (i: number) => void; onSample: () => void; onClear: () => void }) {
+export function DealsPane({ d, set, saved, cloud, onSave, onOpen, onDelete, onSample, onClear }: PaneProps & {
+  saved: SavedDeal[] | null; cloud: boolean; onSave: () => void; onOpen: (i: number) => void; onDelete: (i: number) => void; onSample: () => void; onClear: () => void }) {
   return (
     <div className="space-y-4">
       <div className="grid gap-4 lg:grid-cols-2">
@@ -329,15 +330,15 @@ export function DealsPane({ d, set, saved, onSave, onOpen, onDelete, onSample, o
             <button className="btn" onClick={onSample}>Load sample deal</button>
             <button className="btn" onClick={onClear}>Clear form</button>
           </div>
-          {saved === null ? <p className="note mt-3">Saving isn't available in this browser.</p> : saved.length === 0 ? <p className="note mt-3">No saved deals yet.</p> : (
+          {saved === null ? <p className="note mt-3">Couldn't load saved deals.</p> : saved.length === 0 ? <p className="note mt-3">No saved deals yet.</p> : (
             <table className="tbl mt-3">
-              <thead><tr><th>Deal</th><th>Cap</th><th>IRR</th><th>Result</th><th /></tr></thead>
-              <tbody>{saved.map((s, i) => { const p = project(s), ok = allPass(tests(p, s)); return (
-                <tr key={i}><td>{s.name || "Untitled"}</td><td className="num">{pct(p.y1.cap)}</td><td className="num">{pct(p.irr, 1)}</td>
-                  <td className={`font-semibold ${ok ? "text-pass-600" : "text-fail-600"}`}>{ok ? "Pass" : "Fail"}</td>
+              <thead><tr><th>Deal</th><th>Cap</th><th>IRR</th><th>Result</th><th>Saved</th><th /></tr></thead>
+              <tbody>{saved.map((r, i) => { const s = r.data, p = project(s), ok = allPass(tests(p, s)); return (
+                <tr key={r.id}><td>{r.name || "Untitled"}</td><td className="num">{pct(p.y1.cap)}</td><td className="num">{pct(p.irr, 1)}</td>
+                  <td className={`font-semibold ${ok ? "text-pass-600" : "text-fail-600"}`}>{ok ? "Pass" : "Fail"}</td><td className="text-xs text-slate-500">{new Date(r.updated_at).toLocaleDateString()}</td>
                   <td className="space-x-1"><button className="btn !px-2 !py-0.5 text-xs" onClick={() => onOpen(i)}>Open</button><button className="btn !px-2 !py-0.5 text-xs" onClick={() => onDelete(i)}>Delete</button></td></tr>) })}</tbody>
             </table>)}
-          <p className="note mt-2">Saved deals stay in this browser for now.</p>
+          <p className="note mt-2">{cloud ? "Saved to your account, so they follow you to any device." : "Saved in this browser only. Sign in to keep deals in your account."}</p>
         </Card>
       </div>
       <Card title="How the numbers are calculated">

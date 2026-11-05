@@ -3,9 +3,10 @@ import { type Deal, DEFAULTS, SAMPLE, norm, project, tests, allPass, maxPrice, u
 import { Kpi } from "./components/ui"
 import { SummaryPane, IncomePane, ExpensesPane, FinancingPane, ProjectionsPane, ScenariosPane, DealsPane, failNames } from "./components/Panes"
 import AiPanel from "./components/AiPanel"
+import ImportPane from "./components/ImportPane"
 
 const TABS = [
-  ["summary", "Summary"], ["income", "Property & Income"], ["expenses", "Expenses"], ["financing", "Financing"],
+  ["summary", "Summary"], ["documents", "Import Documents"], ["income", "Property & Income"], ["expenses", "Expenses"], ["financing", "Financing"],
   ["projections", "Projections"], ["scenarios", "Scenarios"], ["ai", "Deal School AI"], ["deals", "Buy Box & Deals"],
 ] as const
 type Tab = typeof TABS[number][0]
@@ -53,7 +54,7 @@ export default function App() {
               </div>
               <p className="mt-1 text-sm text-slate-500">Underwrite a multifamily acquisition: year 1 screen, full hold period, scenarios and the Deal School AI.</p>
             </div>
-            <span className="font-mono text-xs text-slate-400">v0.4 · first web build</span>
+            <span className="font-mono text-xs text-slate-400">v0.5 · document import</span>
           </div>
           <input className="mt-4 w-full max-w-md font-semibold" placeholder="Deal name" value={deal.name} onChange={e => set({ name: e.target.value })} />
           <nav className="-mb-px mt-4 flex gap-1 overflow-x-auto">
@@ -70,7 +71,7 @@ export default function App() {
         {!valid ? (
           <div className="rounded-xl border border-brand-100 bg-brand-50 px-5 py-4 text-brand-700">
             <div className="text-lg font-bold">Enter a price and unit mix</div>
-            <div className="text-sm">Start on Property &amp; Income, or load the sample deal from Buy Box &amp; Deals.</div>
+            <div className="text-sm">Upload a rent roll, T12 or offering memo on Import Documents, enter it on Property &amp; Income, or load the sample deal from Buy Box &amp; Deals.</div>
           </div>
         ) : (
           <div className={`rounded-xl border px-5 py-4 ${ok ? "border-pass-600/30 bg-pass-50 text-pass-600" : "border-fail-600/30 bg-fail-50 text-fail-600"}`}>
@@ -95,6 +96,7 @@ export default function App() {
         )}
 
         {tab === "summary" && (valid ? <SummaryPane {...pane} /> : null)}
+        <div className={tab === "documents" ? "" : "hidden"}><ImportPane deal={deal} onApply={(patch, msg) => { set(patch); setToast(msg); go("summary") }} /></div>
         {tab === "income" && <IncomePane {...pane} />}
         {tab === "expenses" && <ExpensesPane {...pane} />}
         {tab === "financing" && <FinancingPane {...pane} />}

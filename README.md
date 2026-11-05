@@ -1,9 +1,10 @@
 # Deal Screener
 
-A multifamily underwriting website with the **Deal School** AI agent built in. Started as a Claude artifact (v0.1 to v0.3) and moved to a real web app in v0.4.
+A multifamily underwriting website with the **Deal School** AI agent built in. Started as a Claude artifact (v0.1 to v0.3), moved to a real web app in v0.4, and added document import in v0.5.
 
 ## What it does
 
+- **Import Documents**: upload a rent roll, T12, offering memo or loan quote (PDF, Excel, CSV or photo). Claude reads it, shows each value with its source, and you choose what to apply
 - **Summary**: buy box verdict, max price that passes every test, sources and uses, returns, cash flow chart, deal memo
 - **Property & Income**: unit mix, other income, vacancy
 - **Expenses**: operating expenses and year 1 pro forma
@@ -19,7 +20,9 @@ A multifamily underwriting website with the **Deal School** AI agent built in. S
 src/lib/model.ts       All underwriting math. One source of truth for the tabs and the AI.
 src/lib/agent.ts       Deal School tools and route rules
 src/components/        Tabs, AI panel, chart, UI pieces
-api/deal-school.ts     Serverless function that calls the Anthropic API (keeps the key off the browser)
+api/deal-school.ts     Serverless function for the Deal School AI (keeps the key off the browser)
+api/extract.ts         Serverless function that reads uploaded documents
+src/lib/extract.ts     What gets pulled from each document type and how it maps to inputs
 ```
 
 ## Run it locally
@@ -44,3 +47,9 @@ Set a monthly spend limit in the Anthropic Console, since each AI request is bil
 - Single family and commercial modes
 - Market data and tax panel
 - Web research for the Pro route
+
+## Document import limits
+
+- PDFs and images up to about 3 MB each (the hosting request limit). Split large offering memos or upload just the rent roll and T12 pages.
+- Excel and CSV files are converted to text in the browser first, so size is rarely a problem.
+- Nothing changes until you click Apply. Always check the values against the documents.

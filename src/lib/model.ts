@@ -1,6 +1,18 @@
 // Deal Screener model: the one source of truth for every number on the site and in the AI tools.
 
-export interface UnitType { type: string; count: number; rent: number }
+export interface UnitType {
+  type: string; count: number; rent: number
+  /** Current market rent for this unit type. 0 or blank means in place rent is at market (no loss to lease). */
+  market?: number
+  /** Average square feet, for rent per square foot. */
+  sf?: number
+}
+export interface OtherItem { label: string; amt: number }
+/** A statement column (seller T12 or T3 annualized): annual dollars by line. */
+export type StatementCol = Partial<Record<StatementKey, number>>
+export const STATEMENT_KEYS = ["gpr","ltl","vac","conc","bad","nru","other","tax","ins","util","rm","pay","adm","contract","turn","mkt","mgmt","res"] as const
+export type StatementKey = typeof STATEMENT_KEYS[number]
+export type SizeMode = "ltv" | "lesser"
 export interface Scenario { name: string; prob: number; rg: number; vac: number; expG: number; exitCap: number }
 
 export interface Deal {
@@ -8,25 +20,44 @@ export interface Deal {
   /** Location, used by Market check. Optional so old saved deals still load. */
   state?: string; zip?: string; address?: string
   price: number; cc: number; other: number; vac: number
+  /** Revenue deductions, % of gross potential rent, and units that earn no rent (model, office, employee, down). */
+  conc: number; bad: number; nru: number
+  /** Years for loss to lease to burn off as leases roll to market (0 = it stays). */
+  ltlBurn: number
+  /** Other income broken out ($ per unit per month). When present, other = their sum. */
+  otherItems: OtherItem[]
   tax: number; ins: number; util: number; rm: number; pay: number; adm: number; mgmt: number; res: number
+  /** Contract services, turnover / make ready, marketing ($ per year). */
+  contract: number; turn: number; mkt: number
+  /** Property tax after reassessment ($/yr) and the hold year it takes effect (0 = no reset). */
+  taxNew: number; taxResetYr: number
+  /** Up front capital (renovations, immediate repairs) funded with equity at closing. */
+  capexUp: number
   ltv: number; rate: number; amort: number; ioYrs: number; loanFee: number
+  /** Loan term in years (balloon), and how the loan is sized: LTV only, or the lesser of LTV, DSCR and debt yield. */
+  term: number; sizeMode: SizeMode; sizeDscr: number; sizeDy: number
   hold: number; expG: number; taxG: number; insG: number; exitCap: number; sellCost: number
   minCap: number; minDscr: number; minCoc: number; minIrr: number; minEm: number
   rg: number[]
   units: UnitType[]
   scen: Scenario[]
+  /** Seller's trailing 12 months and trailing 3 months annualized, for the operating statement. */
+  t12?: StatementCol; t3?: StatementCol
 }
 
 export const NUM_FIELDS = [
-  "price","cc","other","vac","tax","ins","util","rm","pay","adm","mgmt","res",
-  "ltv","rate","amort","ioYrs","loanFee","hold","expG","taxG","insG","exitCap","sellCost",
+  "price","cc","other","vac","conc","bad","nru","ltlBurn","tax","ins","util","rm","pay","adm","contract","turn","mkt","mgmt","res",
+  "taxNew","taxResetYr","capexUp",
+  "ltv","rate","amort","ioYrs","loanFee","term","sizeDscr","sizeDy","hold","expG","taxG","insG","exitCap","sellCost",
   "minCap","minDscr","minCoc","minIrr","minEm",
 ] as const
 export type NumField = typeof NUM_FIELDS[number]
 
 export const DEFAULTS: Deal = {
-  name: "", price: 0, cc: 2.5, other: 0, vac: 7, tax: 0, ins: 0, util: 0, rm: 0, pay: 0, adm: 0, mgmt: 5, res: 300,
-  ltv: 70, rate: 6.5, amort: 30, ioYrs: 0, loanFee: 1, hold: 7, expG: 3, taxG: 3, insG: 5, exitCap: 6.5, sellCost: 2,
+  name: "", price: 0, cc: 2.5, other: 0, vac: 7, conc: 0, bad: 0, nru: 0, ltlBurn: 0, otherItems: [],
+  tax: 0, ins: 0, util: 0, rm: 0, pay: 0, adm: 0, contract: 0, turn: 0, mkt: 0, mgmt: 5, res: 300,
+  taxNew: 0, taxResetYr: 0, capexUp: 0,
+  ltv: 70, rate: 6.5, amort: 30, ioYrs: 0, loanFee: 1, term: 10, sizeMode: "ltv", sizeDscr: 1.25, sizeDy: 8, hold: 7, expG: 3, taxG: 3, insG: 5, exitCap: 6.5, sellCost: 2,
   minCap: 6, minDscr: 1.25, minCoc: 6, minIrr: 12, minEm: 1.6,
   rg: [], units: [{ type: "1 bed", count: 0, rent: 0 }], scen: [],
 }
@@ -57,7 +88,19 @@ export function norm(input: Partial<Deal> & { io?: string } = {}): Deal {
   while (d.rg.length < d.hold) d.rg.push(last)
   d.rg = d.rg.slice(0, d.hold).map((v: any) => Number(v) || 0)
   if (!Array.isArray(d.units) || !d.units.length) d.units = [{ type: "", count: 0, rent: 0 }]
-  d.units = d.units.map((u: any) => ({ type: String(u.type ?? ""), count: Number(u.count) || 0, rent: Number(u.rent) || 0 }))
+  d.units = d.units.map((u: any) => ({ type: String(u.type ?? ""), count: Number(u.count) || 0, rent: Number(u.rent) || 0, market: Number(u.market) || 0, sf: Number(u.sf) || 0 }))
+  if (!Array.isArray(d.otherItems)) d.otherItems = []
+  d.otherItems = d.otherItems.map((o: any) => ({ label: String(o.label ?? ""), amt: Number(o.amt) || 0 }))
+  if (d.otherItems.length) d.other = round2(d.otherItems.reduce((a: number, o: OtherItem) => a + o.amt, 0))
+  d.sizeMode = d.sizeMode === "lesser" ? "lesser" : "ltv"
+  if (!d.term) d.term = 10
+  if (!d.sizeDscr) d.sizeDscr = 1.25
+  if (!d.sizeDy) d.sizeDy = 8
+  d.taxResetYr = Math.max(0, Math.round(d.taxResetYr))
+  for (const k of ["t12", "t3"]) {
+    if (d[k] && typeof d[k] === "object") { const o: any = {}; for (const [kk, v] of Object.entries(d[k])) if (v !== "" && v !== null && isFinite(Number(v))) o[kk] = Number(v); d[k] = o }
+    else delete d[k]
+  }
   if (!Array.isArray(d.scen) || !d.scen.length) d.scen = defaultScen(d)
   for (const k of ["state", "zip", "address"]) d[k] = typeof d[k] === "string" ? d[k] : ""
   d.state = d.state.toUpperCase().slice(0, 2)
@@ -109,10 +152,12 @@ export function irr(cfs: number[]) {
 export interface Overrides {
   price?: number; vac?: number; rate?: number; ltv?: number; amort?: number; ioYrs?: number; loanFee?: number; cc?: number
   tax?: number; ins?: number; util?: number; rm?: number; pay?: number; adm?: number; mgmt?: number; res?: number; other?: number
+  contract?: number; turn?: number; mkt?: number; conc?: number; bad?: number; nru?: number; taxNew?: number; capexUp?: number
   hold?: number; expG?: number; taxG?: number; insG?: number; exitCap?: number; sellCost?: number
   rg?: number | number[]; rentChangePct?: number; expenseChangePct?: number
 }
-const OVERRIDE_KEYS = ["price","vac","rate","ltv","amort","ioYrs","loanFee","cc","tax","ins","util","rm","pay","adm","mgmt","res","other","hold","expG","taxG","insG","exitCap","sellCost"] as const
+const OVERRIDE_KEYS = ["price","vac","rate","ltv","amort","ioYrs","loanFee","cc","tax","ins","util","rm","pay","adm","mgmt","res","other","hold","expG","taxG","insG","exitCap","sellCost",
+  "contract","turn","mkt","conc","bad","nru","taxNew","capexUp"] as const
 
 export function applyOverrides(d0: Deal, o: Overrides = {}): Deal {
   const e: any = structuredClone(d0)
@@ -129,20 +174,28 @@ export function applyOverrides(d0: Deal, o: Overrides = {}): Deal {
     e.rg = e.rg.slice(0, e.hold)
   }
   if (o.rentChangePct) e.units = e.units.map((u: UnitType) => ({ ...u, rent: u.rent * (1 + o.rentChangePct! / 100) }))
-  if (o.expenseChangePct) ["tax","ins","util","rm","pay","adm"].forEach(k => { e[k] *= 1 + o.expenseChangePct! / 100 })
+  if (o.expenseChangePct) ["tax","ins","util","rm","pay","adm","contract","turn","mkt","taxNew"].forEach(k => { e[k] *= 1 + o.expenseChangePct! / 100 })
   return e as Deal
 }
 
 export interface YearRow {
   t: number; gpr: number; vacLoss: number; oth: number; egi: number
-  tax: number; ins: number; fixed: number; res: number; mgmt: number; opex: number; noi: number
+  /** Revenue deductions: loss to lease, concessions, bad debt, non-revenue units. */
+  ltl: number; conc: number; bad: number; nru: number
+  tax: number; ins: number; fixed: number; res: number; mgmt: number; opex: number
+  /** noi is after replacement reserves (= lender net cash flow); noiBR is before reserves. */
+  noi: number; noiBR: number
   ds: number; interest: number; principal: number; endBal: number; cf: number; dscr: number; coc: number
 }
+export interface LoanSizing { mode: SizeMode; ltvLoan: number; dscrLoan: number; dyLoan: number; binding: "LTV" | "DSCR" | "Debt yield"; maxLoan: number }
 export interface Projection {
-  d: Deal; units: number; loan: number; closing: number; fee: number; equity: number
+  d: Deal; units: number; loan: number; closing: number; fee: number; equity: number; sizing: LoanSizing
+  /** True if the loan matures before the planned sale. */
+  balloonBeforeSale: boolean
   years: YearRow[]; exitYear: YearRow; exitNoi: number; salePrice: number; sellCosts: number; payoff: number; proceeds: number
   cfs: number[]; irr: number; unlevIrr: number; em: number; profit: number; avgCoc: number; minDscr: number
-  y1: { gpr: number; egi: number; opex: number; noi: number; ds: number; cf: number; vacLoss: number; oth: number; mgmt: number; res: number
+  y1: { gpr: number; egi: number; opex: number; noi: number; noiBR: number; ds: number; cf: number; vacLoss: number; oth: number; mgmt: number; res: number
+        ltl: number; conc: number; bad: number; nru: number; inPlace: number; econOcc: number
         cap: number; dscr: number; coc: number; debtYield: number; expRatio: number; beo: number; ppu: number; grm: number }
 }
 
@@ -150,43 +203,126 @@ export function project(d0: Deal, o: Overrides = {}): Projection {
   const d = applyOverrides(d0, o)
   const N = d.hold
   const units = d.units.reduce((s, u) => s + (u.count || 0), 0)
-  const gpr1 = d.units.reduce((s, u) => s + (u.count || 0) * (u.rent || 0), 0) * 12
+  // Revenue: gross potential rent is at MARKET; loss to lease is the gap to in-place rent.
+  const inPlace1 = d.units.reduce((s, u) => s + (u.count || 0) * (u.rent || 0), 0) * 12
+  const gpr1 = d.units.reduce((s, u) => s + (u.count || 0) * ((u.market || 0) > 0 ? u.market! : (u.rent || 0)), 0) * 12
+  const ltl1 = Math.max(0, gpr1 - inPlace1)
+  const avgMkt = units > 0 ? gpr1 / units : 0
   const other1 = d.other * units * 12
-  const loan = d.price * d.ltv / 100, closing = d.price * d.cc / 100, fee = loan * d.loanFee / 100
-  const equity = d.price - loan + closing + fee
-  const fixed1 = d.util + d.rm + d.pay + d.adm
-  const years: YearRow[] = []
+  const fixed1 = d.util + d.rm + d.pay + d.adm + (d.contract || 0) + (d.turn || 0) + (d.mkt || 0)
+  const closing = d.price * d.cc / 100
+  const capexUp = d.capexUp || 0
+
+  // Operating years first (no debt), so the loan can be sized off year 1 NOI.
+  type Ops = Omit<YearRow, "ds" | "interest" | "principal" | "endBal" | "cf" | "dscr" | "coc">
+  const ops: Ops[] = []
   let growth = 1
   for (let t = 1; t <= N + 1; t++) {
     if (t > 1) growth *= 1 + (d.rg[Math.min(t - 2, d.rg.length - 1)] || 0) / 100
-    const gpr = gpr1 * growth, oth = other1 * growth, vacLoss = gpr * d.vac / 100, egi = gpr - vacLoss + oth
-    const tax = d.tax * Math.pow(1 + d.taxG / 100, t - 1), ins = d.ins * Math.pow(1 + d.insG / 100, t - 1)
+    const gpr = gpr1 * growth, oth = other1 * growth
+    const burn = d.ltlBurn > 0 ? Math.max(0, 1 - (t - 1) / d.ltlBurn) : 1
+    const ltl = ltl1 * growth * burn
+    const vacLoss = gpr * d.vac / 100, conc = gpr * (d.conc || 0) / 100, bad = gpr * (d.bad || 0) / 100
+    const nru = (d.nru || 0) * avgMkt * growth
+    const egi = gpr - ltl - vacLoss - conc - bad - nru + oth
+    const reset = d.taxResetYr > 0 && d.taxNew > 0 && t >= d.taxResetYr
+    const tax = reset ? d.taxNew * Math.pow(1 + d.taxG / 100, t - d.taxResetYr) : d.tax * Math.pow(1 + d.taxG / 100, t - 1)
+    const ins = d.ins * Math.pow(1 + d.insG / 100, t - 1)
     const fixed = fixed1 * Math.pow(1 + d.expG / 100, t - 1), res = d.res * units * Math.pow(1 + d.expG / 100, t - 1)
     const mgmt = egi * d.mgmt / 100
     const opex = tax + ins + fixed + res + mgmt, noi = egi - opex
-    const dy = debtYear(loan, d, t)
-    years.push({ t, gpr, vacLoss, oth, egi, tax, ins, fixed, res, mgmt, opex, noi, ds: dy.ds, interest: dy.interest, principal: dy.principal,
-      endBal: dy.endBal, cf: noi - dy.ds, dscr: dy.ds > 0 ? noi / dy.ds : NaN, coc: equity > 0 ? (noi - dy.ds) / equity : NaN })
+    ops.push({ t, gpr, ltl, vacLoss, conc, bad, nru, oth, egi, tax, ins, fixed, res, mgmt, opex, noi, noiBR: noi + res })
   }
+
+  // Loan sizing: LTV, or the lesser of LTV, DSCR and debt yield (how agency and bank lenders actually size).
+  const noi1 = ops[0].noi
+  const ltvLoan = d.price * d.ltv / 100
+  const constant = d.amort > 0 ? monthlyPmt(1, d.rate, d.amort) * 12 : d.rate / 100
+  const dscrLoan = d.sizeDscr > 0 && constant > 0 ? Math.max(0, noi1 / d.sizeDscr / constant) : Infinity
+  const dyLoan = d.sizeDy > 0 ? Math.max(0, noi1 / (d.sizeDy / 100)) : Infinity
+  const maxLoan = Math.min(ltvLoan, dscrLoan, dyLoan)
+  const binding = maxLoan === ltvLoan ? "LTV" : maxLoan === dscrLoan ? "DSCR" : "Debt yield"
+  const loan = d.sizeMode === "lesser" ? maxLoan : ltvLoan
+  const sizing: LoanSizing = { mode: d.sizeMode, ltvLoan, dscrLoan, dyLoan, binding, maxLoan }
+  const fee = loan * d.loanFee / 100
+  const equity = d.price - loan + closing + fee + capexUp
+
+  const years: YearRow[] = ops.map(y => {
+    const dy = debtYear(loan, d, y.t)
+    return { ...y, ds: dy.ds, interest: dy.interest, principal: dy.principal, endBal: dy.endBal,
+      cf: y.noi - dy.ds, dscr: dy.ds > 0 ? y.noi / dy.ds : NaN, coc: equity > 0 ? (y.noi - dy.ds) / equity : NaN }
+  })
   const hold = years.slice(0, N), exitYear = years[N], exitNoi = exitYear.noi
   const salePrice = d.exitCap > 0 ? exitNoi / (d.exitCap / 100) : NaN
   const sellCosts = salePrice * d.sellCost / 100, payoff = hold[N - 1].endBal
   const proceeds = salePrice - sellCosts - payoff
   const cfs = [-equity, ...hold.map(y => y.cf)]; cfs[N] += proceeds
-  const ucfs = [-(d.price + closing), ...hold.map(y => y.noi)]; ucfs[N] += salePrice - sellCosts
+  const ucfs = [-(d.price + closing + capexUp), ...hold.map(y => y.noi)]; ucfs[N] += salePrice - sellCosts
   const totalCf = hold.reduce((s, y) => s + y.cf, 0), totalBack = totalCf + proceeds
   const y1 = years[0]
+  const potential = y1.gpr + y1.oth
   return {
-    d, units, loan, closing, fee, equity, years: hold, exitYear, exitNoi, salePrice, sellCosts, payoff, proceeds, cfs,
+    d, units, loan, closing, fee, equity, sizing, balloonBeforeSale: d.term > 0 && d.term < N,
+    years: hold, exitYear, exitNoi, salePrice, sellCosts, payoff, proceeds, cfs,
     irr: irr(cfs), unlevIrr: irr(ucfs), em: equity > 0 ? totalBack / equity : NaN, profit: totalBack - equity,
     avgCoc: equity > 0 ? totalCf / N / equity : NaN, minDscr: Math.min(...hold.map(y => y.dscr)),
     y1: {
-      gpr: y1.gpr, egi: y1.egi, opex: y1.opex, noi: y1.noi, ds: y1.ds, cf: y1.cf, vacLoss: y1.vacLoss, oth: y1.oth, mgmt: y1.mgmt, res: y1.res,
+      gpr: y1.gpr, egi: y1.egi, opex: y1.opex, noi: y1.noi, noiBR: y1.noiBR, ds: y1.ds, cf: y1.cf, vacLoss: y1.vacLoss, oth: y1.oth, mgmt: y1.mgmt, res: y1.res,
+      ltl: y1.ltl, conc: y1.conc, bad: y1.bad, nru: y1.nru, inPlace: inPlace1,
+      econOcc: y1.gpr > 0 ? (y1.gpr - y1.ltl - y1.vacLoss - y1.conc - y1.bad - y1.nru) / y1.gpr : NaN,
       cap: d.price > 0 ? y1.noi / d.price : NaN, dscr: y1.dscr, coc: y1.coc, debtYield: loan > 0 ? y1.noi / loan : NaN,
-      expRatio: y1.egi > 0 ? y1.opex / y1.egi : NaN, beo: (y1.gpr + y1.oth) > 0 ? (y1.opex + y1.ds) / (y1.gpr + y1.oth) : NaN,
+      expRatio: y1.egi > 0 ? y1.opex / y1.egi : NaN, beo: potential > 0 ? (y1.opex + y1.ds) / potential : NaN,
       ppu: units > 0 ? d.price / units : NaN, grm: y1.gpr > 0 ? d.price / y1.gpr : NaN,
     },
   }
+}
+
+/* ---------- professional checks ---------- */
+/** Exit cap discipline: exit should sit at or above going in, about +5 bps per hold year (25 to 75 bps). */
+export function exitCapCheck(p: Projection) {
+  const goingIn = p.y1.cap * 100, exit = p.d.exitCap
+  const suggested = goingIn + Math.min(0.75, Math.max(0.25, p.d.hold * 0.05))
+  const level = !isFinite(goingIn) || !exit ? "na" : exit < goingIn ? "bad" : exit < suggested - 0.05 ? "warn" : "ok"
+  return { goingIn, exit, suggested, level }
+}
+/** Exit cap stress: IRR and equity multiple with exit cap 50 bps lower and higher. */
+export function exitStress(d: Deal) {
+  return [-0.5, 0, 0.5].map(bp => { const p = project(d, { exitCap: d.exitCap + bp }); return { exitCap: d.exitCap + bp, irr: p.irr, em: p.em, price: p.salePrice } })
+}
+
+/** Expense benchmarks, $ per unit per year (market rate garden / mid rise, 2025-26). */
+export const BENCH: Record<string, { label: string; lo: number; hi: number; note: string }> = {
+  ins: { label: "Insurance", lo: 400, hi: 1200, note: "Coastal FL, TX Gulf and hail zones often run 1,200 to 2,500." },
+  util: { label: "Utilities (owner paid)", lo: 600, hi: 1600, note: "Lower with RUBS or individually metered units." },
+  rm: { label: "Repairs & maintenance", lo: 500, hi: 1600, note: "Older vintage runs high." },
+  pay: { label: "Payroll", lo: 1000, hi: 2300, note: "Under about 50 units, often third party instead of on site staff." },
+  adm: { label: "General & admin", lo: 150, hi: 600, note: "Software, legal, accounting, office." },
+  contract: { label: "Contract services", lo: 150, hi: 600, note: "Landscaping, pest, trash, pool, security." },
+  turn: { label: "Turnover / make ready", lo: 150, hi: 500, note: "Paint, clean, carpet between tenants." },
+  mkt: { label: "Marketing", lo: 50, hi: 350, note: "Listing sites, signage; higher in lease up." },
+  res: { label: "Replacement reserves", lo: 250, hi: 500, note: "Lenders require 250 to 350; older assets 400+." },
+  total: { label: "Total operating expenses", lo: 5000, hi: 10000, note: "Varies most with taxes, insurance and who pays utilities." },
+}
+export function benchFlag(key: string, perUnit: number, units: number): "low" | "high" | "ok" | "na" {
+  const b = BENCH[key]; if (!b || !(units > 0) || !isFinite(perUnit)) return "na"
+  if (key === "pay" && units < 50 && perUnit === 0) return "ok"
+  if (perUnit === 0 && ["contract", "turn", "mkt"].includes(key)) return "na"
+  return perUnit < b.lo ? "low" : perUnit > b.hi ? "high" : "ok"
+}
+
+/** Underwritten statement column built from the model, keyed like the seller T12. */
+export function underwrittenCol(p: Projection): Record<StatementKey, number> {
+  const d = p.d, y = p.years[0]
+  return { gpr: y.gpr, ltl: y.ltl, vac: y.vacLoss, conc: y.conc, bad: y.bad, nru: y.nru, other: y.oth, tax: y.tax, ins: y.ins,
+    util: d.util, rm: d.rm, pay: d.pay, adm: d.adm, contract: d.contract || 0, turn: d.turn || 0, mkt: d.mkt || 0, mgmt: y.mgmt, res: y.res }
+}
+/** Totals for any statement column (seller columns may be partial). */
+export function colTotals(c: Partial<Record<StatementKey, number>>) {
+  const g = (k: StatementKey) => Number(c[k]) || 0
+  const egi = g("gpr") - g("ltl") - g("vac") - g("conc") - g("bad") - g("nru") + g("other")
+  const opexBR = ["tax","ins","util","rm","pay","adm","contract","turn","mkt","mgmt"].reduce((a, k) => a + g(k as StatementKey), 0)
+  const noi = egi - opexBR
+  return { egi, opexBR, noi, ncf: noi - g("res") }
 }
 
 /* ---------- buy box ---------- */

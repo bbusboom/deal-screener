@@ -2,7 +2,7 @@
 // so the AI uses exactly the same math as the screen.
 import {
   type Deal, type Overrides, type Projection, NUM_FIELDS, TEST_NAMES, type TestKey,
-  project, tests, maxPrice, weighted, scenCases, irr, norm,
+  project, tests, maxPrice, exitCapCheck, weighted, scenCases, irr, norm,
 } from "./model.js"
 import { locationBrief } from "./checks.js"
 
@@ -21,6 +21,11 @@ function brief(p: Projection) {
       exit_noi: r0(p.exitNoi), exit_cap_pct: d.exitCap, sale_price: r0(p.salePrice), loan_payoff: r0(p.payoff), net_sale_proceeds: r0(p.proceeds),
       irr_pct: r2(p.irr * 100), irr_note: isFinite(p.irr) ? undefined : "IRR undefined: cash flows never earn back the equity",
       unlevered_irr_pct: r2(p.unlevIrr * 100), equity_multiple: r2(p.em), avg_cash_on_cash_pct: r2(p.avgCoc * 100), total_profit: r0(p.profit) },
+    lender: { noi_before_reserves: r0(p.y1.noiBR), net_cash_flow_after_reserves: r0(p.y1.noi), debt_yield_pct: r2(p.y1.debtYield * 100),
+      sizing_mode: p.sizing.mode, max_loan_ltv: r0(p.sizing.ltvLoan), max_loan_dscr: r0(p.sizing.dscrLoan), max_loan_debt_yield: r0(p.sizing.dyLoan), binding_constraint: p.sizing.binding,
+      loan_matures_before_sale: p.balloonBeforeSale || undefined },
+    revenue: { loss_to_lease: r0(p.y1.ltl), concessions: r0(p.y1.conc), bad_debt: r0(p.y1.bad), non_revenue_units: r0(p.y1.nru), economic_occupancy_pct: r2(p.y1.econOcc * 100) },
+    exit_cap_check: (() => { const e = exitCapCheck(p); return { going_in_cap_pct: r2(e.goingIn), exit_cap_pct: e.exit, suggested_min_exit_cap_pct: r2(e.suggested), status: e.level } })(),
     buy_box: Object.fromEntries((Object.entries(t) as [TestKey, boolean][]).map(([k, b]) => [TEST_NAMES[k], b ? "pass" : "fail"])),
   }
 }
@@ -60,7 +65,7 @@ export const TOOL_DEFS = [
     input_schema: { type: "object", properties: { target_irr_pct: { type: "number" }, target_year1_coc_pct: { type: "number" }, case: { type: "object" }, scenarios: { type: "array", items: { type: "object" } } } } },
   { name: "get_location", description: "The deal's state and what it means for underwriting: property tax level and how taxes reset after a sale, rent regulation and caps, income tax, owner groups, and checks against this deal's inputs with suggested changes.",
     input_schema: { type: "object", properties: {} } },
-  { name: "update_inputs", description: "Change inputs in the screener so every tab shows them. Only when the user asks to use a number. Keys: " + NUM_FIELDS.join(", ") + ", and rg as one rent growth number for all years.",
+  { name: "update_inputs", description: "Change inputs in the screener so every tab shows them. Only when the user asks to use a number. Keys: " + NUM_FIELDS.join(", ") + ", rg as one rent growth number for all years, and sizeMode ('ltv' or 'lesser' of LTV, DSCR and debt yield).",
     input_schema: { type: "object", properties: { changes: { type: "object" } }, required: ["changes"] } },
 ] as const
 
@@ -109,6 +114,7 @@ export function runTool(name: string, input: any, deal: Deal): { result: unknown
       const next: any = structuredClone(d), applied: Record<string, number> = {}
       Object.entries(input?.changes || {}).forEach(([k, v]) => {
         if (k === "rg" && isFinite(Number(v))) { next.rg = next.rg.map(() => Number(v)); applied.rg = Number(v) }
+        else if (k === "sizeMode" && (v === "ltv" || v === "lesser")) { next.sizeMode = v; (applied as any).sizeMode = v }
         else if ((NUM_FIELDS as readonly string[]).includes(k) && isFinite(Number(v))) { next[k] = Number(v); applied[k] = Number(v) }
       })
       return { deal: norm(next), result: { applied } }

@@ -63,7 +63,7 @@ export default function App() {
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-3 px-4 md:px-8">
           <div className="flex items-center gap-2">
             <div className="grid h-8 w-8 place-items-center rounded-lg bg-brand-600 text-sm font-bold text-white">DS</div>
-            <div className="leading-tight"><div className="font-bold">Deal Screener</div><div className="hidden text-[11px] text-slate-400 sm:block">v0.9 · Challenges</div></div>
+            <div className="leading-tight"><div className="font-bold">Deal Screener</div><div className="hidden text-[11px] text-slate-400 sm:block">v1.0 · Pro underwriting</div></div>
           </div>
           {path && !choosing && (
             <div className="flex rounded-lg bg-slate-100 p-1 text-sm font-semibold">

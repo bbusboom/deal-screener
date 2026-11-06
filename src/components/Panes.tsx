@@ -1,6 +1,8 @@
+import { useState } from "react"
+import { stateBy, rentalTaxRate, DEFAULT_REASSESS } from "../lib/states"
 import {
-  type Deal, type NumField, type Projection, type Scenario, type TestKey,
-  usd, pct, xx, monthlyPmt, project, weighted, scenCases, defaultScen, avgGrowth, memo, tests, allPass, TEST_NAMES,
+  BENCH, benchFlag, type Deal, type NumField, type Projection, type Scenario, type TestKey,
+  usd, pct, xx, project, weighted, scenCases, defaultScen, avgGrowth, memo, tests, allPass, TEST_NAMES,
 } from "../lib/model"
 import { Card, Field, NumInput, Row } from "./ui"
 import type { SavedDeal } from "../lib/store"
@@ -23,9 +25,10 @@ export function SummaryPane({ d, p, mp }: PaneProps) {
             <Row label="Purchase price" value={usd(d.price)} />
             <Row label={`Closing costs (${d.cc}%)`} value={usd(p.closing)} />
             <Row label={`Loan fees (${d.loanFee}%)`} value={usd(p.fee)} />
-            <Row label="Total uses" value={usd(d.price + p.closing + p.fee)} cls="total" />
+            {d.capexUp > 0 && <Row label="Up front capex" value={usd(d.capexUp)} />}
+            <Row label="Total uses" value={usd(d.price + p.closing + p.fee + (d.capexUp || 0))} cls="total" />
             <tr className="head"><td>Sources</td><td /></tr>
-            <Row label={`Loan (${d.ltv}% LTV)`} value={usd(p.loan)} />
+            <Row label={`Loan (${d.price > 0 ? (p.loan / d.price * 100).toFixed(1) : d.ltv}% LTV${d.sizeMode === "lesser" ? `, ${p.sizing.binding} binds` : ""})`} value={usd(p.loan)} />
             <Row label="Equity" value={usd(p.equity)} />
             <Row label="Total sources" value={usd(p.loan + p.equity)} cls="total" />
           </tbody></table>
@@ -57,6 +60,10 @@ export function SummaryPane({ d, p, mp }: PaneProps) {
 export function IncomePane({ d, p, set }: PaneProps) {
   const units = d.units
   const setUnit = (i: number, patch: Partial<Deal["units"][number]>) => set({ units: units.map((u, j) => j === i ? { ...u, ...patch } : u) })
+  const items = d.otherItems || []
+  const setItems = (next: Deal["otherItems"]) => set({ otherItems: next, other: Math.round(next.reduce((a, o) => a + (o.amt || 0), 0) * 100) / 100 })
+  const y = p.y1, sf = units.reduce((a, u) => a + u.count * (u.sf || 0), 0)
+  const grid = "grid grid-cols-[minmax(0,1.3fr)_64px_minmax(0,1fr)_minmax(0,1fr)_64px_20px] gap-2"
   return (
     <div className="grid gap-4 lg:grid-cols-2">
       <div className="space-y-4">
@@ -64,76 +71,151 @@ export function IncomePane({ d, p, set }: PaneProps) {
           <div className="grid grid-cols-2 gap-3">
             <Num d={d} set={set} k="price" label="Purchase price ($)" step={1000} />
             <Num d={d} set={set} k="cc" label="Closing costs (% of price)" step={0.1} />
+            <Num d={d} set={set} k="capexUp" label="Up front capex ($)" step={5000} hint="Renovations and immediate repairs funded at closing. Added to equity." />
           </div>
         </Card>
-        <Card title="Unit mix (monthly rent)">
-          <div className="mb-1 grid grid-cols-[1.4fr_.7fr_1fr_28px] gap-2 text-xs text-slate-500"><span>Unit type</span><span>Count</span><span>Rent / mo</span><span /></div>
+        <Card title="Unit mix (monthly)">
+          <div className={`mb-1 text-xs text-slate-500 ${grid}`}><span>Unit type</span><span>Count</span><span>In place rent</span><span>Market rent</span><span>Avg SF</span><span /></div>
           {units.map((u, i) => (
-            <div key={i} className="mb-2 grid grid-cols-[1.4fr_.7fr_1fr_28px] items-center gap-2">
+            <div key={i} className={`mb-2 items-center ${grid}`}>
               <input value={u.type} onChange={e => setUnit(i, { type: e.target.value })} />
               <NumInput value={u.count} min={0} onChange={v => setUnit(i, { count: v })} />
               <NumInput value={u.rent} min={0} step={5} onChange={v => setUnit(i, { rent: v })} />
+              <NumInput value={u.market || 0} min={0} step={5} onChange={v => setUnit(i, { market: v })} />
+              <NumInput value={u.sf || 0} min={0} step={10} onChange={v => setUnit(i, { sf: v })} />
               <button className="text-slate-400 hover:text-fail-600" title="Remove" onClick={() => set({ units: units.length > 1 ? units.filter((_, j) => j !== i) : [{ type: "", count: 0, rent: 0 }] })}>✕</button>
             </div>
           ))}
           <button className="btn mt-1" onClick={() => set({ units: [...units, { type: "", count: 0, rent: 0 }] })}>+ Add unit type</button>
-          <div className="mt-4 grid grid-cols-2 gap-3">
-            <Num d={d} set={set} k="other" label="Other income ($/unit/mo)" step={5} />
-            <Num d={d} set={set} k="vac" label="Vacancy & credit loss (%)" step={0.5} />
+          <p className="note mt-2">Leave market rent at 0 if in place rents are at market. When market is higher, gross potential rent is booked at market and the gap shows as loss to lease, the way a rent roll and T12 report it.</p>
+        </Card>
+        <Card title="Revenue deductions">
+          <div className="grid grid-cols-2 gap-3">
+            <Num d={d} set={set} k="vac" label="Physical vacancy (% of GPR)" step={0.5} />
+            <Num d={d} set={set} k="conc" label="Concessions (% of GPR)" step={0.25} />
+            <Num d={d} set={set} k="bad" label="Bad debt (% of GPR)" step={0.25} />
+            <Num d={d} set={set} k="nru" label="Non revenue units (count)" hint="Model, office, employee or down units." />
+            <Num d={d} set={set} k="ltlBurn" label="Years to burn off loss to lease" hint="0 keeps the gap. 2 to 3 is typical as leases roll." />
           </div>
+          <p className="note mt-2">Lenders underwrite economic vacancy (vacancy + concessions + bad debt + non revenue) of at least 5 to 7%, even when the building is full.</p>
+        </Card>
+        <Card title="Other income ($/unit/mo)">
+          {items.length === 0 && <div className="grid grid-cols-2 gap-3"><Num d={d} set={set} k="other" label="Other income total ($/unit/mo)" step={5} /></div>}
+          {items.map((o, i) => (
+            <div key={i} className="mb-2 grid grid-cols-[1.6fr_1fr_24px] items-center gap-2">
+              <input value={o.label} placeholder="RUBS, parking, pet, fees, laundry…" onChange={e => setItems(items.map((x, j) => j === i ? { ...x, label: e.target.value } : x))} />
+              <NumInput value={o.amt} step={1} onChange={v => setItems(items.map((x, j) => j === i ? { ...x, amt: v } : x))} />
+              <button className="text-slate-400 hover:text-fail-600" onClick={() => setItems(items.filter((_, j) => j !== i))}>✕</button>
+            </div>
+          ))}
+          <button className="btn mt-2" onClick={() => setItems(items.length ? [...items, { label: "", amt: 0 }] : [{ label: "Utility reimbursement (RUBS)", amt: 0 }, { label: "Fees (late, app, admin)", amt: 0 }, { label: "Parking, storage, pet", amt: 0 }, { label: "Laundry, other", amt: d.other || 0 }])}>
+            {items.length ? "+ Add line" : "Break other income into lines"}</button>
+          {items.length > 0 && <p className="note mt-2">Total {usd(d.other)}/unit/mo. Underwrite only what the T12 actually collected; new RUBS or fees need a ramp.</p>}
         </Card>
       </div>
-      <Card title="Year 1 income">
+      <Card title="Year 1 revenue">
         <table className="tbl"><tbody>
-          <Row label="Gross potential rent" value={usd(p.y1.gpr)} />
-          <Row label={`Vacancy & credit loss (${d.vac}%)`} value={usd(-p.y1.vacLoss)} />
-          <Row label="Other income" value={usd(p.y1.oth)} />
-          <Row label="Effective gross income" value={usd(p.y1.egi)} cls="total" />
-          <Row label="Gross rent multiplier" value={isFinite(p.y1.grm) ? p.y1.grm.toFixed(2) : "n/a"} />
+          <Row label="Gross potential rent at market" value={usd(y.gpr)} />
+          {y.ltl > 0 && <Row label="Loss to lease" value={usd(-y.ltl)} />}
+          <Row label={`Physical vacancy (${d.vac}%)`} value={usd(-y.vacLoss)} />
+          {y.conc > 0 && <Row label={`Concessions (${d.conc}%)`} value={usd(-y.conc)} />}
+          {y.bad > 0 && <Row label={`Bad debt (${d.bad}%)`} value={usd(-y.bad)} />}
+          {y.nru > 0 && <Row label={`Non revenue units (${d.nru})`} value={usd(-y.nru)} />}
+          <Row label="Net rental income" value={usd(y.gpr - y.ltl - y.vacLoss - y.conc - y.bad - y.nru)} cls="sub" />
+          <Row label="Other income" value={usd(y.oth)} />
+          <Row label="Effective gross income" value={usd(y.egi)} cls="total" />
+          <Row label="Economic occupancy" value={pct(y.econOcc, 1)} />
+          <Row label="Gross rent multiplier" value={isFinite(y.grm) ? y.grm.toFixed(2) : "n/a"} />
         </tbody></table>
-        <h3 className="card-title mt-6">Rent by unit type</h3>
-        <table className="tbl">
-          <thead><tr><th>Type</th><th>Units</th><th>Rent</th><th>Annual</th><th>Mix</th></tr></thead>
+        <h3 className="card-title mt-6">Rent roll summary</h3>
+        <div className="overflow-x-auto"><table className="tbl">
+          <thead><tr><th>Type</th><th>Units</th><th>In place</th><th>Market</th><th>Gap</th>{sf > 0 && <th>$/SF</th>}<th>Mix</th></tr></thead>
           <tbody>
-            {units.map((u, i) => <tr key={i}><td>{u.type || "Unit"}</td><td className="num">{u.count}</td><td className="num">{usd(u.rent)}</td><td className="num">{usd(u.count * u.rent * 12)}</td><td className="num">{pct(u.count / p.units, 0)}</td></tr>)}
-            <tr className="total"><td>Total</td><td className="num">{p.units}</td><td className="num">{usd(p.y1.gpr / 12 / p.units)} avg</td><td className="num">{usd(p.y1.gpr)}</td><td /></tr>
+            {units.map((u, i) => { const m = (u.market || 0) > 0 ? u.market! : u.rent; return (
+              <tr key={i}><td>{u.type || "Unit"}</td><td className="num">{u.count}</td><td className="num">{usd(u.rent)}</td><td className="num">{usd(m)}</td>
+                <td className={`num ${m > u.rent ? "text-pass-600" : ""}`}>{m > u.rent ? usd(m - u.rent) : "-"}</td>
+                {sf > 0 && <td className="num">{u.sf ? "$" + (u.rent / u.sf).toFixed(2) : ""}</td>}<td className="num">{pct(u.count / p.units, 0)}</td></tr>) })}
+            <tr className="total"><td>Total / avg</td><td className="num">{p.units}</td><td className="num">{usd(y.inPlace / 12 / p.units)}</td><td className="num">{usd(y.gpr / 12 / p.units)}</td>
+              <td className="num">{y.gpr > y.inPlace ? pct(1 - y.inPlace / y.gpr, 1) : "-"}</td>{sf > 0 && <td className="num">{"$" + (y.inPlace / 12 / sf).toFixed(2)}</td>}<td /></tr>
           </tbody>
-        </table>
+        </table></div>
       </Card>
     </div>
   )
 }
 
 /* ---------- Expenses ---------- */
+const EXP_INPUTS: [NumField, string, string][] = [
+  ["ins", "Insurance", "ins"], ["util", "Utilities (owner paid)", "util"], ["rm", "Repairs & maintenance", "rm"], ["turn", "Turnover / make ready", "turn"],
+  ["contract", "Contract services", "contract"], ["pay", "Payroll", "pay"], ["adm", "General & admin", "adm"], ["mkt", "Marketing", "mkt"],
+]
+function Flag({ f }: { f: string }) {
+  if (f === "na" || f === "ok") return f === "ok" ? <span className="text-xs text-pass-600">in range</span> : null
+  return <span className={`rounded px-1.5 py-0.5 text-xs ${f === "low" ? "bg-amber-50 text-amber-800" : "bg-fail-50 text-fail-600"}`}>{f === "low" ? "low" : "high"}</span>
+}
 export function ExpensesPane({ d, p, set }: PaneProps) {
-  const y = p.years[0]
+  const y = p.years[0], u = p.units || 1
+  const st = stateBy(d.state)
+  const [ratio, setRatio] = useState(100)
+  const [mills, setMills] = useState(() => { const r = rentalTaxRate(st); return isFinite(r) ? Math.round(r * 1000 * 100) / 100 : 20 })
+  const calcTax = Math.round(d.price * ratio / 100 * mills / 1000)
   return (
-    <div className="grid gap-4 lg:grid-cols-2">
-      <Card title="Operating expenses (year 1, annual)">
-        <div className="grid grid-cols-2 gap-3">
-          <Num d={d} set={set} k="tax" label="Property taxes ($)" step={500} />
-          <Num d={d} set={set} k="ins" label="Insurance ($)" step={500} />
-          <Num d={d} set={set} k="util" label="Utilities ($)" step={500} />
-          <Num d={d} set={set} k="rm" label="Repairs & maintenance ($)" step={500} />
-          <Num d={d} set={set} k="pay" label="Payroll ($)" step={500} />
-          <Num d={d} set={set} k="adm" label="Admin, marketing, contracts ($)" step={500} />
-          <Num d={d} set={set} k="mgmt" label="Management (% of EGI)" step={0.25} />
-          <Num d={d} set={set} k="res" label="Replacement reserves ($/unit/yr)" step={25} />
+    <div className="space-y-4">
+      <div className="grid gap-4 lg:grid-cols-2">
+        <Card title="Operating expenses (year 1, $ per year)">
+          <table className="tbl">
+            <thead><tr><th>Line</th><th className="w-36">Annual</th><th>$/unit</th><th>Typical $/unit</th><th /></tr></thead>
+            <tbody>
+              <tr><td>Real estate taxes</td><td><NumInput value={d.tax} step={500} onChange={v => set({ tax: v })} /></td><td className="num">{usd(d.tax / u)}</td><td className="text-xs text-slate-500">see calculator</td><td /></tr>
+              {EXP_INPUTS.map(([k, label, b]) => { const v = d[k] as number; return (
+                <tr key={k}><td>{label}</td><td><NumInput value={v} step={500} onChange={n => set({ [k]: n } as Partial<Deal>)} /></td>
+                  <td className="num">{usd(v / u)}</td><td className="text-xs text-slate-500" title={BENCH[b].note}>{usd(BENCH[b].lo)} to {usd(BENCH[b].hi)}</td><td><Flag f={benchFlag(b, v / u, p.units)} /></td></tr>) })}
+              <tr><td>Management (% of EGI)</td><td><NumInput value={d.mgmt} step={0.25} onChange={v => set({ mgmt: v })} /></td><td className="num">{usd(y.mgmt / u)}</td><td className="text-xs text-slate-500">3% to 8%</td>
+                <td>{d.mgmt < 3 ? <Flag f="low" /> : d.mgmt > 8 ? <Flag f="high" /> : <Flag f="ok" />}</td></tr>
+              <tr><td>Reserves ($/unit/yr)</td><td><NumInput value={d.res} step={25} onChange={v => set({ res: v })} /></td><td className="num">{usd(d.res)}</td><td className="text-xs text-slate-500">$250 to $500</td><td><Flag f={benchFlag("res", d.res, p.units)} /></td></tr>
+            </tbody>
+          </table>
+          <p className="note mt-2">Ranges are rough national figures for market rate apartments. Hover a range for context. A low flag is usually the bigger risk: sellers under report repairs, payroll and insurance.</p>
+        </Card>
+        <Card title="Year 1 pro forma">
+          <table className="tbl"><tbody>
+            <Row label="Effective gross income" value={usd(y.egi)} cls="total" />
+            <Row label="Real estate taxes" value={usd(-y.tax)} /><Row label="Insurance" value={usd(-y.ins)} />
+            <Row label="Utilities" value={usd(-d.util)} /><Row label="Repairs & maintenance" value={usd(-d.rm)} />
+            {d.turn > 0 && <Row label="Turnover" value={usd(-d.turn)} />}{d.contract > 0 && <Row label="Contract services" value={usd(-d.contract)} />}
+            <Row label="Payroll" value={usd(-d.pay)} /><Row label="General & admin" value={usd(-d.adm)} />
+            {d.mkt > 0 && <Row label="Marketing" value={usd(-d.mkt)} />}
+            <Row label={`Management (${d.mgmt}% of EGI)`} value={usd(-y.mgmt)} />
+            <Row label="NOI before reserves" value={usd(y.noiBR)} cls="sub" />
+            <Row label="Replacement reserves" value={usd(-y.res)} />
+            <Row label="Net cash flow (NOI after reserves)" value={usd(y.noi)} cls="total" />
+            <Row label="Total expenses incl. reserves, per unit" value={<span>{usd(y.opex / u)} <Flag f={benchFlag("total", y.opex / u, p.units)} /></span>} />
+            <Row label="Expense ratio" value={<span>{pct(p.y1.expRatio, 1)} {p.y1.expRatio < 0.35 ? <Flag f="low" /> : p.y1.expRatio > 0.6 ? <Flag f="high" /> : null}</span>} />
+          </tbody></table>
+        </Card>
+      </div>
+      <Card title="Property tax: underwrite the bill after you buy">
+        <div className="grid gap-4 lg:grid-cols-2">
+          <div>
+            <div className="grid grid-cols-3 gap-3">
+              <Field label="Price ($)"><NumInput value={d.price} disabled onChange={() => {}} /></Field>
+              <Field label="Assessment ratio (%)" hint="Share of value that is taxed."><NumInput value={ratio} step={1} onChange={setRatio} /></Field>
+              <Field label="Millage (per $1,000)" hint={st ? `Starting point from ${st.name} rentals.` : "Set your state on the Market tab."}><NumInput value={mills} step={0.5} onChange={setMills} /></Field>
+            </div>
+            <p className="mt-3 text-sm">Estimated tax on your price: <b>{usd(calcTax)}</b> ({usd(calcTax / u)}/unit) vs. the {usd(d.tax)} in your model{d.tax > 0 && calcTax > d.tax * 1.1 ? <span className="text-fail-600">, {pct(calcTax / d.tax - 1, 0)} higher</span> : ""}.</p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <button className="btn" onClick={() => set({ tax: calcTax, taxNew: 0, taxResetYr: 0 })}>Use as year 1 tax</button>
+              <button className="btn" onClick={() => set({ taxNew: calcTax, taxResetYr: d.taxResetYr || 2 })}>Reassess to this in year {d.taxResetYr || 2}</button>
+            </div>
+          </div>
+          <div>
+            <div className="grid grid-cols-2 gap-3">
+              <Num d={d} set={set} k="taxNew" label="Tax after reassessment ($/yr)" step={500} />
+              <Num d={d} set={set} k="taxResetYr" label="Reassessment takes effect in year" hint="0 = no reset." />
+            </div>
+            <p className="note mt-2">{st?.reassess || DEFAULT_REASSESS} Many counties bill a year in arrears, so the jump often lands in year 2. Ask the county assessor or a local tax consultant for the real millage.</p>
+          </div>
         </div>
-        <p className="note mt-3">Base property tax on the expected assessment after the sale, not the seller's bill.</p>
-      </Card>
-      <Card title="Year 1 pro forma">
-        <table className="tbl"><tbody>
-          <Row label="Effective gross income" value={usd(y.egi)} cls="total" />
-          <Row label="Taxes" value={usd(-y.tax)} /><Row label="Insurance" value={usd(-y.ins)} />
-          <Row label="Utilities" value={usd(-d.util)} /><Row label="Repairs & maintenance" value={usd(-d.rm)} />
-          <Row label="Payroll" value={usd(-d.pay)} /><Row label="Admin, marketing, contracts" value={usd(-d.adm)} />
-          <Row label={`Management (${d.mgmt}% of EGI)`} value={usd(-y.mgmt)} /><Row label="Reserves" value={usd(-y.res)} />
-          <Row label="Total operating expenses" value={usd(-y.opex)} />
-          <Row label="Per unit" value={usd(y.opex / p.units)} cls="sub" />
-          <Row label="Net operating income" value={usd(y.noi)} cls="total" />
-          <Row label="Expense ratio" value={pct(p.y1.expRatio, 1)} />
-        </tbody></table>
       </Card>
     </div>
   )
@@ -141,25 +223,43 @@ export function ExpensesPane({ d, p, set }: PaneProps) {
 
 /* ---------- Financing ---------- */
 export function FinancingPane({ d, p, set }: PaneProps) {
+  const sz = p.sizing, lesser = d.sizeMode === "lesser"
+  const cap = (v: number) => isFinite(v) ? usd(v) : "no limit"
   return (
     <div className="space-y-4">
       <div className="grid gap-4 lg:grid-cols-2">
         <Card title="Loan terms">
           <div className="grid grid-cols-2 gap-3">
-            <Num d={d} set={set} k="ltv" label="Loan to value (%)" />
+            <Field label="How the loan is sized">
+              <select value={d.sizeMode} onChange={e => set({ sizeMode: e.target.value as Deal["sizeMode"] })}>
+                <option value="ltv">LTV only</option><option value="lesser">Lesser of LTV, DSCR, debt yield</option>
+              </select>
+            </Field>
+            <Num d={d} set={set} k="ltv" label="Max loan to value (%)" />
+            {lesser && <Num d={d} set={set} k="sizeDscr" label="Min DSCR for sizing (x)" step={0.05} hint="Agency 1.25x; banks 1.20 to 1.35x." />}
+            {lesser && <Num d={d} set={set} k="sizeDy" label="Min debt yield (%)" step={0.25} hint="Banks and CMBS 8 to 10%." />}
             <Num d={d} set={set} k="rate" label="Interest rate (%)" step={0.05} />
             <Num d={d} set={set} k="amort" label="Amortization (years)" />
             <Num d={d} set={set} k="ioYrs" label="Interest only period (years)" />
+            <Num d={d} set={set} k="term" label="Loan term (years)" hint="When the balloon is due." />
             <Num d={d} set={set} k="loanFee" label="Loan fees and points (% of loan)" step={0.25} />
           </div>
-          <p className="note mt-3">Interest only years pay interest only, then the loan amortizes over the amortization period. Set interest only to the hold period for a fully interest only loan.</p>
+          {p.balloonBeforeSale && <p className="mt-3 rounded-lg bg-amber-50 p-3 text-sm text-amber-900">The loan matures in year {d.term}, before your year {d.hold} sale. You'd have to refinance at whatever rates and values exist then. Shorten the hold or plan the refi.</p>}
+          <p className="note mt-3">Lenders size the loan to the lowest of three limits. In a high rate market DSCR usually binds, not LTV, so the loan you get is smaller than the LTV you were quoted.</p>
         </Card>
-        <Card title="Debt summary">
-          <table className="tbl"><tbody>
-            <Row label="Loan amount" value={usd(p.loan)} />
-            <Row label="Interest only payment, annual" value={usd(p.loan * d.rate / 100)} />
-            <Row label="Amortizing payment, annual" value={usd(monthlyPmt(p.loan, d.rate, d.amort) * 12)} />
-            <Row label="Year 1 DSCR" value={xx(p.y1.dscr)} />
+        <Card title="Loan sizing">
+          <table className="tbl">
+            <thead><tr><th>Constraint</th><th>Max loan</th><th>LTV</th></tr></thead>
+            <tbody>
+              {([["LTV", `${d.ltv}% of price`, sz.ltvLoan], ["DSCR", `NCF ÷ ${d.sizeDscr}x ÷ loan constant`, sz.dscrLoan], ["Debt yield", `NCF ÷ ${d.sizeDy}%`, sz.dyLoan]] as const).map(([k, how, v]) =>
+                <tr key={k} className={sz.binding === k ? "font-semibold" : ""}><td>{k}{sz.binding === k ? " (binds)" : ""}<div className="text-xs font-normal text-slate-500">{how}</div></td><td className="num">{cap(v)}</td><td className="num">{d.price > 0 && isFinite(v) ? pct(v / d.price, 1) : ""}</td></tr>)}
+              <tr className="total"><td>Loan used</td><td className="num">{usd(p.loan)}</td><td className="num">{d.price > 0 ? pct(p.loan / d.price, 1) : ""}</td></tr>
+            </tbody>
+          </table>
+          {!lesser && sz.binding !== "LTV" && <p className="mt-3 rounded-lg bg-amber-50 p-3 text-sm text-amber-900">At these terms a lender would cap the loan at {usd(sz.maxLoan)} ({sz.binding} binds), {usd(sz.ltvLoan - sz.maxLoan)} less than your LTV loan. Switch sizing to "lesser of" to see the real equity check.</p>}
+          <table className="tbl mt-4"><tbody>
+            <Row label="Year 1 debt service" value={usd(p.y1.ds)} />
+            <Row label="Year 1 DSCR (on NCF)" value={xx(p.y1.dscr)} />
             <Row label="Lowest DSCR during hold" value={xx(p.minDscr)} />
             <Row label="Debt yield" value={pct(p.y1.debtYield)} />
             <Row label="Break even occupancy, yr 1" value={pct(p.y1.beo, 1)} />
@@ -342,7 +442,7 @@ export function DealsPane({ d, set, saved, cloud, onSave, onOpen, onDelete, onSa
         </Card>
       </div>
       <Card title="How the numbers are calculated">
-        <p className="note leading-relaxed">EGI = gross potential rent × (1 − vacancy) + other income. NOI = EGI − operating expenses; management is a % of EGI and reserves are per unit. Rent and other income grow by the yearly rent growth; taxes, insurance and other expenses grow at their own rates. Debt service is interest only during the interest only period, then a standard amortizing payment. Cash flow = NOI − debt service. Equity = down payment + closing costs + loan fees. Sale price = exit year NOI ÷ exit cap; net proceeds = sale price − selling costs − loan payoff. IRR uses the equity outflow at purchase, each year's cash flow and the net proceeds in the final year. Equity multiple = total cash returned ÷ equity. Max price is the highest price where every buy box test still passes, holding everything else constant.</p>
+        <p className="note leading-relaxed">Gross potential rent is booked at market rent. EGI = GPR − loss to lease − vacancy − concessions − bad debt − non revenue units + other income. NOI = EGI − operating expenses; management is a % of EGI and reserves are per unit, so the NOI used for cap rate, DSCR and debt yield is after reserves (lender net cash flow). Property tax can step up to a reassessed amount in a chosen year. Loan amount is the LTV loan, or the lesser of the LTV, DSCR and debt yield loans when that sizing is chosen. Rent and other income grow by the yearly rent growth; taxes, insurance and other expenses grow at their own rates. Debt service is interest only during the interest only period, then a standard amortizing payment. Cash flow = NOI − debt service. Equity = down payment + closing costs + loan fees + up front capex. Sale price = exit year NOI ÷ exit cap; net proceeds = sale price − selling costs − loan payoff. IRR uses the equity outflow at purchase, each year's cash flow and the net proceeds in the final year. Equity multiple = total cash returned ÷ equity. Max price is the highest price where every buy box test still passes, holding everything else constant.</p>
       </Card>
     </div>
   )

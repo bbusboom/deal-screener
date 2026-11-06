@@ -11,7 +11,10 @@ export const EXTRACT_FIELDS = {
   util: { label: "Utilities", unit: "$/yr" },
   rm: { label: "Repairs & maintenance", unit: "$/yr" },
   pay: { label: "Payroll", unit: "$/yr" },
-  adm: { label: "Admin, marketing, contracts", unit: "$/yr" },
+  adm: { label: "General & admin", unit: "$/yr" },
+  contract: { label: "Contract services", unit: "$/yr" },
+  turn: { label: "Turnover / make ready", unit: "$/yr" },
+  mkt: { label: "Marketing", unit: "$/yr" },
   mgmt: { label: "Management", unit: "% of EGI" },
   res: { label: "Replacement reserves", unit: "$/unit/yr" },
   ltv: { label: "Loan to value", unit: "%" },
@@ -30,6 +33,8 @@ export interface Extraction {
   property_name?: string
   fields: Partial<Record<ExtractKey, { value: number; source: string }>>
   unit_mix?: { units: UnitType[]; rent_basis: string; source: string }
+  /** T12 total column, annual dollars by standard line (T12 or operating statement only). */
+  statement?: Partial<Record<"gpr"|"ltl"|"vac"|"conc"|"bad"|"nru"|"other"|"tax"|"ins"|"util"|"rm"|"pay"|"adm"|"contract"|"turn"|"mkt"|"mgmt"|"res", number>>
   notes?: string[]
 }
 
@@ -59,6 +64,11 @@ export const EXTRACTION_TOOL = {
           source: { type: "string" },
         },
       },
+      statement: {
+        type: "object",
+        description: "T12 or operating statement only: the trailing 12 month total column mapped to standard lines, annual dollars, all positive numbers (deductions like vacancy as positive amounts). Leave out lines the document doesn't show.",
+        properties: Object.fromEntries(["gpr","ltl","vac","conc","bad","nru","other","tax","ins","util","rm","pay","adm","contract","turn","mkt","mgmt","res"].map(k => [k, { type: "number" }])),
+      },
       notes: { type: "array", items: { type: "string" }, description: "Short caveats: annualized partial year, missing lines, assumptions made, items that look off." },
     },
   },
@@ -73,7 +83,7 @@ Rules:
 
 By document type:
 - Rent roll: group units by unit type or floor plan. count = all units of that type, occupied and vacant. rent = average in place monthly rent of occupied units; if there's no in place rent, use market rent and say so in rent_basis. vac = vacant units / total units × 100 (physical vacancy); note that it's physical vacancy. If unit type names are codes, label them with beds/baths when the roll shows them.
-- T12 or operating statement: use the trailing 12 month total column. If fewer than 12 months are shown, annualize and add a note. Map lines: tax = real estate taxes; ins = property insurance; util = all utilities (electric, water, sewer, gas, trash) net of nothing; rm = repairs, maintenance, make ready, turnover, landscaping, pest control and contract services that are maintenance; pay = payroll, salaries, benefits, payroll taxes; adm = administrative, marketing, advertising, office, legal, professional fees, software and other contract services; mgmt = management fee ÷ effective gross income × 100; vac = (vacancy loss + concessions + bad debt + model, employee and down units) ÷ gross potential rent × 100 when those lines exist; other = total other income (fees, RUBS, parking, pet, laundry) ÷ unit count ÷ 12 when the unit count is known; res = replacement reserves per unit if a reserve line exists. Exclude capital expenditures, debt service and depreciation from operating expenses.
+- T12 or operating statement: use the trailing 12 month total column. If fewer than 12 months are shown, annualize and add a note. Map lines: tax = real estate taxes; ins = property insurance; util = all utilities (electric, water, sewer, gas, trash) net of nothing; rm = repairs and maintenance; turn = make ready, turnover, painting, cleaning and carpet between tenants; contract = landscaping, pest control, trash, pool, security and other contract services; pay = payroll, salaries, benefits, payroll taxes; adm = administrative, office, legal, professional fees, software; mkt = marketing and advertising; mgmt = management fee ÷ effective gross income × 100; vac = (vacancy loss + concessions + bad debt + model, employee and down units) ÷ gross potential rent × 100 when those lines exist; other = total other income (fees, RUBS, parking, pet, laundry) ÷ unit count ÷ 12 when the unit count is known; res = replacement reserves per unit if a reserve line exists. Exclude capital expenditures, debt service and depreciation from operating expenses. Also fill statement with the T12 total column in annual dollars: gpr = gross potential rent (or scheduled market rent), ltl = loss to lease (gain to lease as a negative number), vac = vacancy loss, conc = concessions, bad = bad debt and write offs, nru = model, employee and down unit loss, other = total other income, and each expense line using the same mapping as above, mgmt in dollars.
 - Offering memo: price (asking or guidance price), unit_mix, and pro forma or in place expenses using the same mapping, preferring the in place / T12 figures and noting which you used.
 - Loan quote or term sheet: ltv, rate, amort, ioYrs, and loan fees in notes.
 - If the document shows a property name, return it.

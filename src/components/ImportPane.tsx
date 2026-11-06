@@ -72,6 +72,8 @@ export default function ImportPane({ deal, onApply }: { deal: Deal; onApply: (pa
     found.forEach(k => { const i = choice[k] ?? 0; if (i >= 0 && cands[k][i]) { patch[k] = cands[k][i].value; applied.push(EXTRACT_FIELDS[k].label) } })
     if (unitCands.length && unitChoice >= 0) { patch.units = unitCands[unitChoice].ex.unit_mix!.units.map(u => ({ type: u.type, count: Math.round(u.count), rent: Math.round(u.rent) })); applied.push("unit mix") }
     if (name && !deal.name) patch.name = name
+    const st = done.find(r => r.ex.document_type === "t12" && r.ex.statement && Object.keys(r.ex.statement).length)
+    if (st) { patch.t12 = { ...st.ex.statement }; applied.push("seller T12 column") }
     onApply(patch, applied.length ? `Updated ${applied.length} items from your documents` : "Nothing selected")
   }
 

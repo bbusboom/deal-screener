@@ -3,6 +3,7 @@ import type { Session } from "@supabase/supabase-js"
 import { type Deal, DEFAULTS, SAMPLE, norm, project, tests, allPass, maxPrice, usd, pct, xx } from "./lib/model"
 import { listDeals, saveDeal, deleteDeal, type SavedDeal } from "./lib/store"
 import { Kpi } from "./components/ui"
+import { StatementPane } from "./components/StatementPane"
 import { SummaryPane, IncomePane, ExpensesPane, FinancingPane, ProjectionsPane, ScenariosPane, DealsPane, failNames } from "./components/Panes"
 import AiPanel from "./components/AiPanel"
 import ImportPane from "./components/ImportPane"
@@ -10,7 +11,7 @@ import MarketPane from "./components/MarketPane"
 import { getHomeState } from "./lib/market"
 
 const TABS = [
-  ["summary", "Summary"], ["documents", "Import Documents"], ["market", "Market Check"], ["income", "Property & Income"], ["expenses", "Expenses"], ["financing", "Financing"],
+  ["summary", "Summary"], ["documents", "Import Documents"], ["market", "Market Check"], ["income", "Property & Income"], ["expenses", "Expenses"], ["statement", "Operating Statement"], ["financing", "Financing"],
   ["projections", "Projections"], ["scenarios", "Scenarios"], ["ai", "Deal School AI"], ["deals", "Buy Box & Deals"],
 ] as const
 type Tab = typeof TABS[number][0]
@@ -96,6 +97,7 @@ export default function ProWorkspace({ session, toast }: { session: Session | nu
         <div className={tab === "documents" ? "" : "hidden"}><ImportPane deal={deal} onApply={(patch, msg) => { set(patch); toast(msg); go("summary") }} /></div>
         {tab === "market" && <MarketPane d={deal} set={set} session={session} route="pro" />}
         {tab === "income" && <IncomePane {...pane} />}
+        {tab === "statement" && <StatementPane {...pane} />}
         {tab === "expenses" && <ExpensesPane {...pane} />}
         {tab === "financing" && <FinancingPane {...pane} />}
         {tab === "projections" && <ProjectionsPane {...pane} />}

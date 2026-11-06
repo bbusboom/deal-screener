@@ -19,6 +19,30 @@ export type StatementCol = Partial<Record<StatementKey, number>>
 export const STATEMENT_KEYS = ["gpr","ltl","vac","conc","bad","nru","other","tax","ins","util","rm","pay","adm","contract","turn","mkt","mgmt","res"] as const
 export type StatementKey = typeof STATEMENT_KEYS[number]
 export type SizeMode = "ltv" | "lesser"
+/** Value add renovation program. */
+export interface ValueAdd {
+  on: boolean
+  /** Units to renovate, cost per unit, and rent premium per renovated unit per month (today's dollars). */
+  units: number; cost: number; premium: number
+  /** Units started per month, month the program starts (1 = first month after closing), months a unit is offline. */
+  pace: number; startMo: number; downMo: number
+  /** true: budget raised as equity at closing. false: paid out of cash flow as it's spent. */
+  upfront: boolean
+}
+export const VA_DEFAULT: ValueAdd = { on: false, units: 0, cost: 10000, premium: 150, pace: 4, startMo: 2, downMo: 1, upfront: true }
+/** Sponsor (GP) and investor (LP) split with IRR hurdles. */
+export interface Waterfall {
+  on: boolean
+  /** Share of equity the GP co-invests, %. */
+  gpCo: number
+  /** Preferred return to all equity, %/yr (pari passu). */
+  pref: number
+  /** After the pref: LP share until the LP IRR hits hurdle2, then LP share above it, %. */
+  split1: number; hurdle2: number; split2: number
+  /** Fees to the GP: acquisition % of price (funded with equity), asset management % of EGI, disposition % of sale. */
+  acqFee: number; amFee: number; dispFee: number
+}
+export const WF_DEFAULT: Waterfall = { on: false, gpCo: 10, pref: 8, split1: 70, hurdle2: 15, split2: 50, acqFee: 2, amFee: 2, dispFee: 1 }
 export interface Scenario { name: string; prob: number; rg: number; vac: number; expG: number; exitCap: number }
 
 export interface Deal {
@@ -49,6 +73,8 @@ export interface Deal {
   scen: Scenario[]
   /** User added income, expense and capital lines. */
   custom: CustomLine[]
+  va: ValueAdd
+  wf: Waterfall
   /** Seller's trailing 12 months and trailing 3 months annualized, for the operating statement. */
   t12?: StatementCol; t3?: StatementCol
 }
@@ -65,7 +91,7 @@ export const DEFAULTS: Deal = {
   name: "", price: 0, cc: 2.5, other: 0, vac: 7, conc: 0, bad: 0, nru: 0, ltlBurn: 0, otherItems: [],
   tax: 0, ins: 0, util: 0, rm: 0, pay: 0, adm: 0, contract: 0, turn: 0, mkt: 0, mgmt: 5, res: 300,
   taxNew: 0, taxResetYr: 0, capexUp: 0,
-  custom: [],
+  custom: [], va: { ...VA_DEFAULT }, wf: { ...WF_DEFAULT },
   ltv: 70, rate: 6.5, amort: 30, ioYrs: 0, loanFee: 1, term: 10, sizeMode: "ltv", sizeDscr: 1.25, sizeDy: 8, hold: 7, expG: 3, taxG: 3, insG: 5, exitCap: 6.5, sellCost: 2,
   minCap: 6, minDscr: 1.25, minCoc: 6, minIrr: 12, minEm: 1.6,
   rg: [], units: [{ type: "1 bed", count: 0, rent: 0 }], scen: [],
@@ -98,6 +124,11 @@ export function norm(input: Partial<Deal> & { io?: string } = {}): Deal {
   d.rg = d.rg.slice(0, d.hold).map((v: any) => Number(v) || 0)
   if (!Array.isArray(d.units) || !d.units.length) d.units = [{ type: "", count: 0, rent: 0 }]
   d.units = d.units.map((u: any) => ({ type: String(u.type ?? ""), count: Number(u.count) || 0, rent: Number(u.rent) || 0, market: Number(u.market) || 0, sf: Number(u.sf) || 0 }))
+  d.va = { ...VA_DEFAULT, ...(d.va || {}) }; d.wf = { ...WF_DEFAULT, ...(d.wf || {}) }
+  for (const k of Object.keys(VA_DEFAULT)) if (k !== "on" && k !== "upfront") d.va[k] = Math.max(0, Number(d.va[k]) || 0)
+  for (const k of Object.keys(WF_DEFAULT)) if (k !== "on") d.wf[k] = Math.max(0, Number(d.wf[k]) || 0)
+  d.va.on = !!d.va.on; d.va.upfront = d.va.upfront !== false; d.wf.on = !!d.wf.on
+  d.va.startMo = Math.max(1, Math.round(d.va.startMo)); d.va.downMo = Math.round(d.va.downMo); d.va.pace = Math.max(0.1, d.va.pace)
   if (!Array.isArray(d.custom)) d.custom = []
   d.custom = d.custom.map((c: any) => ({
     label: String(c.label ?? ""), kind: ["income", "expense", "capex"].includes(c.kind) ? c.kind : "expense",
@@ -198,14 +229,18 @@ export interface YearRow {
   ltl: number; conc: number; bad: number; nru: number
   /** Custom lines: total income, total operating expense, capital below NOI, and each line's value in d.custom order. */
   custInc: number; custExp: number; capex: number; cust: number[]
+  /** Value add: renovation premium (net of vacancy), rent lost to downtime, renovations finished by year end, budget spent this year. */
+  vaPrem: number; vaDown: number; vaDone: number; vaSpend: number
   tax: number; ins: number; fixed: number; res: number; mgmt: number; opex: number
   /** noi is after replacement reserves (= lender net cash flow); noiBR is before reserves. */
   noi: number; noiBR: number
   ds: number; interest: number; principal: number; endBal: number; cf: number; dscr: number; coc: number
 }
+export interface VaSummary { units: number; budget: number; upfront: number; roc: number; finishYr: number; annualPremium: number }
 export interface LoanSizing { mode: SizeMode; ltvLoan: number; dscrLoan: number; dyLoan: number; binding: "LTV" | "DSCR" | "Debt yield"; maxLoan: number }
 export interface Projection {
   d: Deal; units: number; loan: number; closing: number; fee: number; equity: number; sizing: LoanSizing
+  va: VaSummary
   /** True if the loan matures before the planned sale. */
   balloonBeforeSale: boolean
   years: YearRow[]; exitYear: YearRow; exitNoi: number; salePrice: number; sellCosts: number; payoff: number; proceeds: number
@@ -229,6 +264,27 @@ export function project(d0: Deal, o: Overrides = {}): Projection {
   const closing = d.price * d.cc / 100
   const capexUp = d.capexUp || 0
 
+  // Value add: build a monthly renovation schedule, then roll it up by year.
+  const va = d.va, vaOn = !!va?.on && va.units > 0
+  const vaUnits = vaOn ? Math.min(va.units, units) : 0
+  const Y = N + 1, premMo = Array(Y + 1).fill(0), downMo = Array(Y + 1).fill(0), spend = Array(Y + 1).fill(0), done = Array(Y + 1).fill(0)
+  if (vaOn) {
+    let started = 0
+    const starts: { m: number; n: number }[] = []
+    for (let m = va.startMo; started < vaUnits - 1e-9 && m <= Y * 12; m++) { const n = Math.min(va.pace, vaUnits - started); starts.push({ m, n }); started += n }
+    for (const { m, n } of starts) {
+      const yr0 = Math.ceil(m / 12); spend[yr0] += n * va.cost
+      for (let k = m; k <= Y * 12; k++) {
+        const yr = Math.ceil(k / 12)
+        if (k < m + va.downMo) downMo[yr] += n
+        else { premMo[yr] += n; if (k === m + va.downMo) done[yr] += n }
+      }
+    }
+    for (let t = 1; t <= Y; t++) done[t] += done[t - 1]
+  }
+  const vaBudget = vaUnits * (va?.cost || 0)
+  const vaUpfront = vaOn && va.upfront ? vaBudget : 0
+
   // Operating years first (no debt), so the loan can be sized off year 1 NOI.
   type Ops = Omit<YearRow, "ds" | "interest" | "principal" | "endBal" | "cf" | "dscr" | "coc">
   const ops: Ops[] = []
@@ -251,16 +307,20 @@ export function project(d0: Deal, o: Overrides = {}): Projection {
     }
     let custInc = 0
     d.custom.forEach((c, i) => { if (c.kind === "income" && c.basis !== "pctEgi") { const v = lineVal(c, i, 0); cust[i] = v; custInc += v } })
-    const egi = gpr - ltl - vacLoss - conc - bad - nru + oth + custInc
+    const vaPrem = vaOn ? premMo[t] * va.premium * growth * (1 - d.vac / 100) : 0
+    const vaDown = vaOn ? downMo[t] * (avgMkt / 12) * growth : 0
+    const egi = gpr - ltl - vacLoss - conc - bad - nru + oth + custInc + vaPrem - vaDown
     let custExp = 0, capex = 0
     d.custom.forEach((c, i) => { if (c.kind !== "income") { const v = lineVal(c, i, egi); cust[i] = v; if (c.kind === "expense") custExp += v; else capex += v } })
+    const vaSpend = vaOn ? spend[t] : 0
+    if (vaOn && !va.upfront) capex += vaSpend
     const reset = d.taxResetYr > 0 && d.taxNew > 0 && t >= d.taxResetYr
     const tax = reset ? d.taxNew * Math.pow(1 + d.taxG / 100, t - d.taxResetYr) : d.tax * Math.pow(1 + d.taxG / 100, t - 1)
     const ins = d.ins * Math.pow(1 + d.insG / 100, t - 1)
     const fixed = fixed1 * Math.pow(1 + d.expG / 100, t - 1), res = d.res * units * Math.pow(1 + d.expG / 100, t - 1)
     const mgmt = egi * d.mgmt / 100
     const opex = tax + ins + fixed + res + mgmt + custExp, noi = egi - opex
-    ops.push({ t, gpr, ltl, vacLoss, conc, bad, nru, oth, custInc, custExp, capex, cust, egi, tax, ins, fixed, res, mgmt, opex, noi, noiBR: noi + res })
+    ops.push({ t, gpr, ltl, vacLoss, conc, bad, nru, oth, custInc, custExp, capex, cust, vaPrem, vaDown, vaDone: done[t] || 0, vaSpend, egi, tax, ins, fixed, res, mgmt, opex, noi, noiBR: noi + res })
   }
 
   // Loan sizing: LTV, or the lesser of LTV, DSCR and debt yield (how agency and bank lenders actually size).
@@ -274,7 +334,7 @@ export function project(d0: Deal, o: Overrides = {}): Projection {
   const loan = d.sizeMode === "lesser" ? maxLoan : ltvLoan
   const sizing: LoanSizing = { mode: d.sizeMode, ltvLoan, dscrLoan, dyLoan, binding, maxLoan }
   const fee = loan * d.loanFee / 100
-  const equity = d.price - loan + closing + fee + capexUp
+  const equity = d.price - loan + closing + fee + capexUp + vaUpfront
 
   const years: YearRow[] = ops.map(y => {
     const dy = debtYear(loan, d, y.t)
@@ -286,11 +346,13 @@ export function project(d0: Deal, o: Overrides = {}): Projection {
   const sellCosts = salePrice * d.sellCost / 100, payoff = hold[N - 1].endBal
   const proceeds = salePrice - sellCosts - payoff
   const cfs = [-equity, ...hold.map(y => y.cf)]; cfs[N] += proceeds
-  const ucfs = [-(d.price + closing + capexUp), ...hold.map(y => y.noi - y.capex)]; ucfs[N] += salePrice - sellCosts
+  const ucfs = [-(d.price + closing + capexUp + vaUpfront), ...hold.map(y => y.noi - y.capex)]; ucfs[N] += salePrice - sellCosts
   const totalCf = hold.reduce((s, y) => s + y.cf, 0), totalBack = totalCf + proceeds
   const y1 = years[0]
   const potential = y1.gpr + y1.oth
   return {
+    va: { units: vaUnits, budget: vaBudget, upfront: vaUpfront, roc: vaOn && va.cost > 0 ? va.premium * 12 * (1 - d.vac / 100) / va.cost : NaN,
+      finishYr: vaOn ? (i => i > 0 ? i : NaN)(done.findIndex((x, i) => i > 0 && x >= vaUnits - 1e-9)) : NaN, annualPremium: vaUnits * va.premium * 12 },
     d, units, loan, closing, fee, equity, sizing, balloonBeforeSale: d.term > 0 && d.term < N,
     years: hold, exitYear, exitNoi, salePrice, sellCosts, payoff, proceeds, cfs,
     irr: irr(cfs), unlevIrr: irr(ucfs), em: equity > 0 ? totalBack / equity : NaN, profit: totalBack - equity,
@@ -304,6 +366,67 @@ export function project(d0: Deal, o: Overrides = {}): Projection {
       ppu: units > 0 ? d.price / units : NaN, grm: y1.gpr > 0 ? d.price / y1.gpr : NaN,
     },
   }
+}
+
+/* ---------- GP / LP waterfall ---------- */
+export interface WaterfallResult {
+  totalEquity: number; lpEquity: number; gpEquity: number; acqFee: number
+  years: { t: number; cash: number; amFee: number; toLp: number; toGp: number; promote: number }[]
+  lpCfs: number[]; gpCfs: number[]
+  lp: { irr: number; em: number; profit: number }; gp: { irr: number; em: number; profit: number; promote: number; fees: number }
+  dealIrr: number
+}
+/**
+ * Standard IRR hurdle waterfall, run each year on cash after debt service (and sale proceeds in the final year):
+ * 1) all equity pari passu until the LP earns the pref IRR (return of capital included);
+ * 2) split1 to LP / rest to GP until the LP IRR reaches hurdle2;
+ * 3) split2 to LP / rest to GP after that.
+ * Fees to the GP come first: acquisition fee at closing (funded with equity), asset management from operating cash, disposition from sale.
+ */
+export function waterfall(p: Projection): WaterfallResult {
+  const w = p.d.wf, N = p.d.hold
+  const acqFee = p.d.price * w.acqFee / 100
+  const totalEquity = p.equity + acqFee
+  const gpShare = Math.min(100, w.gpCo) / 100, lpShare = 1 - gpShare
+  const lpEquity = totalEquity * lpShare, gpEquity = totalEquity * gpShare
+  let b1 = lpEquity, b2 = lpEquity // LP balances compounding at the pref and at hurdle2
+  const r1 = w.pref / 100, r2 = w.hurdle2 / 100, s1 = w.split1 / 100, s2 = w.split2 / 100
+  const lpCfs = [-lpEquity], gpCfs = [-gpEquity], years: WaterfallResult["years"] = []
+  let feeSum = acqFee, promoteSum = 0
+  gpCfs[0] += acqFee // the GP is paid the acquisition fee out of the equity raise
+  for (let t = 1; t <= N; t++) {
+    const y = p.years[t - 1]
+    b1 *= 1 + r1; b2 *= 1 + r2
+    const amFee = Math.max(0, y.egi * w.amFee / 100)
+    let cash = y.cf - amFee
+    let dispFee = 0
+    if (t === N) { dispFee = p.salePrice * w.dispFee / 100; cash += p.proceeds - dispFee }
+    let toLp = 0, toGp = 0, promote = 0
+    if (cash > 0) {
+      // tier 1: pari passu until LP reaches the pref
+      const need1 = lpShare > 0 ? Math.max(0, b1) / lpShare : 0
+      const c1 = Math.min(cash, need1); toLp += c1 * lpShare; toGp += c1 * gpShare; cash -= c1
+      // tier 2: split1 until LP IRR reaches hurdle2
+      const lpNow = toLp, b2after = b2 - lpNow
+      const need2 = s1 > 0 ? Math.max(0, b2after) / s1 : 0
+      const c2 = Math.min(cash, need2); toLp += c2 * s1; toGp += c2 * (1 - s1); cash -= c2
+      // tier 3: split2
+      toLp += cash * s2; toGp += cash * (1 - s2)
+      // GP promote = GP cash above its pro rata share of what was distributed
+      const dist = toLp + toGp; promote = toGp - dist * gpShare; if (Math.abs(promote) < 0.5) promote = 0
+    } else { toLp = cash * lpShare; toGp = cash * gpShare } // shortfalls shared pro rata
+    b1 -= toLp; b2 -= toLp
+    feeSum += amFee + dispFee; promoteSum += promote
+    lpCfs.push(toLp); gpCfs.push(toGp + amFee + dispFee)
+    years.push({ t, cash: toLp + toGp, amFee: amFee + dispFee, toLp, toGp, promote })
+  }
+  const stats = (cfs: number[], eq: number) => { const back = cfs.slice(1).reduce((a, b) => a + b, 0); return { irr: irr(cfs), em: eq > 0 ? back / eq : NaN, profit: back - eq } }
+  const gpOut = gpEquity - acqFee // GP's net cash in at closing after receiving the acquisition fee
+  const gpStats = stats(gpCfs, gpEquity)
+  return { totalEquity, lpEquity, gpEquity, acqFee, years, lpCfs, gpCfs,
+    lp: stats(lpCfs, lpEquity),
+    gp: { ...gpStats, irr: gpOut > 0 ? gpStats.irr : NaN, promote: promoteSum, fees: feeSum },
+    dealIrr: irr(lpCfs.map((c, i) => c + gpCfs[i])) }
 }
 
 /* ---------- professional checks ---------- */

@@ -81,7 +81,7 @@ export function CustomLinesCard({ d, p, set, kinds, title }: PaneProps & { kinds
             </tr>))}
           </tbody>
         </table>
-        {!kinds.includes("income") && lines.some(c => c.kind === "income") && <p className="mt-2 text-xs text-brand-600">Paired income lines ({lines.filter(c => c.kind === "income").map(c => c.label || "unnamed").join(", ")}) are on the Property & Income tab.</p>}
+        {!kinds.includes("income") && lines.some(c => c.kind === "income") && <p className="mt-2 text-xs text-brand-600">Paired income lines ({lines.filter(c => c.kind === "income").map(c => c.label || "unnamed").join(", ")}) are on the Income tab.</p>}
         <p className="note mt-2">End year 0 means the line runs for the whole hold. Capital lines reduce cash flow but not NOI, the way lenders and buyers treat them. One time amounts land in the start year.</p></div>
       )}
     </Card>

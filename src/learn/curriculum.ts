@@ -323,7 +323,7 @@ export const COURSE: Module[] = [
           { t: "p", text: "Politics third. Governors, legislatures, city councils and voters keep changing these rules: tax caps, eviction timelines, rent limits, insurance rules. Owner groups such as the Texas Apartment Association and the California Apartment Association lobby for owners; tenant advocacy groups push the other way. A good underwriter doesn't pick a side. They track what's in force, what's proposed and how likely it is to pass, then test the deal with and without it." },
           { t: "state" },
           { t: "terms", items: [["Effective tax rate", "Yearly property tax divided by the property's value."], ["Reassessment", "The county updating a property's taxable value, often after a sale."], ["Preemption", "A state law that stops cities from passing their own rules, such as rent control."], ["Rent stabilization", "A limit on how much rent on an existing unit can rise each year."]] },
-          { t: "tip", text: "On the Underwrite side, the Market Check tab runs these checks on your deal, pulls neighborhood data by ZIP, and can write a current policy briefing for the property's state." },
+          { t: "tip", text: "On the Underwrite side, the Market tab runs these checks on your deal, pulls neighborhood data by ZIP, and can write a current policy briefing for the property's state." },
         ],
       },
     ],

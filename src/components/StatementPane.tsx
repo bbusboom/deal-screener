@@ -90,6 +90,8 @@ export function StatementPane({ d, p, set }: PaneProps) {
             <tr className="head"><td colSpan={8}>Revenue</td></tr>
             {REV.map(l => line(l, true))}
             {added("income").map((x, j) => addedRow(x.c.label || "Added income", x.v, "ai" + j))}
+            {d.va.on && addedRow("Renovation premium, net", y1.vaPrem, "vap")}
+            {d.va.on && addedRow("Renovation downtime", -y1.vaDown, "vad")}
             {tot("Effective gross income", T.egi, T3.egi, U.egi)}
             <tr className="head"><td colSpan={8}>Operating expenses</td></tr>
             {EXP.map(l => line(l, false))}

@@ -1,5 +1,5 @@
 // Pure checks that turn a state's rules and live market data into concrete changes to a deal.
-// Shared by the browser (Market Check tab) and the server (the AI's get_location tool), so no browser imports here.
+// Shared by the browser (Market tab) and the server (the AI's get_location tool), so no browser imports here.
 import { type Deal, avgGrowth, project, usd, pct } from "./model.js"
 import { stateBy, taxEstimate, DEFAULT_REASSESS, RENT_LABEL, type StateInfo } from "./states.js"
 
@@ -107,7 +107,7 @@ export function marketChecks(d: Deal, st: StateInfo | undefined, m: MarketData |
 /** Everything the AI needs about a deal's location, without live data. */
 export function locationBrief(d: Deal) {
   const st = stateBy(d.state)
-  if (!st) return { state: null, note: "No state set on this deal. Ask the user which state the property is in, or point them to the Market Check tab." }
+  if (!st) return { state: null, note: "No state set on this deal. Ask the user which state the property is in, or point them to the Market tab." }
   return {
     state: st.name, zip: d.zip || null, address: d.address || null,
     property_tax_owner_homes_pct: st.propTax, top_income_tax_pct: st.incomeTax,
@@ -115,6 +115,6 @@ export function locationBrief(d: Deal) {
     taxes_after_purchase: st.reassess || DEFAULT_REASSESS,
     owner_groups: (st.groups || []).map(g => g.name),
     checks: marketChecks(d, st, null).map(c => ({ level: c.level, title: c.title, detail: c.detail, suggested_change: c.fix?.patch })),
-    live_data_note: "Neighborhood, flood, HUD rent, jobs and interest rate data are on the Market Check tab; current officials and bills are in its policy briefing.",
+    live_data_note: "Neighborhood, flood, HUD rent, jobs and interest rate data are on the Market tab; current officials and bills are in its policy briefing.",
   }
 }

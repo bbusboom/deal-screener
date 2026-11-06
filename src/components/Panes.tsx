@@ -2,7 +2,7 @@ import { useState } from "react"
 import { stateBy, rentalTaxRate, DEFAULT_REASSESS } from "../lib/states"
 import {
   BENCH, benchFlag, type Deal, type NumField, type Projection, type Scenario, type TestKey,
-  usd, pct, xx, project, weighted, scenCases, defaultScen, avgGrowth, memo, tests, allPass, TEST_NAMES,
+  usd, pct, xx, project, waterfall, weighted, scenCases, defaultScen, avgGrowth, memo, tests, allPass, TEST_NAMES,
 } from "../lib/model"
 import { Card, Field, NumInput, Row } from "./ui"
 import type { SavedDeal } from "../lib/store"
@@ -27,7 +27,8 @@ export function SummaryPane({ d, p, mp }: PaneProps) {
             <Row label={`Closing costs (${d.cc}%)`} value={usd(p.closing)} />
             <Row label={`Loan fees (${d.loanFee}%)`} value={usd(p.fee)} />
             {d.capexUp > 0 && <Row label="Up front capex" value={usd(d.capexUp)} />}
-            <Row label="Total uses" value={usd(d.price + p.closing + p.fee + (d.capexUp || 0))} cls="total" />
+            {p.va.upfront > 0 && <Row label="Renovation budget" value={usd(p.va.upfront)} />}
+            <Row label="Total uses" value={usd(d.price + p.closing + p.fee + (d.capexUp || 0) + p.va.upfront)} cls="total" />
             <tr className="head"><td>Sources</td><td /></tr>
             <Row label={`Loan (${d.price > 0 ? (p.loan / d.price * 100).toFixed(1) : d.ltv}% LTV${d.sizeMode === "lesser" ? `, ${p.sizing.binding} binds` : ""})`} value={usd(p.loan)} />
             <Row label="Equity" value={usd(p.equity)} />
@@ -38,6 +39,7 @@ export function SummaryPane({ d, p, mp }: PaneProps) {
           <table className="tbl"><tbody>
             <Row label="Levered IRR" value={pct(p.irr)} />
             <Row label="Unlevered IRR" value={pct(p.unlevIrr)} />
+            {d.wf.on && (() => { const w = waterfall(p); return <><Row label="Investor (LP) IRR after fees and promote" value={pct(w.lp.irr)} /><Row label="Sponsor (GP) IRR incl. fees" value={pct(w.gp.irr)} cls="sub" /></> })()}
             <Row label="Equity multiple" value={xx(p.em)} />
             <Row label="Average cash on cash" value={pct(p.avgCoc)} />
             <Row label="Total profit" value={usd(p.profit)} />
@@ -126,6 +128,8 @@ export function IncomePane({ d, p, set }: PaneProps) {
           <Row label="Net rental income" value={usd(y.gpr - y.ltl - y.vacLoss - y.conc - y.bad - y.nru)} cls="sub" />
           <Row label="Other income" value={usd(y.oth)} />
           {d.custom.map((c, i) => c.kind === "income" && p.years[0].cust[i] ? <Row key={i} label={c.label || "Added income"} value={usd(p.years[0].cust[i])} /> : null)}
+          {d.va.on && <Row label="Renovation premium, net" value={usd(p.years[0].vaPrem)} />}
+          {d.va.on && <Row label="Renovation downtime" value={usd(-p.years[0].vaDown)} />}
           <Row label="Effective gross income" value={usd(y.egi)} cls="total" />
           <Row label="Economic occupancy" value={pct(y.econOcc, 1)} />
           <Row label="Gross rent multiplier" value={isFinite(y.grm) ? y.grm.toFixed(2) : "n/a"} />
@@ -321,6 +325,8 @@ export function ProjectionsPane({ d, p, set }: PaneProps) {
             {line("Vacancy & credit loss", y => usd(-y.vacLoss))}
             {line("Other income", y => usd(y.oth))}
             {d.custom.some(c => c.kind === "income") && line("Added income", y => usd(y.custInc))}
+            {d.va.on && line("Renovation premium", y => usd(y.vaPrem))}
+            {d.va.on && line("Renovation downtime", y => usd(-y.vaDown))}
             {line("Effective gross income", y => usd(y.egi), "total")}
             {line("Property taxes", y => usd(-y.tax))}
             {line("Insurance", y => usd(-y.ins))}

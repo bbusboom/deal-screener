@@ -2,7 +2,7 @@
 // so the AI uses exactly the same math as the screen.
 import {
   type Deal, type Overrides, type Projection, NUM_FIELDS, TEST_NAMES, type TestKey,
-  project, tests, maxPrice, exitCapCheck, waterfall, weighted, scenCases, irr, norm,
+  project, tests, maxPrice, exitCapCheck, waterfall, afterTax, weighted, scenCases, irr, norm,
 } from "./model.js"
 import { locationBrief } from "./checks.js"
 import { analyze as analyzeRR } from "./rentroll.js"
@@ -30,6 +30,7 @@ function brief(p: Projection) {
       refinance: p.refi ? { year: p.refi.yr, value: r0(p.refi.value), new_loan: r0(p.refi.newLoan), binding: p.refi.binding, net_cash: r0(p.refi.cashOut) } : undefined },
     value_add: p.d.va.on ? { units: p.va.units, budget: r0(p.va.budget), return_on_cost_pct: r2(p.va.roc * 100), finished_by_year: p.va.finishYr } : undefined,
     investors: p.d.wf.on ? (() => { const w = waterfall(p); return { lp_irr_pct: r2(w.lp.irr * 100), lp_multiple: r2(w.lp.em), gp_irr_pct: r2(w.gp.irr * 100), gp_fees: r0(w.gp.fees), gp_promote: r0(w.gp.promote) } })() : undefined,
+    after_tax: (() => { const a = afterTax(p); return { after_tax_irr_pct: r2(a.irr * 100), year1_depreciation: r0(a.years[0]?.depreciation ?? 0), tax_at_sale: r0(a.sale.tax), note: "simplified individual owner model, not tax advice" } })(),
     exit_cap_check: (() => { const e = exitCapCheck(p); return { going_in_cap_pct: r2(e.goingIn), exit_cap_pct: e.exit, suggested_min_exit_cap_pct: r2(e.suggested), status: e.level } })(),
     buy_box: Object.fromEntries((Object.entries(t) as [TestKey, boolean][]).map(([k, b]) => [TEST_NAMES[k], b ? "pass" : "fail"])),
   }
@@ -70,7 +71,7 @@ export const TOOL_DEFS = [
     input_schema: { type: "object", properties: { target_irr_pct: { type: "number" }, target_year1_coc_pct: { type: "number" }, case: { type: "object" }, scenarios: { type: "array", items: { type: "object" } } } } },
   { name: "get_location", description: "The deal's state and what it means for underwriting: property tax level and how taxes reset after a sale, rent regulation and caps, income tax, owner groups, and checks against this deal's inputs with suggested changes.",
     input_schema: { type: "object", properties: {} } },
-  { name: "update_inputs", description: "Change inputs in the screener so every tab shows them. Only when the user asks to use a number. Keys: " + NUM_FIELDS.join(", ") + ", rg as one rent growth number for all years, sizeMode ('ltv' or 'lesser' of LTV, DSCR and debt yield), lu: lease up {on, startOcc (% occupied at closing), months to stabilize}, debt: loan options {type: fixed|floating, sofr, sofrChg (bps/yr), spread, capOn, capStrike, capCost, prepay: none|stepdown|ym|exitfee, steps, exitFee, tsy, refiOn, refiYr, refiCap, refiLtv, refiDscr, refiRate, refiAmort, refiIo, refiCost}, va: value add program {on, units, cost, premium, pace, startMo, downMo, upfront}, wf: syndication waterfall {on, gpCo, pref, split1, hurdle2, split2, acqFee, amFee, dispFee} (send only the keys to change), rentComps: FULL list [{name, dist (miles), built, type (must match a unit type name), rent, sf}], saleComps: FULL list [{name, date, built, units, price, cap (%)}], and custom: the FULL list of added lines, each {label, kind: income|expense|capex, basis: year|unitMonth|pctGpr|pctEgi|once, amt, growth, start, end} (read current ones with get_deal first and include them).",
+  { name: "update_inputs", description: "Change inputs in the screener so every tab shows them. Only when the user asks to use a number. Keys: " + NUM_FIELDS.join(", ") + ", rg as one rent growth number for all years, sizeMode ('ltv' or 'lesser' of LTV, DSCR and debt yield), tx: owner taxes {landPct, costSegPct, bonusPct, ordinary, capGains, recapture, niit, losses: now|carry}, lu: lease up {on, startOcc (% occupied at closing), months to stabilize}, debt: loan options {type: fixed|floating, sofr, sofrChg (bps/yr), spread, capOn, capStrike, capCost, prepay: none|stepdown|ym|exitfee, steps, exitFee, tsy, refiOn, refiYr, refiCap, refiLtv, refiDscr, refiRate, refiAmort, refiIo, refiCost}, va: value add program {on, units, cost, premium, pace, startMo, downMo, upfront}, wf: syndication waterfall {on, gpCo, pref, split1, hurdle2, split2, acqFee, amFee, dispFee} (send only the keys to change), rentComps: FULL list [{name, dist (miles), built, type (must match a unit type name), rent, sf}], saleComps: FULL list [{name, date, built, units, price, cap (%)}], and custom: the FULL list of added lines, each {label, kind: income|expense|capex, basis: year|unitMonth|pctGpr|pctEgi|once, amt, growth, start, end} (read current ones with get_deal first and include them).",
     input_schema: { type: "object", properties: { changes: { type: "object" } }, required: ["changes"] } },
 ] as const
 
@@ -120,7 +121,7 @@ export function runTool(name: string, input: any, deal: Deal): { result: unknown
       const next: any = structuredClone(d), applied: Record<string, number> = {}
       Object.entries(input?.changes || {}).forEach(([k, v]) => {
         if (k === "rg" && isFinite(Number(v))) { next.rg = next.rg.map(() => Number(v)); applied.rg = Number(v) }
-        else if ((k === "va" || k === "wf" || k === "debt" || k === "lu") && v && typeof v === "object") { next[k] = { ...next[k], ...(v as object) }; (applied as any)[k] = v }
+        else if ((k === "va" || k === "wf" || k === "debt" || k === "lu" || k === "tx") && v && typeof v === "object") { next[k] = { ...next[k], ...(v as object) }; (applied as any)[k] = v }
         else if ((k === "rentComps" || k === "saleComps") && Array.isArray(v)) { next[k] = v; (applied as any)[k] = `${v.length} comps` }
         else if (k === "custom" && Array.isArray(v)) { next.custom = v; (applied as any).custom = `${v.length} lines` }
         else if (k === "sizeMode" && (v === "ltv" || v === "lesser")) { next.sizeMode = v; (applied as any).sizeMode = v }

@@ -32,6 +32,14 @@ export interface ValueAdd {
 /** Lease up: occupancy starts low and rises in a straight line to stabilized (100% − vacancy) over some months. */
 export interface LeaseUp { on: boolean; startOcc: number; months: number }
 export const LU_DEFAULT: LeaseUp = { on: false, startOcc: 60, months: 12 }
+/** Owner level income tax: depreciation, cost segregation, passive losses, and tax at sale. */
+export interface TaxOpts {
+  landPct: number; costSegPct: number; bonusPct: number
+  ordinary: number; capGains: number; recapture: number; niit: boolean
+  /** now = losses offset other income (real estate professional or other passive income); carry = suspended until sale. */
+  losses: "now" | "carry"
+}
+export const TAX_DEFAULT: TaxOpts = { landPct: 20, costSegPct: 25, bonusPct: 100, ordinary: 37, capGains: 20, recapture: 25, niit: true, losses: "carry" }
 export const VA_DEFAULT: ValueAdd = { on: false, units: 0, cost: 10000, premium: 150, pace: 4, startMo: 2, downMo: 1, upfront: true }
 /** Sponsor (GP) and investor (LP) split with IRR hurdles. */
 export interface Waterfall {
@@ -97,6 +105,7 @@ export interface Deal {
   custom: CustomLine[]
   va: ValueAdd
   lu: LeaseUp
+  tx: TaxOpts
   wf: Waterfall
   debt: DebtOpts
   rentComps: RentComp[]; saleComps: SaleComp[]
@@ -121,7 +130,7 @@ export const DEFAULTS: Deal = {
   name: "", price: 0, cc: 2.5, other: 0, vac: 7, conc: 0, bad: 0, nru: 0, ltlBurn: 0, otherItems: [],
   tax: 0, ins: 0, util: 0, rm: 0, pay: 0, adm: 0, contract: 0, turn: 0, mkt: 0, mgmt: 5, res: 300,
   taxNew: 0, taxResetYr: 0, capexUp: 0,
-  custom: [], va: { ...VA_DEFAULT }, lu: { ...LU_DEFAULT }, wf: { ...WF_DEFAULT }, debt: { ...DEBT_DEFAULT }, rentComps: [], saleComps: [], rr: [], rrName: "", status: "Screening", bidDue: "", notes: "",
+  custom: [], va: { ...VA_DEFAULT }, lu: { ...LU_DEFAULT }, tx: { ...TAX_DEFAULT }, wf: { ...WF_DEFAULT }, debt: { ...DEBT_DEFAULT }, rentComps: [], saleComps: [], rr: [], rrName: "", status: "Screening", bidDue: "", notes: "",
   ltv: 70, rate: 6.5, amort: 30, ioYrs: 0, loanFee: 1, term: 10, sizeMode: "ltv", sizeDscr: 1.25, sizeDy: 8, hold: 7, expG: 3, taxG: 3, insG: 5, exitCap: 6.5, sellCost: 2,
   minCap: 6, minDscr: 1.25, minCoc: 6, minIrr: 12, minEm: 1.6,
   rg: [], units: [{ type: "1 bed", count: 0, rent: 0 }], scen: [],
@@ -154,6 +163,9 @@ export function norm(input: Partial<Deal> & { io?: string } = {}): Deal {
   d.rg = d.rg.slice(0, d.hold).map((v: any) => Number(v) || 0)
   if (!Array.isArray(d.units) || !d.units.length) d.units = [{ type: "", count: 0, rent: 0 }]
   d.units = d.units.map((u: any) => ({ type: String(u.type ?? ""), count: Number(u.count) || 0, rent: Number(u.rent) || 0, market: Number(u.market) || 0, sf: Number(u.sf) || 0 }))
+  d.tx = { ...TAX_DEFAULT, ...(d.tx || {}) }
+  for (const k of ["landPct", "costSegPct", "bonusPct", "ordinary", "capGains", "recapture"]) d.tx[k] = Math.min(100, Math.max(0, Number(d.tx[k]) || 0))
+  d.tx.niit = d.tx.niit !== false; d.tx.losses = d.tx.losses === "now" ? "now" : "carry"
   d.lu = { ...LU_DEFAULT, ...(d.lu || {}) }; d.lu.on = !!d.lu.on
   d.lu.startOcc = Math.min(100, Math.max(0, Number(d.lu.startOcc) || 0)); d.lu.months = Math.max(1, Math.round(Number(d.lu.months) || 1))
   d.va = { ...VA_DEFAULT, ...(d.va || {}) }; d.wf = { ...WF_DEFAULT, ...(d.wf || {}) }
@@ -499,6 +511,71 @@ export function monthlyView(p: Projection, months = 24): MonthRow[] {
     out.push({ m: k, yr: y.t, occ: 1 - vac - (g > 0 ? lu / g : 0) - (p.units > 0 ? M.down[k] / p.units : 0), gpr: g, vacancy, reno, other, egi, opex, noi, ds, capex: capexSpend, cf, cum })
   }
   return out
+}
+
+/* ---------- After tax returns ---------- */
+export interface TaxYear { t: number; noi: number; interest: number; depreciation: number; amort: number; taxable: number; suspendedUsed: number; tax: number; cf: number; afterTax: number }
+export interface TaxResult {
+  basis: number; land: number; personal: number; real: number; years: TaxYear[]
+  totalDep: number; personalDep: number; realDep: number; capDep: number
+  sale: { realized: number; adjBasis: number; gain: number; recapture1245: number; unrecap1250: number; capitalGain: number; suspendedReleased: number; tax: number; afterTaxProceeds: number }
+  cfs: number[]; irr: number; em: number; profit: number
+}
+/**
+ * Simplified owner level tax model (not tax advice). Building basis = (price + closing − land); cost segregation moves a share
+ * to 5, 7 and 15 year property, of which the bonus % is expensed in year 1 and the rest taken over 7 years; the remainder is
+ * 27.5 year straight line. Capital spending is depreciated over 27.5 years from the year spent; loan fees amortize over the term.
+ * Losses either offset other income now or are suspended until sale. At sale, depreciation on cost segregated property is
+ * recaptured at the ordinary rate, straight line depreciation at up to 25%, the rest at the capital gains rate, plus NIIT.
+ */
+export function afterTax(p: Projection, override: Partial<TaxOpts> = {}): TaxResult {
+  const d = p.d, X = { ...d.tx, ...override }, N = d.hold
+  const basis = d.price + p.closing, land = basis * X.landPct / 100, building = basis - land
+  const personal = building * X.costSegPct / 100, real = building - personal
+  const bonus = personal * X.bonusPct / 100, personalRest = personal - bonus
+  const feeAmort = p.fee / Math.max(1, Math.min(d.term || 10, N))
+  const upfrontCap = (d.capexUp || 0) + p.va.upfront + p.capCost
+  const capSpent = p.years.map(y => y.capex) // includes renovation spending paid from cash flow
+  const r = X.ordinary / 100
+  let suspended = 0, totalDep = 0, personalDep = 0, realDep = 0, capDep = 0
+  const years: TaxYear[] = []
+  for (let t = 1; t <= N; t++) {
+    const y = p.years[t - 1]
+    const pd = (t === 1 ? bonus : 0) + (t <= 7 ? personalRest / 7 : 0)
+    const rd = real / 27.5
+    let cd = upfrontCap / 27.5
+    for (let j = 1; j <= t; j++) cd += capSpent[j - 1] / 27.5
+    const dep = pd + rd + cd
+    personalDep += pd; realDep += rd; capDep += cd; totalDep += dep
+    const amort = feeAmort * (t <= Math.min(d.term || 10, N) ? 1 : 0)
+    let taxable = y.noi - y.interest - dep - amort
+    let suspendedUsed = 0
+    if (X.losses === "carry") {
+      if (taxable < 0) { suspended += -taxable; taxable = 0 }
+      else { suspendedUsed = Math.min(suspended, taxable); suspended -= suspendedUsed; taxable -= suspendedUsed }
+    }
+    const tax = taxable * r
+    const cf = y.cf + y.refiCash
+    years.push({ t, noi: y.noi, interest: y.interest, depreciation: dep, amort, taxable, suspendedUsed, tax, cf, afterTax: cf - tax })
+  }
+  // Sale
+  const realized = p.salePrice - p.sellCosts
+  const capitalSpent = upfrontCap + capSpent.reduce((a, b) => a + b, 0)
+  const unamortFees = Math.max(0, p.fee - feeAmort * Math.min(d.term || 10, N))
+  const adjBasis = basis + capitalSpent - totalDep
+  const gain = realized - adjBasis
+  const recapture1245 = Math.max(0, Math.min(gain, personalDep))
+  const unrecap1250 = Math.max(0, Math.min(gain - recapture1245, realDep + capDep))
+  const capitalGain = Math.max(0, gain - recapture1245 - unrecap1250)
+  const niit = X.niit ? Math.max(0, gain) * 0.038 : 0
+  const saleTax = recapture1245 * r + unrecap1250 * Math.min(X.recapture, X.ordinary) / 100 + capitalGain * X.capGains / 100 + niit
+    - (suspended + unamortFees + p.prepayPenalty) * r + (gain < 0 ? gain * r : 0)
+  const afterTaxProceeds = p.proceeds - saleTax
+  const cfs = [-p.equity, ...years.map(y => y.afterTax)]; cfs[N] += afterTaxProceeds
+  const back = cfs.slice(1).reduce((a, b) => a + b, 0)
+  return { basis, land, personal, real, years, totalDep, personalDep, realDep, capDep,
+    sale: { realized, adjBasis, gain, recapture1245, unrecap1250, capitalGain, suspendedReleased: suspended, tax: saleTax, afterTaxProceeds },
+    cfs, irr: irr(cfs), em: p.equity > 0 ? back / p.equity : NaN, profit: back - p.equity }
 }
 
 /* ---------- GP / LP waterfall ---------- */

@@ -13,6 +13,7 @@ import { MonthlyPane } from "./components/MonthlyPane"
 import { RentRollPane } from "./components/RentRollPane"
 import { TaxPane } from "./components/TaxPane"
 import { QuotesPane } from "./components/QuotesPane"
+import SetupGuide, { setupSteps } from "./components/SetupGuide"
 import { SummaryPane, ShareMenu, IncomePane, ExpensesPane, FinancingPane, ProjectionsPane, ScenariosPane, DealsPane, failNames } from "./components/Panes"
 import AiPanel from "./components/AiPanel"
 import ImportPane from "./components/ImportPane"
@@ -38,6 +39,7 @@ const TABS = SECS.flatMap(s => s.pages)
 const sectionOf = (t: Tab) => SECS.find(s => s.pages.some(p => p[0] === t))!
 
 const CURRENT_KEY = "dealScreener.current.v1"
+const SETUP_KEY = "dealScreener.setup"
 function load<T>(key: string, fallback: T): T { try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : fallback } catch { return fallback } }
 const tabFromHash = (): Tab => { const h = location.hash.slice(1); return (TABS.some(t => t[0] === h) ? h : "summary") as Tab }
 
@@ -62,7 +64,14 @@ export default function ProWorkspace({ session, toast }: { session: Session | nu
   const sec = sectionOf(tab)
   const [lastPage, setLastPage] = useState<Record<string, Tab>>({})
   useEffect(() => { setLastPage(m => ({ ...m, [sec.key]: tab })) }, [tab])
-  const go = (k: Tab) => { history.replaceState(null, "", "#" + k); setTab(k) }
+  // Guided setup for a new deal: on until every step is done or it's hidden. Kept per browser tab.
+  const [setupOn, setSetupOn] = useState(() => { try { return sessionStorage.getItem(SETUP_KEY) === "1" } catch { return false } })
+  const [visited, setVisited] = useState<Set<string>>(() => { try { return new Set(JSON.parse(sessionStorage.getItem(SETUP_KEY + ".seen") || "[]")) } catch { return new Set() } })
+  useEffect(() => { if (!setupOn) return; setVisited(v => { if (v.has(tab)) return v; const n = new Set(v).add(tab); try { sessionStorage.setItem(SETUP_KEY + ".seen", JSON.stringify([...n])) } catch {}; return n }) }, [tab, setupOn])
+  const startSetup = () => { try { sessionStorage.setItem(SETUP_KEY, "1"); sessionStorage.setItem(SETUP_KEY + ".seen", "[]") } catch {}; setVisited(new Set()); setSetupOn(true) }
+  const endSetup = () => { try { sessionStorage.removeItem(SETUP_KEY) } catch {}; setSetupOn(false) }
+  const steps = setupSteps(deal, visited)
+  const go = (k: Tab) => { history.replaceState(null, "", "#" + k); setTab(k); scrollTo({ top: 0 }) }
   const pane = { d: deal, p, set, mp }
 
   async function save() {
@@ -81,7 +90,7 @@ export default function ProWorkspace({ session, toast }: { session: Session | nu
             </div>
             {valid && <ShareMenu d={deal} p={p} mp={mp} />}
             <button className="btn btn-gold" onClick={save}>{dealId ? "Save" : "Save deal"}</button>
-            <button className="btn btn-ghost" onClick={() => { setDeal(newDealFromDefault(getHomeState())); setDealId(undefined); go("documents") }}>New deal</button>
+            <button className="btn btn-ghost" onClick={() => { setDeal(newDealFromDefault(getHomeState())); setDealId(undefined); startSetup(); go("documents") }}>New deal</button>
           </div>
           <nav className="mt-4 flex gap-1 overflow-x-auto">
             {SECS.map(s => { const on = s.key === sec.key; return (
@@ -115,10 +124,13 @@ export default function ProWorkspace({ session, toast }: { session: Session | nu
         </div>)}
 
       <main className="mx-auto max-w-7xl space-y-4 px-4 py-5 md:px-8">
-        {!valid ? (
+        {setupOn && <SetupGuide steps={steps} onGo={k => go(k as Tab)} onClose={endSetup}
+          warn={valid && p.y1.expRatio < 0.35 ? { text: `the expense ratio is ${pct(p.y1.expRatio, 0)}. Most apartments run 35% to 50% of income once repairs, payroll, utilities and admin are in, so returns are probably overstated.`, page: "expenses" } : undefined} />}
+        {!valid ? (setupOn ? null :
           <div className="card border-brand-100 bg-brand-50/60">
             <div className="font-display text-xl font-semibold text-brand-900">Start with a price and a unit mix</div>
             <div className="mt-1 text-sm text-slate-600">Upload a rent roll, T12 or offering memo under Property › Documents, type it in under Property › Rent &amp; income, or load the sample deal from Pipeline.</div>
+            <button className="btn btn-primary mt-3" onClick={() => { startSetup(); go("documents") }}>Walk me through it</button>
           </div>
         ) : tab === "summary" && (
           <div className={`card relative overflow-hidden !p-0`}>

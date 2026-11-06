@@ -22,6 +22,9 @@ export default async function handler(req: any, res: any) {
   if (!history.length || history[history.length - 1].role !== "user") return res.status(400).json({ error: "Last message must be from the user." })
   if (history.some(m => typeof m.content !== "string" || m.content.length > MAX_CHARS)) return res.status(400).json({ error: "Message too long." })
 
+  const lesson = typeof body.context === "string" && body.context.trim()
+    ? `\n\nThe user is studying this lesson in the Deal School course right now. Answer questions in its context, at its level, and use its Oak Ridge example when it helps. Only use the deal tools if they ask about the deal in the screener.\n---\n${body.context.slice(0, 4000)}\n---`
+    : ""
   let deal = norm(body.deal || {})
   let changed = false
   const client = new Anthropic()
@@ -32,7 +35,7 @@ export default async function handler(req: any, res: any) {
     for (let round = 0; round <= MAX_TOOL_ROUNDS; round++) {
       const resp = await client.messages.create({
         model, max_tokens: 2000,
-        system: `${RULES[route]}\n\n${COMMON}`,
+        system: `${RULES[route]}\n\n${COMMON}${lesson}`,
         tools: TOOL_DEFS as any,
         messages,
       })

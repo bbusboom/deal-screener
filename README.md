@@ -1,6 +1,6 @@
 # Deal Screener
 
-A multifamily underwriting website with the **Deal School** AI agent built in. Started as a Claude artifact (v0.1 to v0.3), moved to a real web app in v0.4, added document import in v0.5, and accounts with two paths (Learn and Underwrite) in v0.6.
+A multifamily underwriting website with the **Deal School** AI agent built in. Started as a Claude artifact (v0.1 to v0.3), moved to a real web app in v0.4, added document import in v0.5, accounts with two paths (Learn and Underwrite) in v0.6, and the Deal School course in v0.7.
 
 ## What it does
 
@@ -13,6 +13,10 @@ A multifamily underwriting website with the **Deal School** AI agent built in. S
 - **Scenarios**: downside, base and upside with probabilities and weighted IRR, plus sensitivity grids
 - **Deal School AI**: Learner and Pro routes. The AI runs every number through the same model as the tabs, and can change inputs when asked
 - **Buy Box & Deals**: screening minimums and saved deals (saved in the browser for now)
+
+## Deal School course
+
+`src/learn/curriculum.ts` holds the 10 modules, lessons and quizzes. Photos load live from Wikimedia Commons with author and license credit (free licenses only), and each photo links to a Google Images search. Diagrams are drawn in code in `src/learn/Diagrams.tsx`. The worked example numbers come from the site's own model.
 
 ## Project layout
 
@@ -28,8 +32,9 @@ src/lib/extract.ts     What gets pulled from each document type and how it maps 
 ## Accounts (Supabase)
 
 1. Create a Supabase project, open SQL Editor, paste `supabase/schema.sql` and run it.
-2. In Vercel, add `VITE_SUPABASE_URL` (the project URL) and `VITE_SUPABASE_ANON_KEY` (the publishable key), then redeploy.
-3. In Supabase, Authentication > URL Configuration: set Site URL to the live site.
+2. Also run `supabase/002_course_progress.sql` (course progress). It's included at the end of schema.sql for new setups.
+3. In Vercel, add `VITE_SUPABASE_URL` (the project URL) and `VITE_SUPABASE_ANON_KEY` (the publishable key), then redeploy.
+4. In Supabase, Authentication > URL Configuration: set Site URL to the live site.
 
 Without these variables the site runs without logins and saves deals in the browser.
 

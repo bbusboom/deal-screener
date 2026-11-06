@@ -117,3 +117,21 @@ export async function apiHeaders(): Promise<Record<string, string>> {
   const t = await accessToken(); if (t) h.authorization = "Bearer " + t
   return h
 }
+
+/* ---------- course progress ---------- */
+export interface Progress { lessons: Record<string, boolean>; quizzes: Record<string, { best: number; total: number; passed: boolean }>; last?: string }
+const LOCAL_PROGRESS = "dealScreener.course.progress"
+const emptyProgress = (): Progress => ({ lessons: {}, quizzes: {} })
+export async function getProgress(session: Session | null): Promise<Progress> {
+  let local = emptyProgress()
+  try { local = { ...emptyProgress(), ...JSON.parse(localStorage.getItem(LOCAL_PROGRESS) || "{}") } } catch {}
+  if (!supabase || !session) return local
+  const { data, error } = await supabase.from("course_progress").select("data").eq("user_id", session.user.id).maybeSingle()
+  if (error || !data) return local
+  return { ...emptyProgress(), ...(data.data as Progress) }
+}
+export async function saveProgress(session: Session | null, p: Progress) {
+  try { localStorage.setItem(LOCAL_PROGRESS, JSON.stringify(p)) } catch {}
+  if (!supabase || !session) return
+  await supabase.from("course_progress").upsert({ user_id: session.user.id, data: p, updated_at: new Date().toISOString() })
+}

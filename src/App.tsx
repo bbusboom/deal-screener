@@ -6,6 +6,7 @@ import Auth from "./components/Auth"
 import PathPicker from "./components/PathPicker"
 import ProWorkspace from "./ProWorkspace"
 import LearnerApp from "./LearnerApp"
+import Course from "./learn/Course"
 
 export default function App() {
   const [ready, setReady] = useState(false)
@@ -15,6 +16,8 @@ export default function App() {
   const [recovery, setRecovery] = useState(false)
   const [toast, setToast] = useState("")
   const [proKey, setProKey] = useState(0)
+  const [learnTab, setLearnTab] = useState<"course" | "practice">(() => { try { return (localStorage.getItem("dealScreener.learnTab") as any) || "course" } catch { return "course" } })
+  useEffect(() => { try { localStorage.setItem("dealScreener.learnTab", learnTab) } catch {} }, [learnTab])
 
   useEffect(() => {
     let alive = true
@@ -47,7 +50,7 @@ export default function App() {
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-3 px-4 md:px-8">
           <div className="flex items-center gap-2">
             <div className="grid h-8 w-8 place-items-center rounded-lg bg-brand-600 text-sm font-bold text-white">DS</div>
-            <div className="leading-tight"><div className="font-bold">Deal Screener</div><div className="hidden text-[11px] text-slate-400 sm:block">v0.6 · accounts and two paths</div></div>
+            <div className="leading-tight"><div className="font-bold">Deal Screener</div><div className="hidden text-[11px] text-slate-400 sm:block">v0.7 · Deal School course</div></div>
           </div>
           {path && !choosing && (
             <div className="flex rounded-lg bg-slate-100 p-1 text-sm font-semibold">
@@ -64,7 +67,14 @@ export default function App() {
       </header>
 
       {!path || choosing ? <PathPicker username={profile?.username} current={path} onPick={pick} />
-        : path === "learner" ? <LearnerApp session={session} toast={setToast} onOpenInPro={openInPro} />
+        : path === "learner" ? (
+          <>
+            <div className="border-b border-slate-200 bg-white"><div className="mx-auto flex max-w-7xl gap-1 px-4 md:px-8">
+              {([["course", "Course"], ["practice", "Practice a deal"]] as const).map(([k, label]) => (
+                <button key={k} onClick={() => setLearnTab(k)} className={`border-b-2 px-3 py-2.5 text-sm font-semibold ${learnTab === k ? "border-brand-600 text-brand-600" : "border-transparent text-slate-500 hover:text-ink"}`}>{label}</button>))}
+            </div></div>
+            {learnTab === "course" ? <Course session={session} onPractice={() => setLearnTab("practice")} /> : <LearnerApp session={session} toast={setToast} onOpenInPro={openInPro} />}
+          </>)
         : <ProWorkspace key={proKey} session={session} toast={setToast} />}
 
       <footer className="mx-auto max-w-7xl px-4 pb-8 pt-4 text-xs text-slate-400 md:px-8">Screening and learning tool, not investment advice. Verify rent roll, T12, taxes after sale and insurance quotes.</footer>

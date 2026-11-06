@@ -17,10 +17,10 @@ export default function PathPicker({ username, current, onPick }: { username?: s
         <p className="mt-2 text-center text-slate-500">You can switch any time from the menu at the top.</p>
         <div className="mt-8 grid gap-5 md:grid-cols-2">
           {opt("learner", "Learn to underwrite", "New to underwriting", [
-            "Step by step walkthrough from property basics to a final verdict",
-            "Each idea explained in plain English as it comes up, no quizzes",
-            "Practice deals, or bring your own property",
-            "Deal School AI walks with you and corrects real misunderstandings",
+            "A 10 module course from the basics to every underwriting metric",
+            "Real photos, diagrams, worked examples and a quiz after each module",
+            "Practice deals step by step, or bring your own property",
+            "Deal School AI answers questions about every lesson",
           ], "Start learning")}
           {opt("pro", "Underwrite a deal", "Working a live deal", [
             "Import rent rolls, T12s, offering memos and loan quotes",

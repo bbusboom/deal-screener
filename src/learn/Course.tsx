@@ -136,6 +136,14 @@ export default function Course({ session, onPractice }: { session: Session | nul
         </div>
         <div className="mt-3 h-2 max-w-md overflow-hidden rounded-full bg-white/20"><div className="h-full bg-white" style={{ width: `${(lessonsDone / allLessons.length) * 100}%` }} /></div>
       </div>
+      {lessonsDone < 3 && (
+        <div className="card mt-4 flex items-center gap-4 !py-4">
+          <img src="/founder-face.jpg" alt="Blake, founder of Deal School" className="h-14 w-14 shrink-0 rounded-full object-cover" />
+          <div className="min-w-0">
+            <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">From the founder</div>
+            <p className="mt-0.5 text-sm text-ink">“I built Deal School so junior underwriters can learn the basics quickly, then use their own mistakes to get good fast.” <span className="text-slate-500">· Blake</span></p>
+          </div>
+        </div>)}
       <div className="mt-6 grid gap-4 md:grid-cols-2">
         {COURSE.map(m => {
           const done = m.lessons.filter(l => prog.lessons[l.id]).length, qz = prog.quizzes[m.id]

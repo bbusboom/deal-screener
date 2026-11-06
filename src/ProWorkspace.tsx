@@ -1,7 +1,7 @@
 import type React from "react"
 import { useEffect, useMemo, useState } from "react"
 import type { Session } from "@supabase/supabase-js"
-import { type Deal, DEFAULTS, SAMPLE, norm, project, tests, allPass, maxPrice, usd, pct, xx } from "./lib/model"
+import { type Deal, SAMPLE, norm, project, tests, allPass, maxPrice, usd, pct, xx } from "./lib/model"
 import { listDeals, saveDeal, deleteDeal, type SavedDeal } from "./lib/store"
 import { Kpi } from "./components/ui"
 import { Icon } from "./components/Icons"
@@ -17,6 +17,8 @@ import AiPanel from "./components/AiPanel"
 import ImportPane from "./components/ImportPane"
 import MarketPane from "./components/MarketPane"
 import { getHomeState } from "./lib/market"
+import { newDealFromDefault } from "./lib/templates"
+import { TemplatesCard } from "./components/TemplatesCard"
 
 /** Workspace sections, each with its own pages. Page keys are also the URL hash, so old links keep working. */
 const SECTIONS = [
@@ -78,7 +80,7 @@ export default function ProWorkspace({ session, toast }: { session: Session | nu
               <input className="mt-0.5 w-full max-w-xl border-0 !bg-transparent px-0 font-display text-2xl font-semibold text-white shadow-none !ring-0 placeholder:text-white/30 md:text-3xl" placeholder="Name this deal" value={deal.name} onChange={e => set({ name: e.target.value })} />
             </div>
             <button className="btn btn-gold" onClick={save}>{dealId ? "Save" : "Save deal"}</button>
-            <button className="btn btn-ghost" onClick={() => { setDeal(norm({ ...DEFAULTS, state: getHomeState() })); setDealId(undefined); go("documents") }}>New deal</button>
+            <button className="btn btn-ghost" onClick={() => { setDeal(newDealFromDefault(getHomeState())); setDealId(undefined); go("documents") }}>New deal</button>
           </div>
           <nav className="mt-4 flex gap-1 overflow-x-auto">
             {SECS.map(s => { const on = s.key === sec.key; return (
@@ -156,7 +158,8 @@ export default function ProWorkspace({ session, toast }: { session: Session | nu
           onOpen={i => { const r = saved![i]; setDeal(norm(r.data)); setDealId(r.id); go("summary") }}
           onDelete={async i => { await deleteDeal(session, saved![i].id).catch(() => {}); if (saved![i].id === dealId) setDealId(undefined); refresh() }}
           onSample={() => { setDeal(norm(SAMPLE)); setDealId(undefined) }}
-          onClear={() => { setDeal(norm({ ...DEFAULTS, state: getHomeState() })); setDealId(undefined) }} />}
+          onClear={() => { setDeal(newDealFromDefault(getHomeState())); setDealId(undefined) }} />}
+        {tab === "deals" && <TemplatesCard d={deal} setDeal={setDeal} session={session} toast={toast} />}
       </main>
     </>
   )

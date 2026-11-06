@@ -11,6 +11,7 @@ import { CustomLinesCard } from "./CustomLines"
 import { DebtOptions } from "./DebtOptions"
 import { MemoView } from "./Memo"
 import { exportXlsx } from "../lib/exportXlsx"
+import { shareLink } from "../lib/templates"
 
 export interface PaneProps { d: Deal; p: Projection; set: (patch: Partial<Deal>) => void; mp: number }
 
@@ -20,14 +21,15 @@ function Num({ d, set, k, label, step = 1, hint }: { d: Deal; set: PaneProps["se
 
 /* ---------- Summary ---------- */
 export function SummaryPane({ d, p, mp }: PaneProps) {
-  const [memoOpen, setMemoOpen] = useState(false), [busy, setBusy] = useState(false)
+  const [memoOpen, setMemoOpen] = useState(false), [busy, setBusy] = useState(false), [copied, setCopied] = useState("")
   return (
     <div className="space-y-4">
       {memoOpen && <MemoView d={d} p={p} mp={mp} onClose={() => setMemoOpen(false)} />}
       <div className="flex flex-wrap items-center gap-2 rounded-xl border border-brand-100 bg-brand-50 px-4 py-3">
-        <span className="mr-auto text-sm text-brand-700"><b>Share this deal:</b> an investment memo for your partners or lender, or the full model in Excel.</span>
+        <span className="mr-auto text-sm text-brand-700"><b>Share this deal:</b> an investment memo, the full model in Excel, or a read only link (anyone with the link sees the numbers; notes and the unit list stay private).</span>
         <button className="btn btn-primary" onClick={() => setMemoOpen(true)}>Investment memo (PDF)</button>
         <button className="btn" disabled={busy} onClick={async () => { setBusy(true); try { await exportXlsx(d, p) } finally { setBusy(false) } }}>{busy ? "Building…" : "Download Excel"}</button>
+        <button className="btn" onClick={async () => { const url = await shareLink(d); try { await navigator.clipboard.writeText(url); setCopied("Link copied") } catch { setCopied("Copy failed"); prompt("Copy this link", url) } setTimeout(() => setCopied(""), 2500) }}>{copied || "Copy share link"}</button>
       </div>
       <div className="grid gap-4 lg:grid-cols-2">
         <Card title="Sources & uses">

@@ -1,5 +1,6 @@
 // Investment committee memo: a clean one to three page layout the user prints or saves as PDF.
 import { useEffect } from "react"
+import type React from "react"
 import { createPortal } from "react-dom"
 import { type Deal, type Projection, usd, pct, xx, tests, allPass, TEST_NAMES, exitCapCheck, exitStress, waterfall, BENCH, benchFlag, type TestKey } from "../lib/model"
 
@@ -17,7 +18,7 @@ function risks(d: Deal, p: Projection): string[] {
   return r
 }
 
-export function MemoView({ d, p, mp, onClose }: { d: Deal; p: Projection; mp: number; onClose: () => void }) {
+export function MemoView({ d, p, mp, onClose, extra, closeLabel = "Close" }: { d: Deal; p: Projection; mp: number; onClose: () => void; extra?: React.ReactNode; closeLabel?: string }) {
   const t = tests(p, d), ok = allPass(t), y = p.years[0], w = d.wf.on ? waterfall(p) : null
   const R = risks(d, p), stress = exitStress(d)
   useEffect(() => { document.body.classList.add("memo-open"); return () => document.body.classList.remove("memo-open") }, [])
@@ -27,7 +28,8 @@ export function MemoView({ d, p, mp, onClose }: { d: Deal; p: Projection; mp: nu
     <div className="fixed inset-0 z-50 overflow-auto bg-slate-900/60 p-4 print:static print:bg-white print:p-0">
       <div className="no-print mx-auto mb-3 flex max-w-[8.5in] justify-end gap-2">
         <button className="btn btn-primary" onClick={() => print()}>Print or save as PDF</button>
-        <button className="btn" onClick={onClose}>Close</button>
+        {extra}
+        <button className="btn" onClick={onClose}>{closeLabel}</button>
       </div>
       <div className="print-area mx-auto max-w-[8.5in] bg-white p-10 text-[12.5px] leading-snug text-ink shadow-2xl print:max-w-none print:p-0 print:shadow-none">
         <div className="flex items-start justify-between border-b-2 border-ink pb-3">

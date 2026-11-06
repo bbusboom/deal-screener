@@ -1,4 +1,5 @@
 import { Icon } from "./components/Icons"
+import { syncTemplates } from "./lib/templates"
 import { useEffect, useState } from "react"
 import type { Session } from "@supabase/supabase-js"
 import { supabase, accountsEnabled, getSession, getProfile, setPath, signOut, type Path, type Profile } from "./lib/store"
@@ -31,7 +32,7 @@ export default function App() {
 
   useEffect(() => {
     let alive = true
-    getSession().then(async s => { if (!alive) return; setSession(s); if (s) { try { localStorage.setItem(HAS_ACCOUNT, "1") } catch {} } syncHomeState(s); setProfile(await getProfile(s)); setReady(true) })
+    getSession().then(async s => { if (!alive) return; setSession(s); if (s) { try { localStorage.setItem(HAS_ACCOUNT, "1") } catch {} } syncHomeState(s); syncTemplates(s); setProfile(await getProfile(s)); setReady(true) })
     if (!supabase) return () => { alive = false }
     const { data } = supabase.auth.onAuthStateChange(async (event, s) => {
       if (event === "PASSWORD_RECOVERY") setRecovery(true)

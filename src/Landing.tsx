@@ -8,7 +8,7 @@ type Go = (mode: "signin" | "signup") => void
 
 /* ---------- motion helpers ---------- */
 /** Writes scrollY into a CSS variable so parallax layers move without re-rendering React. */
-function useScrollVar(root: React.RefObject<HTMLDivElement | null>) {
+export function useScrollVar(root: React.RefObject<HTMLDivElement | null>) {
   useEffect(() => {
     let raf = 0
     const on = () => { cancelAnimationFrame(raf); raf = requestAnimationFrame(() => root.current?.style.setProperty("--sy", String(scrollY))) }
@@ -17,7 +17,7 @@ function useScrollVar(root: React.RefObject<HTMLDivElement | null>) {
   }, [root])
 }
 /** Which stage of a tall pinned section is on screen. Also writes --p (0..1) on the section for the progress bar. */
-function useStage(ref: React.RefObject<HTMLElement | null>, n: number) {
+export function useStage(ref: React.RefObject<HTMLElement | null>, n: number) {
   const [stage, setStage] = useState(0)
   useEffect(() => {
     let raf = 0
@@ -33,7 +33,7 @@ function useStage(ref: React.RefObject<HTMLElement | null>, n: number) {
   }, [ref, n])
   return stage
 }
-function Reveal({ children, className = "", delay = 0 }: { children: ReactNode; className?: string; delay?: number }) {
+export function Reveal({ children, className = "", delay = 0 }: { children: ReactNode; className?: string; delay?: number }) {
   const ref = useRef<HTMLDivElement>(null)
   useEffect(() => {
     const el = ref.current; if (!el) return
@@ -81,7 +81,7 @@ function Skyline({ seed, cls, maxH, fill, lit }: { seed: number; cls: string; ma
     </svg>
   )
 }
-function Sky() {
+export function Sky() {
   return (
     <div className="lp-sky" aria-hidden>
       <div className="lp-blob b1" /><div className="lp-blob b2" /><div className="lp-blob b3" /><div className="lp-blob b4" />
@@ -132,7 +132,7 @@ function HeroMock() {
 
 /* ---------- the five uses, as stages ---------- */
 type StageDef = { key: string; tag: string; title: string; body: string; bullets: string[]; accent: string; bg: string; visual: ReactNode }
-const Panel = ({ children, glow }: { children: ReactNode; glow: string }) =>
+export const Panel = ({ children, glow }: { children: ReactNode; glow: string }) =>
   <div className="card-white w-full max-w-md rounded-2xl p-5" style={{ boxShadow: `0 0 0 1px #ffffff18, 0 40px 100px -25px ${glow}, 0 0 140px -40px ${glow}` }}>{children}</div>
 
 const STAGES: StageDef[] = [

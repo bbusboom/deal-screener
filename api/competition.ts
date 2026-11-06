@@ -79,7 +79,7 @@ Rules: numbers are plain numbers (no $ or commas); rents are monthly asking rent
   try {
     for (let turn = 0; turn < 4; turn++) {
       const resp: any = await client.messages.create({
-        model, max_tokens: 6000, system, messages,
+        model, max_tokens: 16000, system, messages,
         tools: [{ type: "web_search_20250305", name: "web_search", max_uses: MAX_SEARCHES, user_location: { type: "approximate", country: "US", ...(city ? { city } : {}) } }] as any,
       })
       for (const blk of resp.content) {
@@ -100,13 +100,15 @@ Rules: numbers are plain numbers (no $ or commas); rents are monthly asking rent
   if (!data && text.trim()) {
     try {
       const sourceList = [...seen].slice(0, 25).map(([url, title]) => `- ${title}: ${url}`).join("\n")
+      // Some models don't allow forcing a tool, so ask for it and also accept a JSON reply.
       const resp: any = await client.messages.create({
-        model, max_tokens: 4000,
-        system: "Convert the research notes into the submit_scan tool call. Use only facts in the notes; leave unknown numbers at 0 and unknown text empty. Use the source URLs listed.",
-        messages: [{ role: "user", content: `Research notes:\n${text.slice(0, 30000)}\n\nSources:\n${sourceList}` }],
-        tools: [SCAN_TOOL] as any, tool_choice: { type: "tool", name: "submit_scan" } as any,
+        model, max_tokens: 12000,
+        system: "You convert research notes into structured data. Always respond by calling the submit_scan tool exactly once. Use only facts in the notes (they may be cut off partway); leave unknown numbers at 0 and unknown text empty. Use the source URLs listed.",
+        messages: [{ role: "user", content: `Research notes:\n${text.slice(0, 30000)}\n\nSources:\n${sourceList}\n\nCall submit_scan now.` }],
+        tools: [SCAN_TOOL] as any,
       })
-      data = resp.content.find((b: any) => b.type === "tool_use")?.input || null
+      data = resp.content.find((b: any) => b.type === "tool_use")?.input
+        || parseJson(resp.content.filter((b: any) => b.type === "text").map((b: any) => b.text).join("")) || null
     } catch (e: any) { convertErr = String(e?.message || e).slice(0, 300) }
   }
   if (!data) {

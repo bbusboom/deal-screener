@@ -14,5 +14,6 @@ export const Icon = {
   challenge: (c?: string) => <S className={c} d="M12 2l2.6 6.6L21 9.2l-5 4.5 1.5 6.8L12 17l-5.5 3.5L8 13.7 3 9.2l6.4-.6L12 2z" />,
   practice: (c?: string) => <S className={c} d="M9 11l3 3 8-8M20 12v7a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h9" />,
   check: (c?: string) => <S className={c} d="M5 12l5 5L20 7" />,
+  clock: (c?: string) => <S className={c} d="M12 7v5l3 2M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />,
   x: (c?: string) => <S className={c} d="M6 6l12 12M18 6L6 18" />,
 }

@@ -151,3 +151,33 @@ export async function saveProgress(session: Session | null, p: Progress) {
   if (!supabase || !session) return
   await supabase.from("course_progress").upsert({ user_id: session.user.id, data: p, updated_at: new Date().toISOString() })
 }
+
+/* ---------- Deal Check results and feedback ---------- */
+export interface CheckAnswers { noi: number; cap: number; dscr: number; verdict: "clears" | "misses" }
+export interface CheckRecord { check_id: string; seconds: number; used_workspace: boolean; answers: CheckAnswers; answer_key: CheckAnswers; score: number; created_at: string }
+const LOCAL_CHECKS = "dealScreener.checks.v1", LOCAL_FEEDBACK = "dealScreener.feedback.pending"
+const uname = (s: Session) => (s.user.user_metadata?.username as string | undefined) ?? null
+
+/** Saves to the account when the table exists; always keeps a copy on this browser so nothing is lost. */
+export async function saveCheck(session: Session | null, r: Omit<CheckRecord, "created_at">): Promise<"cloud" | "local"> {
+  const rec: CheckRecord = { ...r, created_at: new Date().toISOString() }
+  try { const all = JSON.parse(localStorage.getItem(LOCAL_CHECKS) || "[]"); all.unshift(rec); localStorage.setItem(LOCAL_CHECKS, JSON.stringify(all.slice(0, 50))) } catch {}
+  if (!supabase || !session) return "local"
+  const { error } = await supabase.from("deal_checks").insert({ ...r, username: uname(session) })
+  return error ? "local" : "cloud"
+}
+export async function listChecks(session: Session | null): Promise<CheckRecord[]> {
+  let local: CheckRecord[] = []; try { local = JSON.parse(localStorage.getItem(LOCAL_CHECKS) || "[]") } catch {}
+  if (!supabase || !session) return local
+  const { data, error } = await supabase.from("deal_checks").select("check_id, seconds, used_workspace, answers, answer_key, score, created_at").order("created_at", { ascending: false }).limit(50)
+  return error || !data ? local : (data as CheckRecord[])
+}
+export async function sendFeedback(session: Session | null, page: string, message: string): Promise<"cloud" | "local"> {
+  const m = message.trim().slice(0, 4000)
+  if (supabase && session) {
+    const { error } = await supabase.from("feedback").insert({ page, message: m, username: uname(session) })
+    if (!error) return "cloud"
+  }
+  try { const q = JSON.parse(localStorage.getItem(LOCAL_FEEDBACK) || "[]"); q.push({ page, message: m, at: new Date().toISOString() }); localStorage.setItem(LOCAL_FEEDBACK, JSON.stringify(q)) } catch {}
+  return "local"
+}

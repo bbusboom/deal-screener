@@ -7,6 +7,8 @@ import type { Deal } from "./lib/model"
 import Auth from "./components/Auth"
 import Landing from "./Landing"
 import PathPicker from "./components/PathPicker"
+import DealCheck from "./learn/DealCheck"
+import Feedback from "./components/Feedback"
 import ProWorkspace from "./ProWorkspace"
 import LearnerApp from "./LearnerApp"
 import Course from "./learn/Course"
@@ -27,7 +29,7 @@ export default function App() {
   const homeState = useHomeState()
   // Anyone who has had an account on this browser skips the public home page and goes straight to sign in.
   const [authMode, setAuthMode] = useState<null | "signin" | "signup">(() => { try { return localStorage.getItem(HAS_ACCOUNT) ? "signin" : null } catch { return null } })
-  const [learnTab, setLearnTab] = useState<"course" | "challenges" | "practice">(() => { try { return (localStorage.getItem("dealScreener.learnTab") as any) || "course" } catch { return "course" } })
+  const [learnTab, setLearnTab] = useState<"course" | "challenges" | "check" | "practice">(() => { try { return (localStorage.getItem("dealScreener.learnTab") as any) || "course" } catch { return "course" } })
   useEffect(() => { try { localStorage.setItem("dealScreener.learnTab", learnTab) } catch {} }, [learnTab])
 
   useEffect(() => {
@@ -116,16 +118,17 @@ export default function App() {
           <>
             <div className="relative overflow-hidden bg-night text-white">
               <div className="relative mx-auto flex max-w-7xl gap-1 overflow-x-auto px-4 pt-3 md:px-8">
-                {([["course", "Course", Icon.course], ["challenges", "Challenges", Icon.challenge], ["practice", "Practice a deal", Icon.practice]] as const).map(([k, label, ic]) => (
+                {([["course", "Course", Icon.course], ["challenges", "Challenges", Icon.challenge], ["check", "Deal Check", Icon.clock], ["practice", "Practice a deal", Icon.practice]] as const).map(([k, label, ic]) => (
                   <button key={k} onClick={() => setLearnTab(k)} className={`group flex items-center gap-2 whitespace-nowrap rounded-t-xl px-4 py-2.5 text-sm font-semibold transition ${learnTab === k ? "bg-[#f6f6f3] text-ink" : "text-white/60 hover:text-white"}`}>
                     <span className={learnTab === k ? "text-ink" : "text-white/40 group-hover:text-white/70"}>{ic("h-4 w-4")}</span>{label}</button>))}
               </div>
             </div>
-            {learnTab === "course" ? <Course session={session} onPractice={() => setLearnTab("practice")} /> : learnTab === "challenges" ? <Challenges session={session} /> : <LearnerApp session={session} toast={setToast} onOpenInPro={openInPro} />}
+            {learnTab === "course" ? <Course session={session} onPractice={() => setLearnTab("practice")} /> : learnTab === "challenges" ? <Challenges session={session} /> : learnTab === "check" ? <DealCheck session={session} onOpenInPro={openInPro} /> : <LearnerApp session={session} toast={setToast} onOpenInPro={openInPro} />}
           </>)
         : <ProWorkspace key={proKey} session={session} toast={setToast} />}
 
       <footer className="mx-auto max-w-7xl px-4 pb-8 pt-4 text-xs text-slate-400 md:px-8">Screening and learning tool, not investment advice. Verify rent roll, T12, taxes after sale and insurance quotes.</footer>
+      {path && !choosing && <Feedback session={session} page={path === "learner" ? `Learn › ${learnTab}` : "Underwrite"} />}
       {toast && <div className="fixed bottom-5 left-1/2 z-30 -translate-x-1/2 rounded-md bg-ink px-4 py-2 text-sm text-white">{toast}</div>}
     </div>
   )

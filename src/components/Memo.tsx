@@ -11,7 +11,7 @@ function risks(d: Deal, p: Projection): string[] {
   if (p.balloonBeforeSale) r.push(`The loan matures in year ${d.term}, before the planned sale in year ${d.hold}.`)
   if (p.refi && p.refi.cashOut < 0) r.push(`The year ${p.refi.yr} refinance needs ${usd(-p.refi.cashOut)} of new equity.`)
   if (p.y1.beo > 0.85) r.push(`Break even occupancy is ${pct(p.y1.beo, 1)}; little room for a downturn.`)
-  for (const k of ["ins", "rm", "pay", "res"]) { const v = k === "res" ? d.res : (d as any)[k]; if (benchFlag(k, k === "res" ? v : v / u, p.units) === "low") r.push(`${BENCH[k].label} looks low at ${usd(k === "res" ? v : v / u)} per unit.`) }
+  for (const k of ["ins", "rm", "pay", "res"]) { const v = k === "res" ? d.res : (d as any)[k]; if (benchFlag(k, k === "res" ? v : v / u, p.units, d.state) === "low") r.push(`${BENCH[k].label} looks low at ${usd(k === "res" ? v : v / u)} per unit.`) }
   if (d.va.on && isFinite(p.va.roc) && p.va.roc < 0.15) r.push(`Renovation return on cost is ${pct(p.va.roc, 1)}, under the usual 15% target.`)
   if (d.t12 && Object.keys(d.t12).length) { const t = d.t12, egi = (t.gpr || 0) - (t.ltl || 0) - (t.vac || 0) - (t.conc || 0) - (t.bad || 0) - (t.nru || 0) + (t.other || 0); if (egi > 0 && p.y1.egi > egi * 1.05) r.push(`Underwritten EGI is ${pct(p.y1.egi / egi - 1, 1)} above the seller's T12.`) }
   return r

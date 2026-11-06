@@ -1,7 +1,7 @@
 import { useState } from "react"
 import { stateBy, rentalTaxRate, DEFAULT_REASSESS } from "../lib/states"
 import {
-  BENCH, benchFlag, STATUSES, type Deal, type NumField, type Projection, type Scenario, type TestKey,
+  benchFlag, benchRange, insTier, STATUSES, type Deal, type NumField, type Projection, type Scenario, type TestKey,
   usd, pct, xx, project, waterfall, weighted, scenCases, defaultScen, avgGrowth, memo, tests, allPass, TEST_NAMES,
 } from "../lib/model"
 import { Card, Field, NumInput, Row } from "./ui"
@@ -187,7 +187,7 @@ export function ExpensesPane({ d, p, set }: PaneProps) {
               <tr><td>Real estate taxes</td><td><NumInput value={d.tax} step={500} onChange={v => set({ tax: v })} /></td><td className="num">{usd(d.tax / u)}</td><td className="text-xs text-slate-500">see calculator</td><td /></tr>
               {EXP_INPUTS.map(([k, label, b]) => { const v = d[k] as number; return (
                 <tr key={k}><td>{label}</td><td><NumInput value={v} step={500} onChange={n => set({ [k]: n } as Partial<Deal>)} /></td>
-                  <td className="num">{usd(v / u)}</td><td className="text-xs text-slate-500" title={BENCH[b].note}>{usd(BENCH[b].lo)} to {usd(BENCH[b].hi)}</td><td><Flag f={benchFlag(b, v / u, p.units)} /></td></tr>) })}
+                  <td className="num">{usd(v / u)}</td><td className="text-xs text-slate-500" title={benchRange(b, d.state)!.note}>{usd(benchRange(b, d.state)!.lo)} to {usd(benchRange(b, d.state)!.hi)}{b === "ins" && d.state ? ` (${d.state})` : ""}</td><td><Flag f={benchFlag(b, v / u, p.units, d.state)} /></td></tr>) })}
               <tr><td>Management (% of EGI)</td><td><NumInput value={d.mgmt} step={0.25} onChange={v => set({ mgmt: v })} /></td><td className="num">{usd(y.mgmt / u)}</td><td className="text-xs text-slate-500">3% to 8%</td>
                 <td>{d.mgmt < 3 ? <Flag f="low" /> : d.mgmt > 8 ? <Flag f="high" /> : <Flag f="ok" />}</td></tr>
               <tr><td>Reserves ($/unit/yr)</td><td><NumInput value={d.res} step={25} onChange={v => set({ res: v })} /></td><td className="num">{usd(d.res)}</td><td className="text-xs text-slate-500">$250 to $500</td><td><Flag f={benchFlag("res", d.res, p.units)} /></td></tr>
@@ -214,6 +214,7 @@ export function ExpensesPane({ d, p, set }: PaneProps) {
         </Card>
       </div>
       <CustomLinesCard d={d} p={p} set={set} mp={0} kinds={["expense", "capex"]} title="Added expense and capital lines" />
+      <InsuranceCard d={d} p={p} />
       <Card title="Property tax: underwrite the bill after you buy">
         <div className="grid gap-4 lg:grid-cols-2">
           <div>
@@ -525,5 +526,40 @@ function Pipeline({ d, set, saved, onOpen }: { d: Deal; set: PaneProps["set"]; s
         </>}
       </Card>
     </div>
+  )
+}
+
+/* ---------- Insurance ---------- */
+function InsuranceCard({ d, p }: { d: Deal; p: Projection }) {
+  const t = insTier(d.state), u = p.units || 1, per = d.ins / u
+  const flag = benchFlag("ins", per, p.units, d.state)
+  const items = [
+    ["Replacement cost", "Insured value per square foot that matches today's construction costs, not the purchase price."],
+    ["Wind, hail and named storm deductibles", "Often 1 to 5% of insured value per building in coastal and hail states. A 2% deductible on a $10M building is $200,000 per storm."],
+    ["Flood", "Required by lenders in FEMA zones A and V; check Market › Location."],
+    ["Loss runs", "Five years of claims from the seller. Repeat water or roof claims raise premiums."],
+    ["Roof age and construction", "Roofs over 15 to 20 years old and frame construction cost more or limit coverage."],
+    ["Liability and umbrella", "Lenders typically require $1M per occurrence and an umbrella sized to the property."],
+    ["Loss of rents", "12 months of rent coverage is the usual lender requirement."],
+  ]
+  return (
+    <Card title="Insurance check" right={d.state ? <span className={`chip ${t.tier === "high" ? "bg-fail-50 text-fail-700" : t.tier === "elevated" ? "bg-gold-100 text-gold-700" : "bg-pass-50 text-pass-700"}`}>{t.tier} cost state</span> : null}>
+      <div className="grid gap-4 md:grid-cols-[1fr_1.4fr]">
+        <div>
+          <table className="tbl"><tbody>
+            <tr><td>Your insurance</td><td className="num">{usd(per)} / unit</td></tr>
+            <tr><td>Typical in {d.state || "your state"}</td><td className="num">{usd(t.lo)} to {usd(t.hi)}</td></tr>
+            <tr><td>Insurance growth in your model</td><td className="num">{d.insG}% / yr</td></tr>
+          </tbody></table>
+          <p className={`mt-3 rounded-lg p-3 text-sm ${flag === "low" ? "bg-fail-50 text-fail-700" : flag === "high" ? "bg-gold-50 text-gold-700" : "bg-slate-50 text-slate-600"}`}>
+            {!d.state ? "Set the property's state under Market › Location for a state specific range." : flag === "low" ? `This looks low for ${d.state}. ${t.why} Get a quote before you rely on the seller's number.` : flag === "high" ? "This is above the usual range. Check the deductibles and coverage; there may be room to rebid." : `In range for ${d.state}. ${t.why}`}
+          </p>
+        </div>
+        <div>
+          <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">What to ask for in a quote</div>
+          <ul className="space-y-1.5 text-sm">{items.map(([k, v]) => <li key={k}><b className="text-brand-900">{k}.</b> <span className="text-slate-600">{v}</span></li>)}</ul>
+        </div>
+      </div>
+    </Card>
   )
 }

@@ -584,8 +584,22 @@ export const BENCH: Record<string, { label: string; lo: number; hi: number; note
   res: { label: "Replacement reserves", lo: 250, hi: 500, note: "Lenders require 250 to 350; older assets 400+." },
   total: { label: "Total operating expenses", lo: 5000, hi: 10000, note: "Varies most with taxes, insurance and who pays utilities." },
 }
-export function benchFlag(key: string, perUnit: number, units: number): "low" | "high" | "ok" | "na" {
-  const b = BENCH[key]; if (!b || !(units > 0) || !isFinite(perUnit)) return "na"
+/** Insurance varies more by state than any other line: wind, hail and wildfire exposure drive it. Rough 2025-26
+ *  ranges for garden and mid rise apartments, $ per unit per year. Always get a real quote. */
+const INS_HIGH = ["FL", "LA"], INS_ELEVATED = ["TX", "OK", "MS", "AL", "SC", "GA", "NC", "CO", "KS", "NE", "CA", "HI"]
+export function insTier(state?: string): { tier: "high" | "elevated" | "standard"; lo: number; hi: number; why: string } {
+  const s = (state || "").toUpperCase()
+  if (INS_HIGH.includes(s)) return { tier: "high", lo: 1200, hi: 3000, why: "Hurricane exposure, a stressed property insurance market and high named storm deductibles." }
+  if (INS_ELEVATED.includes(s)) return { tier: "elevated", lo: 800, hi: 1800, why: s === "CA" ? "Wildfire exposure and insurers leaving the state." : s === "CO" ? "Hail and wildfire losses." : "Hail, wind and tornado losses; premiums rose sharply in 2023 to 2025." }
+  return { tier: "standard", lo: 400, hi: 1100, why: "Lower catastrophe exposure; older buildings and frame construction still run higher." }
+}
+export function benchRange(key: string, state?: string) {
+  const b = BENCH[key]; if (!b) return null
+  if (key === "ins" && state) { const t = insTier(state); return { ...b, lo: t.lo, hi: t.hi, note: t.why } }
+  return b
+}
+export function benchFlag(key: string, perUnit: number, units: number, state?: string): "low" | "high" | "ok" | "na" {
+  const b = benchRange(key, state); if (!b || !(units > 0) || !isFinite(perUnit)) return "na"
   if (key === "pay" && units < 50 && perUnit === 0) return "ok"
   if (perUnit === 0 && ["contract", "turn", "mkt"].includes(key)) return "na"
   return perUnit < b.lo ? "low" : perUnit > b.hi ? "high" : "ok"

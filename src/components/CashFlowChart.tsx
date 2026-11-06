@@ -18,7 +18,7 @@ export default function CashFlowChart({ p }: { p: Projection }) {
         const cx = pad + i * bw + bw / 2
         return (
           <g key={i}>
-            <rect x={pad + i * bw + bw * 0.16} y={y} width={bw * 0.68} height={Math.max(1, h)} rx={6} fill={v < 0 ? "url(#cfNeg)" : last ? "url(#cfSale)" : "url(#cfBar)"} />
+            <rect x={pad + i * bw + bw * 0.16} y={y} width={bw * 0.68} height={Math.max(1, h)} rx={2} fill={v < 0 ? "#c2410c" : last ? "#e8a33d" : "#1d2c6e"} />
             <text x={cx} y={v >= 0 ? y - 5 : y + h + 13} fontSize="11" fontWeight="600" textAnchor="middle" fill="#0c1533" fontFamily="JetBrains Mono, monospace">{usdK(v)}</text>
             <text x={cx} y={H - 4} fontSize="11" textAnchor="middle" fill="#94a3b8" fontFamily="Inter, sans-serif">Yr {i + 1}{last ? " + sale" : ""}</text>
           </g>

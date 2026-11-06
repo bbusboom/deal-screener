@@ -38,15 +38,12 @@ export function Row({ label, value, cls = "" }: { label: ReactNode; value: React
 }
 
 export function Kpi({ label, value, tag, state }: { label: string; value: string; tag: string; state?: boolean }) {
-  const tone = state === undefined ? { bar: "from-brand-400 to-brand-200", dot: "bg-brand-400", tag: "bg-slate-100 text-slate-500" }
-    : state ? { bar: "from-pass-500 to-emerald-300", dot: "bg-pass-500", tag: "bg-pass-50 text-pass-700" }
-    : { bar: "from-fail-500 to-gold-400", dot: "bg-fail-500", tag: "bg-fail-50 text-fail-700" }
+  const tone = state === undefined ? { val: "text-ink", tag: "text-slate-400" } : state ? { val: "text-ink", tag: "text-pass-600" } : { val: "text-fail-600", tag: "text-fail-600" }
   return (
-    <div className="relative overflow-hidden rounded-2xl border border-slate-200/80 bg-white px-4 pb-3 pt-3.5 shadow-card transition hover:-translate-y-0.5 hover:shadow-lift">
-      <div className={`absolute inset-x-0 top-0 h-1 bg-gradient-to-r ${tone.bar}`} />
-      <div className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-slate-400"><span className={`h-1.5 w-1.5 rounded-full ${tone.dot}`} />{label}</div>
-      <div className="num mt-1 text-xl font-semibold text-brand-900">{value}</div>
-      <div className={`chip mt-1 ${tone.tag}`}>{tag}</div>
+    <div className="bg-white px-4 py-3">
+      <div className="text-xs text-slate-500">{label}</div>
+      <div className={`num mt-0.5 text-[19px] font-semibold ${tone.val}`}>{value}</div>
+      <div className={`mt-0.5 text-[11px] ${tone.tag}`}>{tag}</div>
     </div>
   )
 }

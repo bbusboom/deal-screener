@@ -64,7 +64,7 @@ export default function App() {
       <header className="sticky top-0 z-20 border-b border-white/10 bg-night/95 text-white backdrop-blur-xl">
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-3 px-4 md:px-8">
           <div className="flex items-center gap-2.5">
-            <div className="grid h-9 w-9 place-items-center rounded-xl bg-gradient-to-br from-gold-300 to-gold-500 text-sm font-bold text-[#1a1030] shadow-glow">DS</div>
+            <div className="grid h-8 w-8 place-items-center rounded-md bg-gold-400 text-[13px] font-bold text-[#1c1305]">DS</div>
             <div className="leading-tight"><div className="font-bold">Deal Screener</div><div className="hidden text-[11px] text-white/50 sm:block">with Deal School AI</div></div>
           </div>
           {path && !choosing && (
@@ -88,11 +88,10 @@ export default function App() {
         : path === "learner" ? (
           <>
             <div className="relative overflow-hidden bg-night text-white">
-              <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(600px_200px_at_10%_0%,rgba(139,61,255,.30),transparent_70%),radial-gradient(500px_200px_at_95%_10%,rgba(255,179,107,.18),transparent_70%)]" />
               <div className="relative mx-auto flex max-w-7xl gap-1 overflow-x-auto px-4 pt-3 md:px-8">
                 {([["course", "Course", Icon.course], ["challenges", "Challenges", Icon.challenge], ["practice", "Practice a deal", Icon.practice]] as const).map(([k, label, ic]) => (
-                  <button key={k} onClick={() => setLearnTab(k)} className={`group flex items-center gap-2 whitespace-nowrap rounded-t-xl px-4 py-2.5 text-sm font-semibold transition ${learnTab === k ? "bg-[#f3f5fb] text-brand-900" : "text-white/65 hover:bg-white/5 hover:text-white"}`}>
-                    <span className={learnTab === k ? "text-brand-600" : "text-white/45 group-hover:text-gold-300"}>{ic("h-4 w-4")}</span>{label}</button>))}
+                  <button key={k} onClick={() => setLearnTab(k)} className={`group flex items-center gap-2 whitespace-nowrap rounded-t-xl px-4 py-2.5 text-sm font-semibold transition ${learnTab === k ? "bg-[#f6f6f3] text-ink" : "text-white/60 hover:text-white"}`}>
+                    <span className={learnTab === k ? "text-ink" : "text-white/40 group-hover:text-white/70"}>{ic("h-4 w-4")}</span>{label}</button>))}
               </div>
             </div>
             {learnTab === "course" ? <Course session={session} onPractice={() => setLearnTab("practice")} /> : learnTab === "challenges" ? <Challenges session={session} /> : <LearnerApp session={session} toast={setToast} onOpenInPro={openInPro} />}
@@ -100,7 +99,7 @@ export default function App() {
         : <ProWorkspace key={proKey} session={session} toast={setToast} />}
 
       <footer className="mx-auto max-w-7xl px-4 pb-8 pt-4 text-xs text-slate-400 md:px-8">Screening and learning tool, not investment advice. Verify rent roll, T12, taxes after sale and insurance quotes.</footer>
-      {toast && <div className="fixed bottom-5 left-1/2 z-30 -translate-x-1/2 rounded-full border border-white/10 bg-night px-5 py-2.5 text-sm text-white shadow-lift">{toast}</div>}
+      {toast && <div className="fixed bottom-5 left-1/2 z-30 -translate-x-1/2 rounded-md bg-ink px-4 py-2 text-sm text-white">{toast}</div>}
     </div>
   )
 }

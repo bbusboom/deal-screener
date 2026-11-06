@@ -73,12 +73,11 @@ export default function ProWorkspace({ session, toast }: { session: Session | nu
   return (
     <>
       <div className="relative overflow-hidden bg-night text-white">
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(600px_220px_at_10%_0%,rgba(79,107,237,.35),transparent_70%),radial-gradient(500px_200px_at_95%_10%,rgba(255,138,61,.18),transparent_70%)]" />
         <div className="relative mx-auto max-w-7xl px-4 pt-5 md:px-8">
           <div className="flex flex-wrap items-center gap-3">
             <div className="min-w-0 basis-full sm:basis-0 sm:flex-1">
-              <div className="text-[11px] font-semibold uppercase tracking-[.18em] text-gold-300">Underwriting workspace</div>
-              <input className="mt-0.5 w-full max-w-xl border-0 !bg-transparent px-0 font-display text-2xl font-semibold text-white shadow-none !ring-0 placeholder:text-white/30 md:text-3xl" placeholder="Name this deal" value={deal.name} onChange={e => set({ name: e.target.value })} />
+              <div className="text-xs font-medium text-white/50">Underwriting workspace</div>
+              <input className="mt-0.5 w-full max-w-xl border-0 !bg-transparent px-0 font-display text-2xl font-semibold text-white shadow-none !ring-0 placeholder:text-white/30 md:text-[28px]" placeholder="Name this deal" value={deal.name} onChange={e => set({ name: e.target.value })} />
             </div>
             <button className="btn btn-gold" onClick={save}>{dealId ? "Save" : "Save deal"}</button>
             <button className="btn btn-ghost" onClick={() => { setDeal(newDealFromDefault(getHomeState())); setDealId(undefined); go("documents") }}>New deal</button>
@@ -86,17 +85,17 @@ export default function ProWorkspace({ session, toast }: { session: Session | nu
           <nav className="mt-4 flex gap-1 overflow-x-auto">
             {SECS.map(s => { const on = s.key === sec.key; return (
               <button key={s.key} onClick={() => go((lastPage[s.key] || s.pages[0][0]) as Tab)}
-                className={`group relative flex items-center gap-2 whitespace-nowrap rounded-t-xl px-4 py-2.5 text-sm font-semibold transition ${on ? "bg-[#f3f5fb] text-brand-900" : "text-white/65 hover:bg-white/5 hover:text-white"}`}>
-                <span className={on ? "text-brand-600" : "text-white/45 group-hover:text-gold-300"}>{s.icon("h-4 w-4")}</span>{s.label}
+                className={`group relative flex items-center gap-2 whitespace-nowrap rounded-t-xl px-4 py-2.5 text-sm font-semibold transition ${on ? "bg-[#f6f6f3] text-ink" : "text-white/60 hover:text-white"}`}>
+                <span className={on ? "text-ink" : "text-white/40 group-hover:text-white/70"}>{s.icon("h-4 w-4")}</span>{s.label}
               </button>) })}
           </nav>
         </div>
       </div>
       {sec.pages.length > 1 && (
         <div className="mx-auto max-w-7xl px-4 pt-4 md:px-8">
-          <div className="inline-flex flex-wrap gap-1 rounded-xl border border-slate-200/80 bg-white p-1 shadow-card">
+          <div className="flex flex-wrap gap-5 border-b border-[#e4e4de]">
             {sec.pages.map(([k, label]) => (
-              <button key={k} onClick={() => go(k as Tab)} className={`rounded-lg px-3.5 py-1.5 text-sm font-medium transition ${tab === k ? "bg-brand-900 text-white shadow" : "text-slate-500 hover:bg-slate-50 hover:text-ink"}`}>{label}</button>))}
+              <button key={k} onClick={() => go(k as Tab)} className={`-mb-px border-b-2 pb-2.5 pt-1 text-sm font-medium transition ${tab === k ? "border-ink text-ink" : "border-transparent text-slate-500 hover:text-ink"}`}>{label}</button>))}
           </div>
         </div>)}
 
@@ -108,17 +107,17 @@ export default function ProWorkspace({ session, toast }: { session: Session | nu
           </div>
         ) : (
           <div className={`card relative overflow-hidden !p-0`}>
-            <div className={`absolute inset-y-0 left-0 w-1.5 ${ok ? "bg-gradient-to-b from-pass-500 to-emerald-300" : "bg-gradient-to-b from-fail-500 to-gold-400"}`} />
+            <div className={`absolute inset-y-0 left-0 w-1 ${ok ? "bg-pass-500" : "bg-fail-500"}`} />
             <div className="flex flex-wrap items-center gap-x-6 gap-y-2 px-6 py-4">
               <div className="flex items-center gap-3">
                 <span className={`grid h-9 w-9 place-items-center rounded-full ${ok ? "bg-pass-50 text-pass-600" : "bg-fail-50 text-fail-600"}`}>{ok ? Icon.check("h-5 w-5") : Icon.x("h-5 w-5")}</span>
                 <div>
-                  <div className="font-display text-lg font-semibold leading-tight">{ok ? "Clears your buy box" : "Doesn't clear your buy box"}</div>
+                  <div className="text-base font-semibold leading-tight">{ok ? "Clears your buy box" : "Doesn't clear your buy box"}</div>
                   <div className="text-sm text-slate-500">{ok ? "Every test passes at the asking price." : `Short on ${failNames(t).join(", ")}.`}</div>
                 </div>
               </div>
               <div className="ml-auto text-right">
-                <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">Max price that passes every test</div>
+                <div className="text-xs text-slate-500">Max price that passes every test</div>
                 <div className="num text-lg font-semibold text-brand-900">{isFinite(mp) ? <>{usd(mp)} <span className={`chip ${mp >= deal.price ? "bg-pass-50 text-pass-600" : "bg-gold-100 text-gold-700"}`}>{pct(mp / deal.price - 1, 1)} vs asking</span></> : "No price works"}</div>
               </div>
             </div>
@@ -126,7 +125,7 @@ export default function ProWorkspace({ session, toast }: { session: Session | nu
         )}
 
         {valid && (
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-7">
+          <div className="grid grid-cols-2 gap-px overflow-hidden rounded-lg border border-[#e4e4de] bg-[#e4e4de] sm:grid-cols-4 lg:grid-cols-7">
             <Kpi label="Per unit" value={usd(p.y1.ppu)} tag={`${p.units} units`} />
             <Kpi label="NOI" value={usd(p.y1.noi)} tag={`yr 1 · ${pct(p.y1.expRatio, 0)} exp ratio`} />
             <Kpi label="Cap rate" value={pct(p.y1.cap)} tag={`min ${deal.minCap}%`} state={t.cap} />

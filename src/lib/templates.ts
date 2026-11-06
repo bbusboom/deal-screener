@@ -55,8 +55,8 @@ async function pipe(data: Uint8Array, stream: CompressionStream | DecompressionS
   return new Uint8Array(await new Response(new Blob([data as BlobPart]).stream().pipeThrough(stream)).arrayBuffer())
 }
 export async function shareLink(d: Deal) {
-  const { rr, notes, ...rest } = d as any
-  void rr; void notes // the unit list and private notes stay out of shared links
+  const { rr, notes, why, ...rest } = d as any
+  void rr; void notes; void why // the unit list, private notes and adjustment reasons stay out of shared links
   const z = await pipe(new TextEncoder().encode(JSON.stringify(rest)), new CompressionStream("deflate-raw"))
   return `${location.origin}/#share=${b64url(z)}`
 }

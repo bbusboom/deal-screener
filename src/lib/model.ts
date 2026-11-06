@@ -130,6 +130,10 @@ export interface Deal {
   status: DealStatus; bidDue: string; notes: string
   /** Seller's trailing 12 months and trailing 3 months annualized, for the operating statement. */
   t12?: StatementCol; t3?: StatementCol
+  /** Capital budget by line item. yr 0 = funded at closing (adds to equity); yr 1+ = spent from cash flow that year. */
+  capexItems?: CapexItem[]
+  /** The analyst's reason for each underwritten line, especially where it differs from the T12. */
+  why?: Partial<Record<StatementKey, string>>
 }
 
 export const NUM_FIELDS = [
@@ -314,10 +318,14 @@ export interface YearRow {
 export interface RefiResult { yr: number; value: number; newLoan: number; oldBal: number; penalty: number; cost: number; cashOut: number; binding: "LTV" | "DSCR"; ltv: number }
 export interface VaSummary { units: number; budget: number; upfront: number; roc: number; finishYr: number; annualPremium: number }
 export interface LoanSizing { mode: SizeMode; ltvLoan: number; dscrLoan: number; dyLoan: number; binding: "LTV" | "DSCR" | "Debt yield"; maxLoan: number }
+export interface CapexItem { item: string; cost: number; yr: number; source?: string }
+
 export interface Projection {
   d: Deal; units: number; loan: number; closing: number; fee: number; equity: number; sizing: LoanSizing
   monthly: { prem: number[]; down: number[]; spend: number[]; lu: number[]; vaPremium: number; avgRentMo: number }
   va: VaSummary; refi: RefiResult | null; prepayPenalty: number; capCost: number
+  /** Up front capex actually used: the capex budget's closing items when there is a budget, otherwise the single input. */
+  capexUp: number
   /** True if the loan matures before the planned sale. */
   balloonBeforeSale: boolean
   years: YearRow[]; exitYear: YearRow; exitNoi: number; salePrice: number; sellCosts: number; payoff: number; proceeds: number
@@ -339,7 +347,9 @@ export function project(d0: Deal, o: Overrides = {}): Projection {
   const other1 = d.other * units * 12
   const fixed1 = d.util + d.rm + d.pay + d.adm + (d.contract || 0) + (d.turn || 0) + (d.mkt || 0)
   const closing = d.price * d.cc / 100
-  const capexUp = d.capexUp || 0
+  const items = (d.capexItems || []).filter(i => (i.cost || 0) > 0)
+  const capexUp = items.length ? items.filter(i => !i.yr).reduce((a, i) => a + i.cost, 0) : (d.capexUp || 0)
+  const capexByYr = (t: number) => items.filter(i => i.yr === t).reduce((a, i) => a + i.cost, 0)
 
   // Value add: build a monthly renovation schedule, then roll it up by year.
   const va = d.va, vaOn = !!va?.on && va.units > 0
@@ -398,6 +408,7 @@ export function project(d0: Deal, o: Overrides = {}): Projection {
     const egi = gpr - ltl - vacLoss - conc - bad - nru + oth + custInc + vaPrem - vaDown
     let custExp = 0, capex = 0
     d.custom.forEach((c, i) => { if (c.kind !== "income") { const v = lineVal(c, i, egi); cust[i] = v; if (c.kind === "expense") custExp += v; else capex += v } })
+    capex += capexByYr(t)
     const vaSpend = vaOn ? spend[t] : 0
     if (vaOn && !va.upfront) capex += vaSpend
     const reset = d.taxResetYr > 0 && d.taxNew > 0 && t >= d.taxResetYr
@@ -479,7 +490,7 @@ export function project(d0: Deal, o: Overrides = {}): Projection {
   const y1 = years[0]
   const potential = y1.gpr + y1.oth
   return {
-    refi, prepayPenalty, capCost,
+    refi, prepayPenalty, capCost, capexUp,
     monthly: { prem: mPrem, down: mDown, spend: mSpend, lu: mLu, vaPremium: vaOn ? va.premium : 0, avgRentMo: avgMkt / 12 },
     va: { units: vaUnits, budget: vaBudget, upfront: vaUpfront, roc: vaOn && va.cost > 0 ? va.premium * 12 * (1 - d.vac / 100) / va.cost : NaN,
       finishYr: vaOn ? (i => i > 0 ? i : NaN)(done.findIndex((x, i) => i > 0 && x >= vaUnits - 1e-9)) : NaN, annualPremium: vaUnits * va.premium * 12 },
@@ -758,7 +769,7 @@ export function weighted(d: Deal, cases: { name?: string; prob: number; o: Overr
 export const scenCases = (s: Scenario[]) => s.map(x => ({ name: x.name, prob: x.prob, o: { rg: x.rg, vac: x.vac, expG: x.expG, exitCap: x.exitCap } as Overrides }))
 
 /* ---------- formatting ---------- */
-export const usd = (n: number) => !isFinite(n) ? "n/a" : (n < 0 ? "−$" : "$") + Math.abs(Math.round(n)).toLocaleString("en-US")
+export const usd = (n: number) => { if (!isFinite(n)) return "n/a"; const r = Math.round(n); return (r < 0 ? "−$" : "$") + Math.abs(r).toLocaleString("en-US") }
 export const usdK = (n: number) => !isFinite(n) ? "n/a" : (n < 0 ? "−$" : "$") + Math.round(Math.abs(n) / 1000).toLocaleString("en-US") + "k"
 export const pct = (n: number, dp = 2) => isFinite(n) ? (n * 100).toFixed(dp) + "%" : "n/a"
 export const xx = (n: number) => isFinite(n) ? n.toFixed(2) + "x" : "n/a"

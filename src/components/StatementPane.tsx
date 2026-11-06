@@ -30,7 +30,7 @@ export function StatementPane({ d, p, set }: PaneProps) {
   const added = (kind: "income" | "expense") => d.custom.map((c, i) => ({ c, v: y1.cust[i] || 0 })).filter(x => x.c.kind === kind && x.v)
   const addedRow = (label: string, v: number, key: string) => (
     <tr key={key} className="bg-brand-50/40"><td>{label} <span className="text-[10px] text-slate-400">added</span></td><td /><td />
-      <td className="num font-medium">{usd(v)}</td>{showPU && <td className="num text-slate-500">{usd(v / units)}</td>}{showPU && <td className="num text-slate-500">{U.egi > 0 ? pct(Math.abs(v) / U.egi, 1) : ""}</td>}<td /></tr>)
+      <td className="num font-medium">{usd(v)}</td>{showPU && <td className="num text-slate-500">{usd(v / units)}</td>}{showPU && <td className="num text-slate-500">{U.egi > 0 ? pct(Math.abs(v) / U.egi, 1) : ""}</td>}<td /><td /></tr>)
   const t12 = d.t12 || {}, t3 = d.t3 || {}
   const T = colTotals(t12), T3 = colTotals(t3)
   const has12 = Object.keys(t12).length > 0, has3 = Object.keys(t3).length > 0
@@ -50,6 +50,11 @@ export function StatementPane({ d, p, set }: PaneProps) {
   const cell = (col: "t12" | "t3", k: StatementKey) => (
     <td className="num !py-1"><NumInput className="!w-28 !py-1 text-right" value={(d[col] || {})[k] ?? ("" as any)} step={500} min={0} onChange={v => setCol(col, k, v)} /></td>
   )
+  const why = d.why || {}
+  const setWhy = (k: StatementKey, v: string) => set({ why: { ...why, [k]: v } })
+  const whyCell = (k: StatementKey, needed: boolean) => (
+    <td className="!py-1 text-left"><input className={`!min-w-[220px] w-full !py-1 text-left text-[13px] ${needed && !why[k]?.trim() ? "!border-amber-300" : ""}`} value={why[k] || ""} maxLength={240}
+      placeholder={needed ? "Why is this better than the seller's actual?" : ""} onChange={e => setWhy(k, e.target.value)} /></td>)
   const line = (l: Line, revenue: boolean) => {
     const v = uw[l.k]
     return (
@@ -60,6 +65,7 @@ export function StatementPane({ d, p, set }: PaneProps) {
         {showPU && <td className="num text-slate-500">{usd((l.neg ? -v : v) / units)}</td>}
         {showPU && <td className="num text-slate-500">{U.egi > 0 ? pct(v / U.egi, 1) : ""}</td>}
         <td className="num text-slate-500">{has12 && t12[l.k] !== undefined ? usd((l.neg ? -1 : 1) * (v - (Number(t12[l.k]) || 0))) : ""}</td>
+        {whyCell(l.k, !!flag(l.k, revenue))}
       </tr>
     )
   }
@@ -67,13 +73,15 @@ export function StatementPane({ d, p, set }: PaneProps) {
     <tr className={cls}><td>{label}</td>
       <td className="num">{has[0] ? usd(a) : ""}</td><td className="num">{has[1] ? usd(b) : ""}</td><td className="num">{usd(c)}</td>
       {showPU && <td className="num">{usd(c / units)}</td>}{showPU && <td className="num">{U.egi > 0 ? pct(c / U.egi, 1) : ""}</td>}
-      <td className="num">{has[0] ? usd(c - a) : ""}</td></tr>
+      <td className="num">{has[0] ? usd(c - a) : ""}</td><td /></tr>
   )
   const reserves: Line = { k: "res", label: "Replacement reserves" }
 
   const ex = exitCapCheck(p), stress = exitStress(d)
   const ds = p.y1.ds
   const optimistic = has12 && U.noi > T.noi * 1.05
+  const unexplained = [...REV.map(l => [l, true] as const), ...EXP.map(l => [l, false] as const), [reserves, false] as const]
+    .filter(([l, r]) => flag(l.k, r) && !why[l.k]?.trim()).map(([l]) => l.label.toLowerCase())
 
   return (
     <div className="space-y-4">
@@ -83,17 +91,17 @@ export function StatementPane({ d, p, set }: PaneProps) {
           <button className="btn" onClick={snapshot} title="Copy the current underwriting into the Seller T12 column, as a starting point to edit">Fill T12 from inputs</button>
           {(has12 || has3) && <button className="btn" onClick={() => set({ t12: undefined, t3: undefined })}>Clear seller columns</button>}
         </div>}>
-        <p className="note mb-3">Enter the seller's trailing 12 months and the last 3 months annualized (× 4) as positive numbers. Importing a T12 under Property › Documents fills the first column. Shaded lines are where your underwriting is more optimistic than the seller's actuals: be ready to defend each one.</p>
+        <p className="note mb-3">Enter the seller's trailing 12 months and the last 3 months annualized (× 4) as positive numbers. Importing a T12 under Property › Documents fills the first column. Shaded lines are where your underwriting is more optimistic than the seller's actuals. Use the Why column to record the reason for each change, the way an analyst would for a manager.</p>
         <div className="overflow-x-auto"><table className="tbl">
-          <thead><tr><th className="min-w-[200px]">Annual</th><th>Seller T12</th><th>T3 annualized</th><th>Underwritten yr 1</th>{showPU && <th>$/unit</th>}{showPU && <th>% EGI</th>}<th>UW − T12</th></tr></thead>
+          <thead><tr><th className="min-w-[200px]">Annual</th><th>Seller T12</th><th>T3 annualized</th><th>Underwritten yr 1</th>{showPU && <th>$/unit</th>}{showPU && <th>% EGI</th>}<th>UW − T12</th><th className="!text-left">Why</th></tr></thead>
           <tbody>
-            <tr className="head"><td colSpan={8}>Revenue</td></tr>
+            <tr className="head"><td colSpan={9}>Revenue</td></tr>
             {REV.map(l => line(l, true))}
             {added("income").map((x, j) => addedRow(x.c.label || "Added income", x.v, "ai" + j))}
             {d.va.on && addedRow("Renovation premium, net", y1.vaPrem, "vap")}
             {d.va.on && addedRow("Renovation downtime", -y1.vaDown, "vad")}
             {tot("Effective gross income", T.egi, T3.egi, U.egi)}
-            <tr className="head"><td colSpan={8}>Operating expenses</td></tr>
+            <tr className="head"><td colSpan={9}>Operating expenses</td></tr>
             {EXP.map(l => line(l, false))}
             {added("expense").map((x, j) => addedRow(x.c.label || "Added expense", -x.v, "ae" + j))}
             {tot("Total operating expenses", T.opexBR, T3.opexBR, U.opexBR, "sub")}
@@ -102,6 +110,7 @@ export function StatementPane({ d, p, set }: PaneProps) {
             {tot("Net cash flow (lender NOI after reserves)", T.ncf, T3.ncf, U.ncf)}
           </tbody>
         </table></div>
+        {unexplained.length > 0 && <p className="mt-3 rounded-lg border border-amber-200 bg-amber-50/60 p-3 text-sm text-amber-900"><b>{unexplained.length} {unexplained.length === 1 ? "line is" : "lines are"} more optimistic than the seller's actuals with no reason yet:</b> {unexplained.join(", ")}. Write one line on each in the Why column. It's the first thing a manager or lender will ask, and the reasons print on the investment memo.</p>}
         {optimistic && <p className="mt-3 rounded-lg bg-amber-50 p-3 text-sm text-amber-900">Underwritten NOI is {pct(U.noi / T.noi - 1, 1)} above the seller's T12. Lenders size on in place numbers, and buyers who pay for upside they haven't created yet usually overpay.</p>}
         {has12 && has3 && T3.egi < T.egi * 0.97 && <p className="mt-3 rounded-lg bg-amber-50 p-3 text-sm text-amber-900">Recent income (T3) is running {pct(1 - T3.egi / T.egi, 1)} below the T12. The trend matters more than the year: underwrite to the T3 unless you know why it dipped.</p>}
       </Card>

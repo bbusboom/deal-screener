@@ -46,10 +46,10 @@ export function SummaryPane({ d, p, mp }: PaneProps) {
             <Row label="Purchase price" value={usd(d.price)} />
             <Row label={`Closing costs (${d.cc}%)`} value={usd(p.closing)} />
             <Row label={`Loan fees (${d.loanFee}%)`} value={usd(p.fee)} />
-            {d.capexUp > 0 && <Row label="Up front capex" value={usd(d.capexUp)} />}
+            {p.capexUp > 0 && <Row label="Up front capex" value={usd(p.capexUp)} />}
             {p.va.upfront > 0 && <Row label="Renovation budget" value={usd(p.va.upfront)} />}
             {p.capCost > 0 && <Row label="Interest rate cap" value={usd(p.capCost)} />}
-            <Row label="Total uses" value={usd(d.price + p.closing + p.fee + (d.capexUp || 0) + p.va.upfront + p.capCost)} cls="total" />
+            <Row label="Total uses" value={usd(d.price + p.closing + p.fee + p.capexUp + p.va.upfront + p.capCost)} cls="total" />
             <tr className="head"><td>Sources</td><td /></tr>
             <Row label={`Loan (${d.price > 0 ? (p.loan / d.price * 100).toFixed(1) : d.ltv}% LTV${d.sizeMode === "lesser" ? `, ${p.sizing.binding} binds` : ""})`} value={usd(p.loan)} />
             <Row label="Equity" value={usd(p.equity)} />
@@ -105,7 +105,9 @@ export function IncomePane({ d, p, set }: PaneProps) {
           <div className="grid grid-cols-2 gap-3">
             <Num d={d} set={set} k="price" label="Purchase price ($)" step={1000} />
             <Num d={d} set={set} k="cc" label="Closing costs (% of price)" step={0.1} />
-            <Num d={d} set={set} k="capexUp" label="Up front capex ($)" step={5000} hint="Renovations and immediate repairs funded at closing. Added to equity." />
+            {(d.capexItems || []).some(i => i.cost > 0)
+              ? <div className="text-xs font-medium text-slate-500">Up front capex<div className="mt-1 rounded-md border border-[#dcdcd5] bg-slate-50 px-2.5 py-1.5 text-sm text-ink">{usd(p.capexUp)}</div><span className="font-normal text-slate-400">From the Capex budget page.</span></div>
+              : <Num d={d} set={set} k="capexUp" label="Up front capex ($)" step={5000} hint="Renovations and immediate repairs funded at closing. Added to equity. For a line by line budget, use Capex budget." />}
           </div>
         </Card>
         <Card title="Unit mix (monthly)">

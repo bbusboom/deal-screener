@@ -13,6 +13,7 @@ import { MonthlyPane } from "./components/MonthlyPane"
 import { RentRollPane } from "./components/RentRollPane"
 import { TaxPane } from "./components/TaxPane"
 import { QuotesPane } from "./components/QuotesPane"
+import { CapexPane } from "./components/CapexPane"
 import SetupGuide, { setupSteps } from "./components/SetupGuide"
 import { SummaryPane, ShareMenu, IncomePane, ExpensesPane, FinancingPane, ProjectionsPane, ScenariosPane, DealsPane, failNames } from "./components/Panes"
 import AiPanel from "./components/AiPanel"
@@ -25,14 +26,14 @@ import { TemplatesCard } from "./components/TemplatesCard"
 /** Workspace sections, each with its own pages. Page keys are also the URL hash, so old links keep working. */
 const SECTIONS = [
   { key: "overview", label: "Overview", icon: Icon.overview, pages: [["summary", "Summary"]] },
-  { key: "property", label: "Property", icon: Icon.property, pages: [["income", "Rent & income"], ["rentroll", "Rent roll"], ["expenses", "Expenses"], ["valueadd", "Value add"], ["documents", "Documents"]] },
+  { key: "property", label: "Property", icon: Icon.property, pages: [["income", "Rent & income"], ["rentroll", "Rent roll"], ["expenses", "Expenses"], ["capex", "Capex budget"], ["valueadd", "Value add"], ["documents", "Documents"]] },
   { key: "market", label: "Market", icon: Icon.market, pages: [["market", "Location"], ["supply", "Supply & demand"], ["comps", "Comps"]] },
   { key: "financials", label: "Financials", icon: Icon.financials, pages: [["statement", "Operating statement"], ["monthly", "Monthly"], ["projections", "Projections"], ["scenarios", "Scenarios"], ["taxes", "Taxes"]] },
   { key: "capital", label: "Capital", icon: Icon.capital, pages: [["financing", "Debt"], ["quotes", "Loan quotes"], ["investors", "Investors"]] },
   { key: "advisor", label: "Advisor", icon: Icon.advisor, pages: [["ai", "Deal School AI"]] },
   { key: "pipeline", label: "Pipeline", icon: Icon.pipeline, pages: [["deals", "Deals & buy box"]] },
 ] as const
-type Tab = "summary" | "quotes" | "taxes" | "rentroll" | "monthly" | "supply" | "income" | "expenses" | "valueadd" | "documents" | "market" | "comps" | "statement" | "projections" | "scenarios" | "financing" | "investors" | "ai" | "deals"
+type Tab = "summary" | "capex" | "quotes" | "taxes" | "rentroll" | "monthly" | "supply" | "income" | "expenses" | "valueadd" | "documents" | "market" | "comps" | "statement" | "projections" | "scenarios" | "financing" | "investors" | "ai" | "deals"
 type Section = { key: string; label: string; icon: (c?: string) => React.ReactElement; pages: readonly (readonly [Tab, string])[] }
 const SECS: readonly Section[] = SECTIONS
 const TABS = SECS.flatMap(s => s.pages)
@@ -169,6 +170,7 @@ export default function ProWorkspace({ session, toast }: { session: Session | nu
         {tab === "income" && <IncomePane {...pane} />}
         {tab === "statement" && <StatementPane {...pane} />}
         {tab === "valueadd" && <ValueAddPane {...pane} />}
+        {tab === "capex" && <CapexPane {...pane} />}
         {tab === "comps" && <CompsPane {...pane} />}
         {tab === "supply" && <SupplyPane {...pane} />}
         {tab === "monthly" && <MonthlyPane {...pane} />}

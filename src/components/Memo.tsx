@@ -2,7 +2,7 @@
 import { useEffect } from "react"
 import type React from "react"
 import { createPortal } from "react-dom"
-import { type Deal, type Projection, usd, pct, xx, tests, allPass, TEST_NAMES, exitCapCheck, exitStress, waterfall, BENCH, benchFlag, type TestKey } from "../lib/model"
+import { type Deal, type Projection, type StatementKey, usd, pct, xx, tests, allPass, TEST_NAMES, exitCapCheck, exitStress, waterfall, BENCH, benchFlag, type TestKey } from "../lib/model"
 
 function risks(d: Deal, p: Projection): string[] {
   const r: string[] = [], u = p.units || 1, ex = exitCapCheck(p)
@@ -17,6 +17,9 @@ function risks(d: Deal, p: Projection): string[] {
   if (d.t12 && Object.keys(d.t12).length) { const t = d.t12, egi = (t.gpr || 0) - (t.ltl || 0) - (t.vac || 0) - (t.conc || 0) - (t.bad || 0) - (t.nru || 0) + (t.other || 0); if (egi > 0 && p.y1.egi > egi * 1.05) r.push(`Underwritten EGI is ${pct(p.y1.egi / egi - 1, 1)} above the seller's T12.`) }
   return r
 }
+
+const WHY_LABELS: [StatementKey, string][] = [["gpr", "Gross potential rent"], ["ltl", "Loss to lease"], ["vac", "Vacancy"], ["conc", "Concessions"], ["bad", "Bad debt"], ["nru", "Non revenue units"], ["other", "Other income"],
+  ["tax", "Real estate taxes"], ["ins", "Insurance"], ["util", "Utilities"], ["rm", "Repairs & maintenance"], ["turn", "Turnover"], ["contract", "Contract services"], ["pay", "Payroll"], ["adm", "General & admin"], ["mkt", "Marketing"], ["mgmt", "Management fee"], ["res", "Replacement reserves"]]
 
 export function MemoView({ d, p, mp, onClose, extra, closeLabel = "Close" }: { d: Deal; p: Projection; mp: number; onClose: () => void; extra?: React.ReactNode; closeLabel?: string }) {
   const t = tests(p, d), ok = allPass(t), y = p.years[0], w = d.wf.on ? waterfall(p) : null
@@ -53,7 +56,7 @@ export function MemoView({ d, p, mp, onClose, extra, closeLabel = "Close" }: { d
             <H>Sources and uses</H>
             <table className="w-full"><tbody>
               <KV k="Purchase price" v={usd(d.price)} /><KV k="Closing costs" v={usd(p.closing)} /><KV k="Loan fees" v={usd(p.fee)} />
-              {d.capexUp > 0 && <KV k="Up front capex" v={usd(d.capexUp)} />}{p.va.upfront > 0 && <KV k="Renovation budget" v={usd(p.va.upfront)} />}{p.capCost > 0 && <KV k="Rate cap" v={usd(p.capCost)} />}
+              {p.capexUp > 0 && <KV k="Up front capex" v={usd(p.capexUp)} />}{p.va.upfront > 0 && <KV k="Renovation budget" v={usd(p.va.upfront)} />}{p.capCost > 0 && <KV k="Rate cap" v={usd(p.capCost)} />}
               <KV k="Loan" v={`${usd(p.loan)} (${pct(p.loan / d.price, 1)} LTV)`} /><KV k="Equity" v={usd(p.equity)} />
             </tbody></table>
             <H>Debt</H>
@@ -76,6 +79,14 @@ export function MemoView({ d, p, mp, onClose, extra, closeLabel = "Close" }: { d
             </tbody></table>
           </div>
         </div>
+
+        {Object.entries(d.why || {}).some(([, v]) => v?.trim()) && <>
+          <H>Underwriting adjustments</H>
+          <table className="w-full"><tbody>
+            {WHY_LABELS.filter(([k]) => d.why?.[k]?.trim()).map(([k, label]) => (
+              <tr key={k} className="border-b border-slate-100 align-top"><td className="w-48 py-1 pr-3 font-medium">{label}</td><td className="py-1 text-slate-700">{d.why![k]}</td></tr>))}
+          </tbody></table>
+        </>}
 
         <H>Projection</H>
         <table className="w-full text-right font-mono text-[11px]">

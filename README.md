@@ -4,15 +4,20 @@ A multifamily underwriting website with the **Deal School** AI agent built in. S
 
 ## What it does
 
-- **Import Documents**: upload a rent roll, T12, offering memo or loan quote (PDF, Excel, CSV or photo). Claude reads it, shows each value with its source, and you choose what to apply
-- **Summary**: buy box verdict, max price that passes every test, sources and uses, returns, cash flow chart, deal memo
-- **Property & Income**: unit mix, other income, vacancy
-- **Expenses**: operating expenses and year 1 pro forma
-- **Financing**: LTV, rate, amortization, interest only period, loan fees, loan schedule
-- **Projections**: hold period, rent growth by year, expense, tax and insurance growth, exit cap, annual cash flow, sale, IRR and equity multiple
+- **Summary**: buy box verdict, max price that passes every test, sources and uses, returns (and investor IRR), cash flow chart, deal memo, **investment memo PDF** and **Excel download** (live formulas for totals, NOI, cash flow, DSCR, IRR and multiple)
+- **Documents**: upload a rent roll, T12, offering memo or loan quote (PDF, Excel, CSV or photo). Claude reads it, shows each value with its source, and you choose what to apply. A T12 also fills the Seller column of the operating statement
+- **Market**: state rules, live neighborhood data and a policy briefing (see below)
+- **Income**: unit mix with in place and market rent and square feet, loss to lease with burn off, vacancy, concessions, bad debt, non revenue units, itemized other income, added income lines
+- **Expenses**: full chart of accounts with per unit benchmark flags, added expense and capital lines (templates such as valet trash, courtesy patrol, bulk internet, ground lease, roof), property tax calculator with reassessment year
+- **Statement**: Seller T12, T3 annualized and underwritten year 1 side by side with $/unit, % of EGI and variance; NOI vs NCF lender view; exit cap discipline with ±50 bp stress
+- **Value Add**: renovation program (units, cost, premium, pace, downtime), schedule by year, return on cost, value created, before and after IRR and DSCR
+- **Comps**: rent comps by unit type against your market rents, sale comps against your price and exit cap
+- **Financing**: loan sized on LTV or the lesser of LTV, DSCR and debt yield; fixed or floating (SOFR + spread with a rate cap); step down, yield maintenance or exit fee prepayment; refinance in any year with cash out or cash in; loan schedule
+- **Investors**: GP/LP IRR hurdle waterfall with pref, promote, acquisition, asset management and disposition fees; LP and GP returns and distributions by year
+- **Projections**: hold period, growth assumptions, exit cap, annual cash flow, sale, IRR and equity multiple
 - **Scenarios**: downside, base and upside with probabilities and weighted IRR, plus sensitivity grids
-- **Deal School AI**: Learner and Pro routes. The AI runs every number through the same model as the tabs, and can change inputs when asked
-- **Buy Box & Deals**: screening minimums and saved deals (saved in the browser for now)
+- **Deal School AI**: Learner and Pro routes. The AI runs every number through the same model as the tabs and can change any input, including value add, loan options, waterfall, comps and added lines
+- **Deals**: buy box minimums, saved deals, pipeline status, bid date and notes, and side by side comparison of up to four deals
 
 ## Deal School course
 
@@ -75,9 +80,7 @@ Set a monthly spend limit in the Anthropic Console, since each AI request is bil
 
 ## Roadmap
 
-- Single family and commercial modes
-- Market data and tax panel
-- Web research for the Pro route
+See the project roadmap. Next: monthly cash flow view for lease up, saved assumption templates, read only share links, depreciation and after tax returns, then single family and commercial modes.
 
 ## Document import limits
 

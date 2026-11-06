@@ -25,3 +25,9 @@
   .sens td.f { @apply bg-fail-50 text-fail-600; }
   .sens td.base { @apply font-bold outline outline-2 -outline-offset-2 outline-ink; }
 }
+
+@media print {
+  body.memo-open > #root { display: none !important; }
+  .no-print { display: none !important; }
+  @page { margin: 0.5in; }
+}

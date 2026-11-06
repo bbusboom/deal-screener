@@ -9,6 +9,8 @@ import type { SavedDeal } from "../lib/store"
 import CashFlowChart from "./CashFlowChart"
 import { CustomLinesCard } from "./CustomLines"
 import { DebtOptions } from "./DebtOptions"
+import { MemoView } from "./Memo"
+import { exportXlsx } from "../lib/exportXlsx"
 
 export interface PaneProps { d: Deal; p: Projection; set: (patch: Partial<Deal>) => void; mp: number }
 
@@ -18,8 +20,15 @@ function Num({ d, set, k, label, step = 1, hint }: { d: Deal; set: PaneProps["se
 
 /* ---------- Summary ---------- */
 export function SummaryPane({ d, p, mp }: PaneProps) {
+  const [memoOpen, setMemoOpen] = useState(false), [busy, setBusy] = useState(false)
   return (
     <div className="space-y-4">
+      {memoOpen && <MemoView d={d} p={p} mp={mp} onClose={() => setMemoOpen(false)} />}
+      <div className="flex flex-wrap items-center gap-2 rounded-xl border border-brand-100 bg-brand-50 px-4 py-3">
+        <span className="mr-auto text-sm text-brand-700"><b>Share this deal:</b> an investment memo for your partners or lender, or the full model in Excel.</span>
+        <button className="btn btn-primary" onClick={() => setMemoOpen(true)}>Investment memo (PDF)</button>
+        <button className="btn" disabled={busy} onClick={async () => { setBusy(true); try { await exportXlsx(d, p) } finally { setBusy(false) } }}>{busy ? "Building…" : "Download Excel"}</button>
+      </div>
       <div className="grid gap-4 lg:grid-cols-2">
         <Card title="Sources & uses">
           <table className="tbl"><tbody>

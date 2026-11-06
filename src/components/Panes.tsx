@@ -21,17 +21,25 @@ function Num({ d, set, k, label, step = 1, hint }: { d: Deal; set: PaneProps["se
 
 /* ---------- Summary ---------- */
 export function SummaryPane({ d, p, mp }: PaneProps) {
-  const [memoOpen, setMemoOpen] = useState(false), [busy, setBusy] = useState(false), [copied, setCopied] = useState("")
+  const [copied, setCopied] = useState(false)
   return (
     <div className="space-y-4">
-      {memoOpen && <MemoView d={d} p={p} mp={mp} onClose={() => setMemoOpen(false)} />}
-      <div className="flex flex-wrap items-center gap-2 rounded-lg border border-brand-100 bg-brand-50 px-4 py-3">
-        <span className="mr-auto text-sm text-brand-700"><b>Share this deal:</b> an investment memo, the full model in Excel, or a read only link (anyone with the link sees the numbers; notes and the unit list stay private).</span>
-        <button className="btn btn-primary" onClick={() => setMemoOpen(true)}>Investment memo (PDF)</button>
-        <button className="btn" disabled={busy} onClick={async () => { setBusy(true); try { await exportXlsx(d, p) } finally { setBusy(false) } }}>{busy ? "Building…" : "Download Excel"}</button>
-        <button className="btn" onClick={async () => { const url = await shareLink(d); try { await navigator.clipboard.writeText(url); setCopied("Link copied") } catch { setCopied("Copy failed"); prompt("Copy this link", url) } setTimeout(() => setCopied(""), 2500) }}>{copied || "Copy share link"}</button>
-      </div>
+      <Card title="How the money comes back">
+        <CashFlowChart p={p} />
+      </Card>
       <div className="grid gap-4 lg:grid-cols-2">
+        <Card title="Returns over the hold">
+          <table className="tbl"><tbody>
+            <Row label="Levered IRR" value={pct(p.irr)} />
+            <Row label="Unlevered IRR" value={pct(p.unlevIrr)} />
+            {d.wf.on && (() => { const w = waterfall(p); return <><Row label="Investor (LP) IRR after fees and promote" value={pct(w.lp.irr)} /><Row label="Sponsor (GP) IRR incl. fees" value={pct(w.gp.irr)} cls="sub" /></> })()}
+            <Row label="Equity multiple" value={xx(p.em)} />
+            <Row label="Average cash on cash" value={pct(p.avgCoc)} />
+            <Row label="Total profit" value={usd(p.profit)} />
+            <Row label="Lowest DSCR during hold" value={xx(p.minDscr)} />
+          </tbody></table>
+          <p className="note mt-2">Year by year detail and the sale math are under Financials › Projections.</p>
+        </Card>
         <Card title="Sources & uses">
           <table className="tbl"><tbody>
             <tr className="head"><td>Uses</td><td /></tr>
@@ -48,26 +56,36 @@ export function SummaryPane({ d, p, mp }: PaneProps) {
             <Row label="Total sources" value={usd(p.loan + p.equity)} cls="total" />
           </tbody></table>
         </Card>
-        <Card title="Returns over the hold">
-          <table className="tbl"><tbody>
-            <Row label="Levered IRR" value={pct(p.irr)} />
-            <Row label="Unlevered IRR" value={pct(p.unlevIrr)} />
-            {d.wf.on && (() => { const w = waterfall(p); return <><Row label="Investor (LP) IRR after fees and promote" value={pct(w.lp.irr)} /><Row label="Sponsor (GP) IRR incl. fees" value={pct(w.gp.irr)} cls="sub" /></> })()}
-            <Row label="Equity multiple" value={xx(p.em)} />
-            <Row label="Average cash on cash" value={pct(p.avgCoc)} />
-            <Row label="Total profit" value={usd(p.profit)} />
-            <Row label={`Net sale proceeds, year ${d.hold}`} value={usd(p.proceeds)} />
-            <Row label="Lowest DSCR during hold" value={xx(p.minDscr)} />
-          </tbody></table>
-        </Card>
       </div>
-      <Card title="Cash flow to equity by year">
-        <CashFlowChart p={p} />
-        <p className="note mt-2">Bars are annual cash flow after debt service. The last bar adds net sale proceeds.</p>
-      </Card>
-      <Card title="Deal memo" right={<button className="btn" onClick={() => navigator.clipboard?.writeText(memo(d, p, mp)).catch(() => {})}>Copy memo</button>}>
-        <pre className="max-h-96 overflow-auto whitespace-pre-wrap rounded-lg border border-slate-100 bg-slate-50 p-3 font-sans text-[13px]">{memo(d, p, mp)}</pre>
-      </Card>
+      <details className="card group !py-0">
+        <summary className="flex cursor-pointer list-none items-center gap-3 py-4 text-sm font-semibold text-ink">
+          <span className="text-slate-400 transition group-open:rotate-90">›</span>Plain text deal memo
+          <span className="font-normal text-slate-500">for pasting into an email</span>
+          <button className="btn ml-auto" onClick={e => { e.preventDefault(); navigator.clipboard?.writeText(memo(d, p, mp)).then(() => { setCopied(true); setTimeout(() => setCopied(false), 2000) }).catch(() => {}) }}>{copied ? "Copied" : "Copy memo"}</button>
+        </summary>
+        <pre className="mb-4 max-h-96 overflow-auto whitespace-pre-wrap rounded-lg border border-slate-100 bg-slate-50 p-3 font-sans text-[13px]">{memo(d, p, mp)}</pre>
+      </details>
+    </div>
+  )
+}
+
+/** Share menu for the workspace header: investment memo (print to PDF), Excel model, read only link. */
+export function ShareMenu({ d, p, mp }: { d: Deal; p: Projection; mp: number }) {
+  const [open, setOpen] = useState(false), [memoOpen, setMemoOpen] = useState(false), [busy, setBusy] = useState(false), [msg, setMsg] = useState("")
+  const flash = (m: string) => { setMsg(m); setTimeout(() => setMsg(""), 2500) }
+  const item = "block w-full rounded-md px-3 py-2 text-left hover:bg-slate-50"
+  return (
+    <div className="relative">
+      {memoOpen && <MemoView d={d} p={p} mp={mp} onClose={() => setMemoOpen(false)} />}
+      <button className="btn btn-ghost" onClick={() => setOpen(o => !o)} aria-expanded={open}>{msg || "Share"} <span className="text-white/50">▾</span></button>
+      {open && <>
+        <div className="fixed inset-0 z-30" onClick={() => setOpen(false)} />
+        <div className="absolute right-0 z-40 mt-2 w-72 rounded-lg border border-[#e4e4de] bg-white p-1.5 text-sm text-ink shadow-lg">
+          <button className={item} onClick={() => { setOpen(false); setMemoOpen(true) }}><div className="font-medium">Investment memo</div><div className="text-xs text-slate-500">One page summary you can print or save as PDF</div></button>
+          <button className={item} disabled={busy} onClick={async () => { setBusy(true); try { await exportXlsx(d, p); flash("Excel downloaded") } finally { setBusy(false); setOpen(false) } }}><div className="font-medium">{busy ? "Building…" : "Excel model"}</div><div className="text-xs text-slate-500">The full model with live formulas</div></button>
+          <button className={item} onClick={async () => { setOpen(false); const url = await shareLink(d); try { await navigator.clipboard.writeText(url); flash("Link copied") } catch { prompt("Copy this link", url) } }}><div className="font-medium">Copy read only link</div><div className="text-xs text-slate-500">Anyone with it sees the numbers. Notes and the unit list stay private.</div></button>
+        </div>
+      </>}
     </div>
   )
 }

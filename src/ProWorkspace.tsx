@@ -13,7 +13,7 @@ import { MonthlyPane } from "./components/MonthlyPane"
 import { RentRollPane } from "./components/RentRollPane"
 import { TaxPane } from "./components/TaxPane"
 import { QuotesPane } from "./components/QuotesPane"
-import { SummaryPane, IncomePane, ExpensesPane, FinancingPane, ProjectionsPane, ScenariosPane, DealsPane, failNames } from "./components/Panes"
+import { SummaryPane, ShareMenu, IncomePane, ExpensesPane, FinancingPane, ProjectionsPane, ScenariosPane, DealsPane, failNames } from "./components/Panes"
 import AiPanel from "./components/AiPanel"
 import ImportPane from "./components/ImportPane"
 import MarketPane from "./components/MarketPane"
@@ -72,13 +72,14 @@ export default function ProWorkspace({ session, toast }: { session: Session | nu
 
   return (
     <>
-      <div className="relative overflow-hidden bg-night text-white">
+      <div className="relative bg-night text-white">
         <div className="relative mx-auto max-w-7xl px-4 pt-5 md:px-8">
           <div className="flex flex-wrap items-center gap-3">
             <div className="min-w-0 basis-full sm:basis-0 sm:flex-1">
               <div className="text-xs font-medium text-white/50">Underwriting workspace</div>
               <input className="mt-0.5 w-full max-w-xl border-0 !bg-transparent px-0 font-display text-2xl font-semibold text-white shadow-none !ring-0 placeholder:text-white/30 md:text-[28px]" placeholder="Name this deal" value={deal.name} onChange={e => set({ name: e.target.value })} />
             </div>
+            {valid && <ShareMenu d={deal} p={p} mp={mp} />}
             <button className="btn btn-gold" onClick={save}>{dealId ? "Save" : "Save deal"}</button>
             <button className="btn btn-ghost" onClick={() => { setDeal(newDealFromDefault(getHomeState())); setDealId(undefined); go("documents") }}>New deal</button>
           </div>
@@ -99,13 +100,27 @@ export default function ProWorkspace({ session, toast }: { session: Session | nu
           </div>
         </div>)}
 
+      {valid && tab !== "summary" && (
+        <div className="sticky top-[65px] z-10 border-b border-[#e4e4de] bg-[#f6f6f3]/95 backdrop-blur">
+          <button onClick={() => go("summary")} title="Open the Overview" className="mx-auto flex w-full max-w-7xl items-center gap-x-5 gap-y-1 overflow-x-auto whitespace-nowrap px-4 py-2 text-left text-xs md:px-8">
+            <span className={`flex items-center gap-1.5 font-semibold ${ok ? "text-pass-600" : "text-fail-600"}`}><span className={`h-2 w-2 rounded-full ${ok ? "bg-pass-500" : "bg-fail-500"}`} />{ok ? "Clears buy box" : "Misses buy box"}</span>
+            <Slim label="NOI" v={usd(p.y1.noi)} />
+            <Slim label="Cap" v={pct(p.y1.cap)} bad={!t.cap} />
+            <Slim label="DSCR" v={xx(p.y1.dscr)} bad={!t.dscr} />
+            <Slim label="CoC" v={pct(p.y1.coc)} bad={!t.coc} />
+            <Slim label="IRR" v={pct(p.irr)} bad={!t.irr} />
+            <Slim label="Multiple" v={xx(p.em)} bad={!t.em} />
+            <span className="ml-auto text-slate-500">Max price <span className="num font-semibold text-ink">{isFinite(mp) ? usd(mp) : "none"}</span></span>
+          </button>
+        </div>)}
+
       <main className="mx-auto max-w-7xl space-y-4 px-4 py-5 md:px-8">
         {!valid ? (
           <div className="card border-brand-100 bg-brand-50/60">
             <div className="font-display text-xl font-semibold text-brand-900">Start with a price and a unit mix</div>
             <div className="mt-1 text-sm text-slate-600">Upload a rent roll, T12 or offering memo under Property › Documents, type it in under Property › Rent &amp; income, or load the sample deal from Pipeline.</div>
           </div>
-        ) : (
+        ) : tab === "summary" && (
           <div className={`card relative overflow-hidden !p-0`}>
             <div className={`absolute inset-y-0 left-0 w-1 ${ok ? "bg-pass-500" : "bg-fail-500"}`} />
             <div className="flex flex-wrap items-center gap-x-6 gap-y-2 px-6 py-4">
@@ -124,7 +139,7 @@ export default function ProWorkspace({ session, toast }: { session: Session | nu
           </div>
         )}
 
-        {valid && (
+        {valid && tab === "summary" && (
           <div className="grid grid-cols-2 gap-px overflow-hidden rounded-lg border border-[#e4e4de] bg-[#e4e4de] sm:grid-cols-4 lg:grid-cols-7">
             <Kpi label="Per unit" value={usd(p.y1.ppu)} tag={`${p.units} units`} />
             <Kpi label="NOI" value={usd(p.y1.noi)} tag={`yr 1 · ${pct(p.y1.expRatio, 0)} exp ratio`} />
@@ -164,4 +179,8 @@ export default function ProWorkspace({ session, toast }: { session: Session | nu
       </main>
     </>
   )
+}
+
+function Slim({ label, v, bad }: { label: string; v: string; bad?: boolean }) {
+  return <span className="text-slate-500">{label} <span className={`num font-semibold ${bad ? "text-fail-600" : "text-ink"}`}>{v}</span></span>
 }

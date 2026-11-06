@@ -138,10 +138,10 @@ export default function Course({ session, onPractice }: { session: Session | nul
       </div>
       {lessonsDone < 3 && (
         <div className="card mt-4 flex items-center gap-4 !py-4">
-          <img src="/founder-face.jpg" alt="Blake, founder of Deal School" className="h-14 w-14 shrink-0 rounded-full object-cover" />
+          <img src="/founder-face.jpg" alt="Blake Busboom, founder of Deal School" className="h-14 w-14 shrink-0 rounded-full object-cover" />
           <div className="min-w-0">
             <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">From the founder</div>
-            <p className="mt-0.5 text-sm text-ink">“I built Deal School so junior underwriters can learn the basics quickly, then use their own mistakes to get good fast.” <span className="text-slate-500">· Blake</span></p>
+            <p className="mt-0.5 text-sm text-ink">“I built Deal School so junior underwriters can learn the basics quickly, then use their own mistakes to get good fast.” <span className="text-slate-500">· Blake Busboom</span></p>
           </div>
         </div>)}
       <div className="mt-6 grid gap-4 md:grid-cols-2">
@@ -164,10 +164,11 @@ export default function Course({ session, onPractice }: { session: Session | nul
               </ul>
             </div>)
         })}
-      </div>
-      <div className="mt-6 grid gap-4 md:grid-cols-2">
-        <button className="card text-left hover:border-brand-500" onClick={onPractice}><div className="font-bold">Practice a deal →</div><p className="mt-1 text-sm text-slate-500">Underwrite Maple Court step by step, your own property, or uploaded documents, with the math shown at every step.</p></button>
-        <button className="card text-left hover:border-brand-500" onClick={() => setView({ kind: "glossary" })}><div className="font-bold">Glossary →</div><p className="mt-1 text-sm text-slate-500">Every term from the course in one place, {glossary.length} terms.</p></button>
+        {/* Practice and glossary fill the spot beside the last module when the count is odd; otherwise they get their own row. */}
+        <div className={`flex flex-col gap-4 ${COURSE.length % 2 === 1 ? "" : "md:col-span-2 md:grid md:grid-cols-2"}`}>
+          <button className="card flex-1 text-left hover:border-brand-500" onClick={onPractice}><div className="font-bold">Practice a deal →</div><p className="mt-1 text-sm text-slate-500">Underwrite Maple Court step by step, your own property, or uploaded documents, with the math shown at every step.</p></button>
+          <button className="card flex-1 text-left hover:border-brand-500" onClick={() => setView({ kind: "glossary" })}><div className="font-bold">Glossary →</div><p className="mt-1 text-sm text-slate-500">Every term from the course in one place, {glossary.length} terms.</p></button>
+        </div>
       </div>
     </main>)
 

@@ -351,12 +351,12 @@ export default function Landing({ go }: { go: Go }) {
         {/* why I built this */}
         <section id="why" className="mx-auto max-w-6xl scroll-mt-20 px-4 py-16 md:px-8">
           <Reveal className="glass grid items-center gap-8 overflow-hidden rounded-3xl p-6 md:grid-cols-[280px_1fr] md:p-10">
-            <img src="/founder.jpg" alt="Blake, founder of Deal School" className="mx-auto aspect-[4/5] w-56 rounded-2xl object-cover md:w-full" loading="lazy" />
+            <img src="/founder.jpg" alt="Blake Busboom, founder of Deal School" className="mx-auto aspect-[4/5] w-56 rounded-2xl object-cover md:w-full" loading="lazy" />
             <div>
               <div className="text-sm font-semibold uppercase tracking-[.2em] text-[#ffd28a]">Why I built this</div>
               <blockquote className="serif mt-4 text-3xl font-semibold leading-snug text-white md:text-4xl">“I was thrown into the work fast, and half the language went over my head.”</blockquote>
               <p className="mt-5 max-w-2xl text-white/75 md:text-lg">When I started underwriting, there was no simple path to learn it. I was thrown into the work fast, and half the language went over my head. I built Deal School so junior underwriters can learn the basics quickly, then use their own mistakes, with help from AI, to get good fast.</p>
-              <div className="mt-5 text-sm text-white/60"><span className="font-semibold text-white">Blake</span>, founder · junior underwriter</div>
+              <div className="mt-5 text-sm text-white/60"><span className="font-semibold text-white">Blake Busboom</span>, founder · junior underwriter</div>
             </div>
           </Reveal>
         </section>

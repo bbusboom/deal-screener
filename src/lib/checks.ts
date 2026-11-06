@@ -4,9 +4,20 @@ import { type Deal, avgGrowth, project, usd, pct } from "./model.js"
 import { stateBy, taxEstimate, DEFAULT_REASSESS, RENT_LABEL, type StateInfo } from "./states.js"
 
 /* ---------- live data ---------- */
+export interface AreaGrowth {
+  name: string; year: number; compareYear: number | null
+  population: number | null; households: number | null; renterHouseholds: number | null; housingUnits: number | null; apartmentUnits5plus: number | null; medianRent: number | null
+  popGrowth5y: number | null; householdGrowth5y: number | null; renterGrowth5y: number | null; rentGrowth5y: number | null
+  newResidentsPerYear: number | null; newRenterHouseholdsPerYear: number | null
+}
 export interface MarketData {
   fetchedAt: string
-  location?: { matched: string; lat: number; lon: number; countyFips?: string; countyName?: string; tract?: string } | null
+  location?: { matched: string; lat: number; lon: number; countyFips?: string; countyName?: string; tract?: string; placeFips?: string; placeName?: string } | null
+  supply?: {
+    county: AreaGrowth | null; city: AreaGrowth | null
+    permits: { source: string; perYear: { year: number; units5: number; units2to4: number; units1: number }[]; ytd: { through: string; units5: number } | null } | null
+    read: { last3: number; pctOfStock: number | null; avgPermits: number | null; coverage: number | null; level: "heavy" | "elevated" | "light" | "unknown" } | null
+  }
   census?: {
     source: string; year: number; population: number | null; medianIncome: number | null; medianRent: number | null; medianHomeValue: number | null
     medianRealEstateTaxes: number | null; renterShare: number | null; rentalVacancy: number | null; effectiveTaxRate: number | null; medianYearBuilt: number | null

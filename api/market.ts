@@ -2,6 +2,7 @@
 // Keys (all free) go in Vercel environment variables: CENSUS_API_KEY, FRED_API_KEY, HUD_API_TOKEN, BLS_API_KEY.
 // Census and FEMA work without a key at low volume.
 import { authorize } from "./_auth.js"
+import { parsePermitFile, supplyRead } from "../src/lib/permits.js"
 
 const TIMEOUT = 9000
 
@@ -20,16 +21,18 @@ const num = (v: any) => { const n = Number(v); return isFinite(n) && n > -100000
 /* ---------- Census geocoder: address -> point, county, tract (free, no key) ---------- */
 async function geocode(address: string) {
   const u = "https://geocoding.geo.census.gov/geocoder/geographies/onelineaddress?" + new URLSearchParams({
-    address, benchmark: "Public_AR_Current", vintage: "Current_Current", format: "json" })
+    address, benchmark: "Public_AR_Current", vintage: "Current_Current", layers: "all", format: "json" })
   const j = await getJson(u)
   const m = j?.result?.addressMatches?.[0]
   if (!m) return null
   const county = m.geographies?.["Counties"]?.[0]
   const tract = m.geographies?.["Census Tracts"]?.[0]
+  const place = m.geographies?.["Incorporated Places"]?.[0] || m.geographies?.["Census Designated Places"]?.[0]
   return {
     matched: m.matchedAddress as string, lat: m.coordinates.y as number, lon: m.coordinates.x as number,
     countyFips: county?.GEOID as string | undefined, countyName: county?.NAME as string | undefined, tract: tract?.GEOID as string | undefined,
     zip: (m.addressComponents?.zip as string | undefined),
+    placeFips: place?.GEOID as string | undefined, placeName: place?.NAME as string | undefined,
   }
 }
 
@@ -67,6 +70,61 @@ async function census(zip: string) {
     popGrowth5y: past ? growth(L.pop, past.pop) : null, rentGrowth5y: past ? growth(L.rent, past.rent) : null,
     incomeGrowth5y: past ? growth(L.income, past.income) : null, compareYear: past ? year - 5 : null,
   }
+}
+
+/* ---------- Area growth: county and city, ACS 5 year now vs five years earlier ---------- */
+const AREA_VARS = { pop: "B01003_001E", hh: "B11001_001E", renters: "B25003_003E", units: "B25001_001E", rent: "B25064_001E",
+  u5a: "B25024_007E", u5b: "B25024_008E", u5c: "B25024_009E", u5d: "B25024_010E" }
+async function areaAcs(year: number, forClause: string) {
+  const key = process.env.CENSUS_API_KEY ? `&key=${process.env.CENSUS_API_KEY}` : ""
+  const j = await getJson(`https://api.census.gov/data/${year}/acs/acs5?get=NAME,${Object.values(AREA_VARS).join(",")}&${forClause}${key}`)
+  if (!Array.isArray(j) || j.length < 2) throw new Error("no row")
+  const head: string[] = j[0], row: string[] = j[1], g = (c: string) => num(row[head.indexOf(c)])
+  const o: any = { name: row[head.indexOf("NAME")] }
+  for (const [k, c] of Object.entries(AREA_VARS)) o[k] = g(c)
+  o.units5 = [o.u5a, o.u5b, o.u5c, o.u5d].every((v: any) => v != null) ? o.u5a + o.u5b + o.u5c + o.u5d : null
+  return o
+}
+async function areaGrowth(forClause: string) {
+  let now: any = null, year = 0
+  for (const y of [2024, 2023]) { try { now = await areaAcs(y, forClause); year = y; break } catch { /* older */ } }
+  if (!now) return null
+  let then: any = null
+  try { then = await areaAcs(year - 5, forClause) } catch { /* optional */ }
+  const gr = (a: number | null, b: number | null) => a && b ? a / b - 1 : null
+  return {
+    name: now.name, year, compareYear: then ? year - 5 : null,
+    population: now.pop, households: now.hh, renterHouseholds: now.renters, housingUnits: now.units, apartmentUnits5plus: now.units5, medianRent: now.rent,
+    popGrowth5y: then ? gr(now.pop, then.pop) : null, householdGrowth5y: then ? gr(now.hh, then.hh) : null,
+    renterGrowth5y: then ? gr(now.renters, then.renters) : null, rentGrowth5y: then ? gr(now.rent, then.rent) : null,
+    newResidentsPerYear: then && now.pop && then.pop ? (now.pop - then.pop) / 5 : null,
+    newRenterHouseholdsPerYear: then && now.renters && then.renters ? (now.renters - then.renters) / 5 : null,
+  }
+}
+
+/* ---------- New supply: Census Building Permits Survey, units in 5+ unit buildings by county ---------- */
+async function getText(url: string) {
+  const ctl = new AbortController(), t = setTimeout(() => ctl.abort(), TIMEOUT)
+  try { const r = await fetch(url, { signal: ctl.signal, headers: { "user-agent": "DealSchool/1.0" } }); if (!r.ok) throw new Error(`HTTP ${r.status}`); return await r.text() }
+  finally { clearTimeout(t) }
+}
+async function permits(stateFips: string, countyFips: string) {
+  const Y = new Date().getFullYear(), base = "https://www2.census.gov/econ/bps/County/"
+  const years = [Y - 6, Y - 5, Y - 4, Y - 3, Y - 2, Y - 1]
+  const got = await Promise.all(years.map(y => getText(`${base}co${y}a.txt`).then(t => ({ year: y, row: parsePermitFile(t, stateFips, countyFips) })).catch(() => null)))
+  const perYear = got.filter((g): g is { year: number; row: NonNullable<ReturnType<typeof parsePermitFile>> } => !!g && !!g.row)
+    .map(g => ({ year: g.year, units5: g.row.units5, units2to4: g.row.units2to4, units1: g.row.units1 }))
+  // Year to date: the newest monthly cumulative file that exists (coYYMMy.txt).
+  let ytd: { through: string; units5: number } | null = null
+  const now = new Date()
+  for (let back = 1; back <= 5 && !ytd; back++) {
+    const d = new Date(now.getFullYear(), now.getMonth() - back, 1)
+    if (d.getFullYear() !== now.getFullYear()) break
+    const yy = String(d.getFullYear()).slice(2), mm = String(d.getMonth() + 1).padStart(2, "0")
+    try { const r = parsePermitFile(await getText(`${base}co${yy}${mm}y.txt`), stateFips, countyFips); if (r) ytd = { through: d.toLocaleString("en-US", { month: "short", year: "numeric" }), units5: r.units5 } } catch { /* not published yet */ }
+  }
+  if (!perYear.length && !ytd) throw new Error("no permit data for this county")
+  return { source: "U.S. Census Bureau, Building Permits Survey (county, units in buildings with 5+ units)", perYear, ytd }
 }
 
 /* ---------- FEMA flood zone (free public map service) ---------- */
@@ -157,6 +215,18 @@ export default async function handler(req: any, res: any) {
   if (geo?.countyFips) {
     tasks.push(hudFmr(geo.countyFips, zip).then(v => { out.hud = v; if (!v && !process.env.HUD_API_TOKEN) notes.push("HUD rents: add a free HUD_API_TOKEN to turn this on.") }).catch(e => { notes.push("HUD: " + e.message) }))
     tasks.push(jobs(geo.countyFips).then(v => { out.jobs = v }).catch(e => { notes.push("BLS jobs: " + e.message) }))
+    const sF = geo.countyFips.slice(0, 2), cF = geo.countyFips.slice(2)
+    const supply: any = {}
+    tasks.push((async () => {
+      const [county, city, pm] = await Promise.all([
+        areaGrowth(`for=county:${cF}&in=state:${sF}`).catch(() => null),
+        geo!.placeFips ? areaGrowth(`for=place:${geo!.placeFips.slice(2)}&in=state:${sF}`).catch(() => null) : Promise.resolve(null),
+        permits(sF, cF).catch(e => { notes.push("Building permits: " + e.message); return null }),
+      ])
+      supply.county = county; supply.city = city; supply.permits = pm
+      supply.read = pm ? supplyRead(pm.perYear, county?.apartmentUnits5plus ?? null, county?.newRenterHouseholdsPerYear ?? null) : null
+      out.supply = supply
+    })())
   }
   tasks.push(rates().then(v => { out.rates = v; if (!v) notes.push("Live interest rates: add a free FRED_API_KEY to turn this on.") }).catch(e => { notes.push("FRED: " + e.message) }))
   await Promise.all(tasks)

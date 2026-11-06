@@ -60,3 +60,21 @@ export async function fetchBriefing(state: string, city: string, route: "learner
   return b
 }
 
+
+/* ---------- competition scan (AI with web search) ---------- */
+export interface CompProperty { name: string; address: string; distanceMi: number; yearBuilt: number; units: number; status: "stabilized" | "lease-up" | "under construction" | "planned"; delivery: string; rents: { type: string; rent: number }[]; concession: string; concessionWeeks: number; source: string }
+export interface CompetitionScan {
+  summary: string; properties: CompProperty[]; pipeline: string; concessions: string
+  suggestions: { marketRentNote?: string; concessionPct?: number; vacancyPct?: number; rentGrowthYear1Pct?: number; rentGrowthYear2Pct?: number; notes?: string[] }
+  asOf: string; where: string; sources: { url: string; title: string }[]
+}
+const CKEY = "dealSchool.competition."
+const compKey = (d: Deal) => CKEY + (d.address || "") + "|" + (d.zip || "")
+export function cachedCompetition(d: Deal): CompetitionScan | null {
+  try { const v = localStorage.getItem(compKey(d)); if (!v) return null; const c = JSON.parse(v); return Date.now() - c.at < WEEK ? c : null } catch { return null }
+}
+export async function fetchCompetition(d: Deal, city: string): Promise<CompetitionScan> {
+  const c = await post("/api/competition", { address: d.address, zip: d.zip, state: d.state, city, units: d.units.map(u => ({ type: u.type, count: u.count, rent: u.rent, sf: u.sf })) }) as CompetitionScan
+  try { localStorage.setItem(compKey(d), JSON.stringify({ ...c, at: Date.now() })) } catch {}
+  return c
+}

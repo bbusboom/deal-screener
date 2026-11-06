@@ -42,6 +42,21 @@ export interface Waterfall {
   /** Fees to the GP: acquisition % of price (funded with equity), asset management % of EGI, disposition % of sale. */
   acqFee: number; amFee: number; dispFee: number
 }
+/** Loan type, rate cap, prepayment and refinance. */
+export interface DebtOpts {
+  /** fixed = the Financing tab's rate; floating = SOFR + spread, interest only (typical bridge loan). */
+  type: "fixed" | "floating"
+  sofr: number; sofrChg: number; spread: number
+  capOn: boolean; capStrike: number; capCost: number
+  /** Prepayment penalty on payoff before the loan term ends. */
+  prepay: "none" | "stepdown" | "ym" | "exitfee"
+  steps: string; exitFee: number; tsy: number
+  /** Refinance at the end of refiYr into a new fixed loan sized on value and DSCR. */
+  refiOn: boolean; refiYr: number; refiCap: number; refiLtv: number; refiDscr: number; refiRate: number; refiAmort: number; refiIo: number; refiCost: number
+}
+export const DEBT_DEFAULT: DebtOpts = { type: "fixed", sofr: 4, sofrChg: 0, spread: 3, capOn: true, capStrike: 4.5, capCost: 0,
+  prepay: "none", steps: "5,4,3,2,1", exitFee: 1, tsy: 4.25,
+  refiOn: false, refiYr: 3, refiCap: 6, refiLtv: 70, refiDscr: 1.25, refiRate: 6, refiAmort: 30, refiIo: 0, refiCost: 1.5 }
 export const WF_DEFAULT: Waterfall = { on: false, gpCo: 10, pref: 8, split1: 70, hurdle2: 15, split2: 50, acqFee: 2, amFee: 2, dispFee: 1 }
 export interface Scenario { name: string; prob: number; rg: number; vac: number; expG: number; exitCap: number }
 
@@ -75,6 +90,7 @@ export interface Deal {
   custom: CustomLine[]
   va: ValueAdd
   wf: Waterfall
+  debt: DebtOpts
   /** Seller's trailing 12 months and trailing 3 months annualized, for the operating statement. */
   t12?: StatementCol; t3?: StatementCol
 }
@@ -91,7 +107,7 @@ export const DEFAULTS: Deal = {
   name: "", price: 0, cc: 2.5, other: 0, vac: 7, conc: 0, bad: 0, nru: 0, ltlBurn: 0, otherItems: [],
   tax: 0, ins: 0, util: 0, rm: 0, pay: 0, adm: 0, contract: 0, turn: 0, mkt: 0, mgmt: 5, res: 300,
   taxNew: 0, taxResetYr: 0, capexUp: 0,
-  custom: [], va: { ...VA_DEFAULT }, wf: { ...WF_DEFAULT },
+  custom: [], va: { ...VA_DEFAULT }, wf: { ...WF_DEFAULT }, debt: { ...DEBT_DEFAULT },
   ltv: 70, rate: 6.5, amort: 30, ioYrs: 0, loanFee: 1, term: 10, sizeMode: "ltv", sizeDscr: 1.25, sizeDy: 8, hold: 7, expG: 3, taxG: 3, insG: 5, exitCap: 6.5, sellCost: 2,
   minCap: 6, minDscr: 1.25, minCoc: 6, minIrr: 12, minEm: 1.6,
   rg: [], units: [{ type: "1 bed", count: 0, rent: 0 }], scen: [],
@@ -127,6 +143,12 @@ export function norm(input: Partial<Deal> & { io?: string } = {}): Deal {
   d.va = { ...VA_DEFAULT, ...(d.va || {}) }; d.wf = { ...WF_DEFAULT, ...(d.wf || {}) }
   for (const k of Object.keys(VA_DEFAULT)) if (k !== "on" && k !== "upfront") d.va[k] = Math.max(0, Number(d.va[k]) || 0)
   for (const k of Object.keys(WF_DEFAULT)) if (k !== "on") d.wf[k] = Math.max(0, Number(d.wf[k]) || 0)
+  d.debt = { ...DEBT_DEFAULT, ...(d.debt || {}) }
+  for (const k of Object.keys(DEBT_DEFAULT)) if (typeof (DEBT_DEFAULT as any)[k] === "number") d.debt[k] = Math.max(k === "sofrChg" ? -1000 : 0, Number(d.debt[k]) || 0)
+  d.debt.type = d.debt.type === "floating" ? "floating" : "fixed"
+  if (!["none", "stepdown", "ym", "exitfee"].includes(d.debt.prepay)) d.debt.prepay = "none"
+  d.debt.capOn = d.debt.capOn !== false; d.debt.refiOn = !!d.debt.refiOn; d.debt.steps = String(d.debt.steps ?? "")
+  d.debt.refiYr = Math.max(1, Math.round(d.debt.refiYr))
   d.va.on = !!d.va.on; d.va.upfront = d.va.upfront !== false; d.wf.on = !!d.wf.on
   d.va.startMo = Math.max(1, Math.round(d.va.startMo)); d.va.downMo = Math.round(d.va.downMo); d.va.pace = Math.max(0.1, d.va.pace)
   if (!Array.isArray(d.custom)) d.custom = []
@@ -229,6 +251,8 @@ export interface YearRow {
   ltl: number; conc: number; bad: number; nru: number
   /** Custom lines: total income, total operating expense, capital below NOI, and each line's value in d.custom order. */
   custInc: number; custExp: number; capex: number; cust: number[]
+  /** Interest rate paid this year (%), and net cash from a refinance in this year. */
+  rate: number; refiCash: number
   /** Value add: renovation premium (net of vacancy), rent lost to downtime, renovations finished by year end, budget spent this year. */
   vaPrem: number; vaDown: number; vaDone: number; vaSpend: number
   tax: number; ins: number; fixed: number; res: number; mgmt: number; opex: number
@@ -236,11 +260,12 @@ export interface YearRow {
   noi: number; noiBR: number
   ds: number; interest: number; principal: number; endBal: number; cf: number; dscr: number; coc: number
 }
+export interface RefiResult { yr: number; value: number; newLoan: number; oldBal: number; penalty: number; cost: number; cashOut: number; binding: "LTV" | "DSCR"; ltv: number }
 export interface VaSummary { units: number; budget: number; upfront: number; roc: number; finishYr: number; annualPremium: number }
 export interface LoanSizing { mode: SizeMode; ltvLoan: number; dscrLoan: number; dyLoan: number; binding: "LTV" | "DSCR" | "Debt yield"; maxLoan: number }
 export interface Projection {
   d: Deal; units: number; loan: number; closing: number; fee: number; equity: number; sizing: LoanSizing
-  va: VaSummary
+  va: VaSummary; refi: RefiResult | null; prepayPenalty: number; capCost: number
   /** True if the loan matures before the planned sale. */
   balloonBeforeSale: boolean
   years: YearRow[]; exitYear: YearRow; exitNoi: number; salePrice: number; sellCosts: number; payoff: number; proceeds: number
@@ -286,7 +311,7 @@ export function project(d0: Deal, o: Overrides = {}): Projection {
   const vaUpfront = vaOn && va.upfront ? vaBudget : 0
 
   // Operating years first (no debt), so the loan can be sized off year 1 NOI.
-  type Ops = Omit<YearRow, "ds" | "interest" | "principal" | "endBal" | "cf" | "dscr" | "coc">
+  type Ops = Omit<YearRow, "ds" | "interest" | "principal" | "endBal" | "cf" | "dscr" | "coc" | "rate" | "refiCash">
   const ops: Ops[] = []
   let growth = 1
   for (let t = 1; t <= N + 1; t++) {
@@ -326,7 +351,9 @@ export function project(d0: Deal, o: Overrides = {}): Projection {
   // Loan sizing: LTV, or the lesser of LTV, DSCR and debt yield (how agency and bank lenders actually size).
   const noi1 = ops[0].noi
   const ltvLoan = d.price * d.ltv / 100
-  const constant = d.amort > 0 ? monthlyPmt(1, d.rate, d.amort) * 12 : d.rate / 100
+  const D = d.debt, floating = D.type === "floating"
+  const floatRate = (t: number) => { const sofr = Math.max(0, D.sofr + D.sofrChg / 100 * (t - 1)); return (D.capOn ? Math.min(sofr, D.capStrike) : sofr) + D.spread }
+  const constant = floating ? floatRate(1) / 100 : d.amort > 0 ? monthlyPmt(1, d.rate, d.amort) * 12 : d.rate / 100
   const dscrLoan = d.sizeDscr > 0 && constant > 0 ? Math.max(0, noi1 / d.sizeDscr / constant) : Infinity
   const dyLoan = d.sizeDy > 0 ? Math.max(0, noi1 / (d.sizeDy / 100)) : Infinity
   const maxLoan = Math.min(ltvLoan, dscrLoan, dyLoan)
@@ -334,29 +361,70 @@ export function project(d0: Deal, o: Overrides = {}): Projection {
   const loan = d.sizeMode === "lesser" ? maxLoan : ltvLoan
   const sizing: LoanSizing = { mode: d.sizeMode, ltvLoan, dscrLoan, dyLoan, binding, maxLoan }
   const fee = loan * d.loanFee / 100
-  const equity = d.price - loan + closing + fee + capexUp + vaUpfront
+  const capCost = floating && D.capOn ? D.capCost : 0
+  const equity = d.price - loan + closing + fee + capexUp + vaUpfront + capCost
 
-  const years: YearRow[] = ops.map(y => {
-    const dy = debtYear(loan, d, y.t)
-    return { ...y, ds: dy.ds, interest: dy.interest, principal: dy.principal, endBal: dy.endBal,
-      cf: y.noi - dy.ds - y.capex, dscr: dy.ds > 0 ? y.noi / dy.ds : NaN, coc: equity > 0 ? (y.noi - dy.ds - y.capex) / equity : NaN }
-  })
+  // Prepayment penalty on a balance paid off in loan year k (1 based) of a loan with the given rate and term.
+  const penalty = (bal: number, k: number, ratePct: number, term: number) => {
+    if (bal <= 0 || (term > 0 && k > term)) return 0
+    if (D.prepay === "stepdown") { const st = D.steps.split(/[,\s]+/).map(Number).filter(isFinite); return bal * (st[k - 1] || 0) / 100 }
+    if (D.prepay === "exitfee") return bal * D.exitFee / 100
+    if (D.prepay === "ym") {
+      const left = Math.max(0, (term || 10) - k + 1), diff = Math.max(0, ratePct - D.tsy) / 100, tr = D.tsy / 100
+      let pv = 0; for (let j = 1; j <= left; j++) pv += bal * diff / Math.pow(1 + tr, j)
+      return Math.max(pv, bal * 0.01)
+    }
+    return 0
+  }
+
+  // Refinance: value on next year's NOI at the refi cap; new loan is the lesser of LTV and DSCR sizing.
+  let refi: RefiResult | null = null
+  const refiYr = D.refiOn && D.refiYr < N ? D.refiYr : 0
+  const refiDeal = { ...d, rate: D.refiRate, amort: D.refiAmort, ioYrs: D.refiIo } as Deal
+  const years: YearRow[] = []
+  let refiLoan = 0
+  for (const y of ops) {
+    let ds: number, interest: number, principal: number, endBal: number, rate: number, refiCash = 0
+    if (refiYr && y.t > refiYr) {
+      const dy = debtYear(refiLoan, refiDeal, y.t - refiYr); ({ ds, interest, principal, endBal } = dy); rate = D.refiRate
+    } else if (floating) {
+      rate = floatRate(y.t); interest = loan * rate / 100; ds = interest; principal = 0; endBal = loan
+    } else {
+      const dy = debtYear(loan, d, y.t); ({ ds, interest, principal, endBal } = dy); rate = d.rate
+    }
+    if (refiYr && y.t === refiYr) {
+      const value = D.refiCap > 0 ? ops[refiYr].noi / (D.refiCap / 100) : 0
+      const ltvL = value * D.refiLtv / 100
+      const k = D.refiAmort > 0 && D.refiIo === 0 ? monthlyPmt(1, D.refiRate, D.refiAmort) * 12 : D.refiRate / 100
+      const dscrL = D.refiDscr > 0 && k > 0 ? Math.max(0, ops[refiYr].noi / D.refiDscr / k) : Infinity
+      refiLoan = Math.max(0, Math.min(ltvL, dscrL))
+      const pen = penalty(endBal, y.t, rate, floating ? 0 : d.term), cost = refiLoan * D.refiCost / 100
+      refiCash = refiLoan - endBal - pen - cost
+      refi = { yr: refiYr, value, newLoan: refiLoan, oldBal: endBal, penalty: pen, cost, cashOut: refiCash, binding: refiLoan === ltvL ? "LTV" : "DSCR", ltv: value > 0 ? refiLoan / value : NaN }
+      endBal = refiLoan
+    }
+    const cf = y.noi - ds - y.capex
+    years.push({ ...y, ds, interest, principal, endBal, rate, refiCash, cf, dscr: ds > 0 ? y.noi / ds : NaN, coc: equity > 0 ? cf / equity : NaN })
+  }
   const hold = years.slice(0, N), exitYear = years[N], exitNoi = exitYear.noi
   const salePrice = d.exitCap > 0 ? exitNoi / (d.exitCap / 100) : NaN
-  const sellCosts = salePrice * d.sellCost / 100, payoff = hold[N - 1].endBal
+  const endBalN = hold[N - 1].endBal
+  const prepayPenalty = refiYr ? 0 : penalty(endBalN, N, floating ? floatRate(N) : d.rate, floating ? 0 : d.term)
+  const sellCosts = salePrice * d.sellCost / 100, payoff = endBalN + prepayPenalty
   const proceeds = salePrice - sellCosts - payoff
-  const cfs = [-equity, ...hold.map(y => y.cf)]; cfs[N] += proceeds
-  const ucfs = [-(d.price + closing + capexUp + vaUpfront), ...hold.map(y => y.noi - y.capex)]; ucfs[N] += salePrice - sellCosts
-  const totalCf = hold.reduce((s, y) => s + y.cf, 0), totalBack = totalCf + proceeds
+  const cfs = [-equity, ...hold.map(y => y.cf + y.refiCash)]; cfs[N] += proceeds
+  const ucfs = [-(d.price + closing + capexUp + vaUpfront + capCost), ...hold.map(y => y.noi - y.capex)]; ucfs[N] += salePrice - sellCosts
+  const totalCf = hold.reduce((s, y) => s + y.cf + y.refiCash, 0), totalBack = totalCf + proceeds
   const y1 = years[0]
   const potential = y1.gpr + y1.oth
   return {
+    refi, prepayPenalty, capCost,
     va: { units: vaUnits, budget: vaBudget, upfront: vaUpfront, roc: vaOn && va.cost > 0 ? va.premium * 12 * (1 - d.vac / 100) / va.cost : NaN,
       finishYr: vaOn ? (i => i > 0 ? i : NaN)(done.findIndex((x, i) => i > 0 && x >= vaUnits - 1e-9)) : NaN, annualPremium: vaUnits * va.premium * 12 },
-    d, units, loan, closing, fee, equity, sizing, balloonBeforeSale: d.term > 0 && d.term < N,
+    d, units, loan, closing, fee, equity, sizing, balloonBeforeSale: d.term > 0 && d.term < N && !(refiYr && refiYr < d.term),
     years: hold, exitYear, exitNoi, salePrice, sellCosts, payoff, proceeds, cfs,
     irr: irr(cfs), unlevIrr: irr(ucfs), em: equity > 0 ? totalBack / equity : NaN, profit: totalBack - equity,
-    avgCoc: equity > 0 ? totalCf / N / equity : NaN, minDscr: Math.min(...hold.map(y => y.dscr)),
+    avgCoc: equity > 0 ? hold.reduce((s, y) => s + y.cf, 0) / N / equity : NaN, minDscr: Math.min(...hold.map(y => y.dscr)),
     y1: {
       gpr: y1.gpr, egi: y1.egi, opex: y1.opex, noi: y1.noi, noiBR: y1.noiBR, ds: y1.ds, cf: y1.cf, vacLoss: y1.vacLoss, oth: y1.oth, mgmt: y1.mgmt, res: y1.res,
       ltl: y1.ltl, conc: y1.conc, bad: y1.bad, nru: y1.nru, inPlace: inPlace1,
@@ -398,7 +466,7 @@ export function waterfall(p: Projection): WaterfallResult {
     const y = p.years[t - 1]
     b1 *= 1 + r1; b2 *= 1 + r2
     const amFee = Math.max(0, y.egi * w.amFee / 100)
-    let cash = y.cf - amFee
+    let cash = y.cf + y.refiCash - amFee
     let dispFee = 0
     if (t === N) { dispFee = p.salePrice * w.dispFee / 100; cash += p.proceeds - dispFee }
     let toLp = 0, toGp = 0, promote = 0

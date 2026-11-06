@@ -8,6 +8,7 @@ import { Card, Field, NumInput, Row } from "./ui"
 import type { SavedDeal } from "../lib/store"
 import CashFlowChart from "./CashFlowChart"
 import { CustomLinesCard } from "./CustomLines"
+import { DebtOptions } from "./DebtOptions"
 
 export interface PaneProps { d: Deal; p: Projection; set: (patch: Partial<Deal>) => void; mp: number }
 
@@ -28,7 +29,8 @@ export function SummaryPane({ d, p, mp }: PaneProps) {
             <Row label={`Loan fees (${d.loanFee}%)`} value={usd(p.fee)} />
             {d.capexUp > 0 && <Row label="Up front capex" value={usd(d.capexUp)} />}
             {p.va.upfront > 0 && <Row label="Renovation budget" value={usd(p.va.upfront)} />}
-            <Row label="Total uses" value={usd(d.price + p.closing + p.fee + (d.capexUp || 0) + p.va.upfront)} cls="total" />
+            {p.capCost > 0 && <Row label="Interest rate cap" value={usd(p.capCost)} />}
+            <Row label="Total uses" value={usd(d.price + p.closing + p.fee + (d.capexUp || 0) + p.va.upfront + p.capCost)} cls="total" />
             <tr className="head"><td>Sources</td><td /></tr>
             <Row label={`Loan (${d.price > 0 ? (p.loan / d.price * 100).toFixed(1) : d.ltv}% LTV${d.sizeMode === "lesser" ? `, ${p.sizing.binding} binds` : ""})`} value={usd(p.loan)} />
             <Row label="Equity" value={usd(p.equity)} />
@@ -276,15 +278,19 @@ export function FinancingPane({ d, p, set }: PaneProps) {
           </tbody></table>
         </Card>
       </div>
+      <DebtOptions d={d} p={p} set={set} mp={0} />
       <Card title="Loan schedule">
         <div className="overflow-x-auto"><table className="tbl">
-          <thead><tr><th>Year</th>{p.years.map(y => <th key={y.t}>{y.t}{y.t <= d.ioYrs ? " IO" : ""}</th>)}</tr></thead>
+          <thead><tr><th>Year</th>{p.years.map(y => <th key={y.t}>{y.t}{y.principal === 0 && y.ds > 0 ? " IO" : ""}{y.refiCash ? " refi" : ""}</th>)}</tr></thead>
           <tbody>
+            <tr><td>Interest rate</td>{p.years.map(y => <td key={y.t} className="num">{y.rate.toFixed(2)}%</td>)}</tr>
             {([["Debt service", "ds"], ["Interest", "interest"], ["Principal", "principal"], ["Ending balance", "endBal"]] as const).map(([l, k]) =>
               <tr key={k}><td>{l}</td>{p.years.map(y => <td key={y.t} className="num">{usd(y[k])}</td>)}</tr>)}
             <tr><td>DSCR</td>{p.years.map(y => <td key={y.t} className={`num ${y.dscr < d.minDscr ? "text-fail-600" : ""}`}>{xx(y.dscr)}</td>)}</tr>
+            {p.refi && <tr><td>Refinance net cash</td>{p.years.map(y => <td key={y.t} className="num">{y.refiCash ? usd(y.refiCash) : ""}</td>)}</tr>}
           </tbody>
         </table></div>
+        {p.prepayPenalty > 0 && <p className="note mt-2">Loan payoff at sale includes a {usd(p.prepayPenalty)} prepayment penalty.</p>}
       </Card>
     </div>
   )
@@ -336,6 +342,7 @@ export function ProjectionsPane({ d, p, set }: PaneProps) {
             {line("Reserves", y => usd(-y.res))}
             {line("Net operating income", y => usd(y.noi), "total")}
             {line("Debt service", y => usd(-y.ds), "", true)}
+            {p.refi && line("Refinance net cash", y => y.refiCash ? usd(y.refiCash) : "", "", true)}
             {d.custom.some(c => c.kind === "capex") && line("Capital expenditures", y => usd(-y.capex), "", true)}
             {line("Cash flow after debt", y => usd(y.cf), "total", true)}
             {line("DSCR", y => xx(y.dscr), "sub", true)}
@@ -456,7 +463,7 @@ export function DealsPane({ d, set, saved, cloud, onSave, onOpen, onDelete, onSa
         </Card>
       </div>
       <Card title="How the numbers are calculated">
-        <p className="note leading-relaxed">Gross potential rent is booked at market rent. EGI = GPR − loss to lease − vacancy − concessions − bad debt − non revenue units + other income. NOI = EGI − operating expenses; management is a % of EGI and reserves are per unit, so the NOI used for cap rate, DSCR and debt yield is after reserves (lender net cash flow). Property tax can step up to a reassessed amount in a chosen year. Loan amount is the LTV loan, or the lesser of the LTV, DSCR and debt yield loans when that sizing is chosen. Rent and other income grow by the yearly rent growth; taxes, insurance and other expenses grow at their own rates. Debt service is interest only during the interest only period, then a standard amortizing payment. Added lines flow into EGI, operating expenses, or capital below NOI by type. Cash flow = NOI − debt service − capital expenditures. Equity = down payment + closing costs + loan fees + up front capex. Sale price = exit year NOI ÷ exit cap; net proceeds = sale price − selling costs − loan payoff. IRR uses the equity outflow at purchase, each year's cash flow and the net proceeds in the final year. Equity multiple = total cash returned ÷ equity. Max price is the highest price where every buy box test still passes, holding everything else constant.</p>
+        <p className="note leading-relaxed">Gross potential rent is booked at market rent. EGI = GPR − loss to lease − vacancy − concessions − bad debt − non revenue units + other income. NOI = EGI − operating expenses; management is a % of EGI and reserves are per unit, so the NOI used for cap rate, DSCR and debt yield is after reserves (lender net cash flow). Property tax can step up to a reassessed amount in a chosen year. Loan amount is the LTV loan, or the lesser of the LTV, DSCR and debt yield loans when that sizing is chosen. Rent and other income grow by the yearly rent growth; taxes, insurance and other expenses grow at their own rates. Fixed debt service is interest only during the interest only period, then a standard amortizing payment; floating loans pay SOFR (capped at the strike if a cap is bought) plus the spread, interest only. A refinance values the property on the next year's NOI at the refinance cap, sizes the new loan on LTV and DSCR, and pays the net cash (or calls for cash) that year. Prepayment penalties are added to the loan payoff. Added lines flow into EGI, operating expenses, or capital below NOI by type. Cash flow = NOI − debt service − capital expenditures. Equity = down payment + closing costs + loan fees + up front capex + renovation budget (if raised up front) + rate cap. Sale price = exit year NOI ÷ exit cap; net proceeds = sale price − selling costs − loan payoff. IRR uses the equity outflow at purchase, each year's cash flow and the net proceeds in the final year. Equity multiple = total cash returned ÷ equity. Max price is the highest price where every buy box test still passes, holding everything else constant.</p>
       </Card>
     </div>
   )

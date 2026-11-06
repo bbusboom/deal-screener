@@ -1,7 +1,7 @@
 import { useState } from "react"
 import { stateBy, rentalTaxRate, DEFAULT_REASSESS } from "../lib/states"
 import {
-  BENCH, benchFlag, type Deal, type NumField, type Projection, type Scenario, type TestKey,
+  BENCH, benchFlag, STATUSES, type Deal, type NumField, type Projection, type Scenario, type TestKey,
   usd, pct, xx, project, waterfall, weighted, scenCases, defaultScen, avgGrowth, memo, tests, allPass, TEST_NAMES,
 } from "../lib/model"
 import { Card, Field, NumInput, Row } from "./ui"
@@ -471,6 +471,7 @@ export function DealsPane({ d, set, saved, cloud, onSave, onOpen, onDelete, onSa
           <p className="note mt-2">{cloud ? "Saved to your account, so they follow you to any device." : "Saved in this browser only. Sign in to keep deals in your account."}</p>
         </Card>
       </div>
+      <Pipeline d={d} set={set} saved={saved} onOpen={onOpen} />
       <Card title="How the numbers are calculated">
         <p className="note leading-relaxed">Gross potential rent is booked at market rent. EGI = GPR − loss to lease − vacancy − concessions − bad debt − non revenue units + other income. NOI = EGI − operating expenses; management is a % of EGI and reserves are per unit, so the NOI used for cap rate, DSCR and debt yield is after reserves (lender net cash flow). Property tax can step up to a reassessed amount in a chosen year. Loan amount is the LTV loan, or the lesser of the LTV, DSCR and debt yield loans when that sizing is chosen. Rent and other income grow by the yearly rent growth; taxes, insurance and other expenses grow at their own rates. Fixed debt service is interest only during the interest only period, then a standard amortizing payment; floating loans pay SOFR (capped at the strike if a cap is bought) plus the spread, interest only. A refinance values the property on the next year's NOI at the refinance cap, sizes the new loan on LTV and DSCR, and pays the net cash (or calls for cash) that year. Prepayment penalties are added to the loan payoff. Added lines flow into EGI, operating expenses, or capital below NOI by type. Cash flow = NOI − debt service − capital expenditures. Equity = down payment + closing costs + loan fees + up front capex + renovation budget (if raised up front) + rate cap. Sale price = exit year NOI ÷ exit cap; net proceeds = sale price − selling costs − loan payoff. IRR uses the equity outflow at purchase, each year's cash flow and the net proceeds in the final year. Equity multiple = total cash returned ÷ equity. Max price is the highest price where every buy box test still passes, holding everything else constant.</p>
       </Card>
@@ -479,3 +480,50 @@ export function DealsPane({ d, set, saved, cloud, onSave, onOpen, onDelete, onSa
 }
 
 export const failNames = (t: Partial<Record<TestKey, boolean>>) => (Object.entries(t) as [TestKey, boolean][]).filter(([, b]) => !b).map(([k]) => TEST_NAMES[k])
+
+/* ---------- Pipeline and compare ---------- */
+function Pipeline({ d, set, saved, onOpen }: { d: Deal; set: PaneProps["set"]; saved: SavedDeal[] | null; onOpen: (i: number) => void }) {
+  const [pick, setPick] = useState<string[]>([])
+  const [filter, setFilter] = useState("All")
+  const list = (saved || []).map((r, i) => ({ r, i, d: r.data, p: project(r.data) }))
+  const shown = list.filter(x => filter === "All" || (x.d.status || "Screening") === filter)
+  const cmp = list.filter(x => pick.includes(x.r.id))
+  const toggle = (id: string) => setPick(p => p.includes(id) ? p.filter(x => x !== id) : [...p, id].slice(-4))
+  const rows: [string, (x: typeof list[number]) => string][] = [
+    ["Status", x => x.d.status || "Screening"], ["Units", x => String(x.p.units)], ["Price", x => usd(x.d.price)], ["Price / unit", x => usd(x.p.y1.ppu)],
+    ["Year 1 NOI", x => usd(x.p.y1.noi)], ["Going in cap", x => pct(x.p.y1.cap)], ["Expense ratio", x => pct(x.p.y1.expRatio, 1)],
+    ["Loan", x => usd(x.p.loan)], ["DSCR, year 1", x => xx(x.p.y1.dscr)], ["Debt yield", x => pct(x.p.y1.debtYield)], ["Equity", x => usd(x.p.equity)],
+    ["Cash on cash, yr 1", x => pct(x.p.y1.coc)], ["Levered IRR", x => pct(x.p.irr)], ["Equity multiple", x => xx(x.p.em)],
+    ["Investor IRR", x => x.d.wf?.on ? pct(waterfall(x.p).lp.irr) : "n/a"], ["Buy box", x => allPass(tests(x.p, x.d)) ? "Pass" : "Fail"], ["Bid due", x => x.d.bidDue || ""],
+  ]
+  return (
+    <div className="grid gap-4 lg:grid-cols-[1fr_2fr]">
+      <Card title="This deal's pipeline status">
+        <div className="grid grid-cols-2 gap-3">
+          <Field label="Status"><select value={d.status} onChange={e => set({ status: e.target.value as Deal["status"] })}>{STATUSES.map(s => <option key={s}>{s}</option>)}</select></Field>
+          <Field label="Bid or LOI due"><input type="date" value={d.bidDue} onChange={e => set({ bidDue: e.target.value })} /></Field>
+        </div>
+        <Field label="Notes"><textarea rows={5} className="mt-1 w-full" value={d.notes} placeholder="Broker, call notes, diligence items, why you passed…" onChange={e => set({ notes: e.target.value })} /></Field>
+        <p className="note mt-2">Saved with the deal. Save the deal after changing it.</p>
+      </Card>
+      <Card title="Pipeline and side by side compare" right={
+        <select className="!w-auto" value={filter} onChange={e => setFilter(e.target.value)}><option>All</option>{STATUSES.map(s => <option key={s}>{s}</option>)}</select>}>
+        {!list.length ? <p className="note">Save a few deals to track them here and compare up to four side by side.</p> : <>
+          <div className="mb-3 flex flex-wrap gap-2">{STATUSES.map(s => { const n = list.filter(x => (x.d.status || "Screening") === s).length; return n ? <span key={s} className="rounded-full bg-slate-100 px-2.5 py-1 text-xs text-slate-600">{s}: <b>{n}</b></span> : null })}</div>
+          <table className="tbl">
+            <thead><tr><th className="w-6" /><th>Deal</th><th>Status</th><th>Bid due</th><th>IRR</th><th>Buy box</th><th /></tr></thead>
+            <tbody>{shown.map(x => { const ok = allPass(tests(x.p, x.d)); return (
+              <tr key={x.r.id}><td><input type="checkbox" className="!w-auto" checked={pick.includes(x.r.id)} onChange={() => toggle(x.r.id)} /></td>
+                <td>{x.r.name || "Untitled"}</td><td className="text-xs">{x.d.status || "Screening"}</td><td className="text-xs">{x.d.bidDue || ""}</td>
+                <td className="num">{pct(x.p.irr, 1)}</td><td className={`font-semibold ${ok ? "text-pass-600" : "text-fail-600"}`}>{ok ? "Pass" : "Fail"}</td>
+                <td><button className="btn !px-2 !py-0.5 text-xs" onClick={() => onOpen(x.i)}>Open</button></td></tr>) })}</tbody>
+          </table>
+          {cmp.length >= 2 ? <div className="mt-5 overflow-x-auto"><table className="tbl">
+            <thead><tr><th>Compare</th>{cmp.map(x => <th key={x.r.id}>{x.r.name || "Untitled"}</th>)}</tr></thead>
+            <tbody>{rows.map(([l, f]) => <tr key={l}><td>{l}</td>{cmp.map(x => <td key={x.r.id} className="num">{f(x)}</td>)}</tr>)}</tbody>
+          </table></div> : <p className="note mt-3">Tick two to four deals to compare them side by side.</p>}
+        </>}
+      </Card>
+    </div>
+  )
+}

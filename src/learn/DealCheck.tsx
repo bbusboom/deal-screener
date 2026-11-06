@@ -13,7 +13,7 @@ const writeAttempt = (a: Attempt | null) => { try { a ? sessionStorage.setItem(A
 const V = "!whitespace-normal text-right"
 const mmss = (s: number) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, "0")}`
 
-export default function DealCheck({ session, onOpenInPro }: { session: Session | null; onOpenInPro: (d: Deal) => void }) {
+export default function DealCheck({ session, onOpenInPro }: { session: Session | null; onOpenInPro?: (d: Deal) => void }) {
   const [attempt, setAttempt] = useState<Attempt | null>(readAttempt)
   const [result, setResult] = useState<CheckRecord | null>(null)
   const [history, setHistory] = useState<CheckRecord[]>([])
@@ -26,7 +26,7 @@ export default function DealCheck({ session, onOpenInPro }: { session: Session |
   if (attempt) {
     const c = CHECKS.find(x => x.id === attempt.id)
     if (c) return <Run c={c} a={attempt} session={session} onQuit={quit}
-      onOpen={() => { const a = { ...attempt, usedWorkspace: true }; writeAttempt(a); setAttempt(a); onOpenInPro({ ...c.deal, name: `Deal Check: ${c.title}` }) }}
+      onOpen={onOpenInPro && (() => { const a = { ...attempt, usedWorkspace: true }; writeAttempt(a); setAttempt(a); onOpenInPro({ ...c.deal, name: `Deal Check: ${c.title}` }) })}
       onDone={r => { writeAttempt(null); setAttempt(null); setResult(r) }} />
   }
 
@@ -35,7 +35,7 @@ export default function DealCheck({ session, onOpenInPro }: { session: Session |
       <div className="rounded-lg bg-brand-900 p-6 text-white md:p-8">
         <div className="text-xs font-semibold uppercase tracking-wider text-brand-100">Deal Check</div>
         <h1 className="mt-1 text-2xl font-bold md:text-3xl">Underwrite a deal against the clock</h1>
-        <p className="mt-2 max-w-2xl text-white/80">You get a broker package. Work out year one NOI, the cap rate and DSCR, then decide whether it clears the buy box. Use paper, a calculator or the Underwrite workspace. The clock runs until you submit, and your score and time are saved.</p>
+        <p className="mt-2 max-w-2xl text-white/80">You get a broker package. Work out year one NOI, the cap rate and DSCR, then decide whether it clears the buy box. Use paper, a calculator{onOpenInPro ? " or the Underwrite workspace" : ""}. The clock runs until you submit, and your score and time are saved.</p>
       </div>
       <div className="grid gap-4 md:grid-cols-3">
         {CHECKS.map(c => {
@@ -64,7 +64,7 @@ export default function DealCheck({ session, onOpenInPro }: { session: Session |
   )
 }
 
-function Run({ c, a, session, onQuit, onOpen, onDone }: { c: Check; a: Attempt; session: Session | null; onQuit: () => void; onOpen: () => void; onDone: (r: CheckRecord) => void }) {
+function Run({ c, a, session, onQuit, onOpen, onDone }: { c: Check; a: Attempt; session: Session | null; onQuit: () => void; onOpen?: () => void; onDone: (r: CheckRecord) => void }) {
   const [now, setNow] = useState(Date.now())
   useEffect(() => { const t = setInterval(() => setNow(Date.now()), 1000); return () => clearInterval(t) }, [])
   const [f, setF] = useState({ noi: "", cap: "", dscr: "", verdict: "" as "" | "clears" | "misses" })
@@ -137,10 +137,10 @@ function Run({ c, a, session, onQuit, onOpen, onDone }: { c: Check; a: Attempt; 
               <button className="btn btn-gold w-full" disabled={!ready || busy} onClick={submit}>{busy ? "Saving…" : "Submit and see the answer"}</button>
             </div>
           </Card>
-          <Card title="Want to use the workspace?">
+          {onOpen && <Card title="Want to use the workspace?">
             <p className="text-sm text-slate-600">Open this deal in Underwrite to work it there. The clock keeps running, and your result notes that you used the workspace. Come back to Learn › Deal Check to submit.</p>
             <button className="btn mt-3" onClick={onOpen}>Open in Underwrite</button>
-          </Card>
+          </Card>}
         </div>
       </div>
     </main>

@@ -3,7 +3,7 @@ import { signIn, signUp, resetPassword, updatePassword } from "../lib/store"
 
 type Mode = "signin" | "signup" | "forgot" | "newpass"
 
-export default function Auth({ initial = "signin", onDone, onBack, onSignedUp }: { initial?: Mode; onDone?: () => void; onBack?: () => void; onSignedUp?: () => void }) {
+export default function Auth({ initial = "signin", onDone, onBack, onSignedUp, app = false }: { initial?: Mode; onDone?: () => void; onBack?: () => void; onSignedUp?: () => void; app?: boolean }) {
   const [mode, setMode] = useState<Mode>(initial)
   const [email, setEmail] = useState("")
   const [username, setUsername] = useState("")
@@ -37,7 +37,7 @@ export default function Auth({ initial = "signin", onDone, onBack, onSignedUp }:
       <div className="w-full max-w-md">
         <div className="mb-6 flex items-center justify-center gap-2 text-white">
           <div className="grid h-10 w-10 place-items-center rounded-lg bg-white/15 font-bold">DS</div>
-          <div><div className="text-xl font-bold leading-tight">Deal Screener</div><div className="text-xs text-white/70">with Deal School AI</div></div>
+          <div><div className="text-xl font-bold leading-tight">{app ? "Deal School" : "Deal Screener"}</div><div className="text-xs text-white/70">{app ? "Same account as getdealscreener.com" : "with Deal School AI"}</div></div>
         </div>
         <form onSubmit={submit} className="rounded-lg bg-white p-6 shadow-xl">
           <h1 className="mb-4 text-lg font-bold">{title}</h1>

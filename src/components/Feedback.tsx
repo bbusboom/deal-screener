@@ -3,7 +3,7 @@ import type { Session } from "@supabase/supabase-js"
 import { sendFeedback } from "../lib/store"
 
 /** A small button in the corner of every page. Sends the comment with the page it came from. */
-export default function Feedback({ session, page }: { session: Session | null; page: string }) {
+export default function Feedback({ session, page, lift }: { session: Session | null; page: string; lift?: boolean }) {
   const [open, setOpen] = useState(false), [msg, setMsg] = useState(""), [state, setState] = useState<"" | "sending" | "sent">("")
   async function send() {
     if (!msg.trim()) return
@@ -13,7 +13,7 @@ export default function Feedback({ session, page }: { session: Session | null; p
     setTimeout(() => { setOpen(false); setState("") }, 1600)
   }
   return (
-    <div className="fixed bottom-4 right-4 z-40 print:hidden">
+    <div className={`fixed right-4 z-40 print:hidden ${lift ? "bottom-[calc(4.5rem+env(safe-area-inset-bottom))] sm:bottom-4" : "bottom-4"}`}>
       {open ? (
         <div className="w-[min(20rem,calc(100vw-2rem))] rounded-lg border border-[#e4e4de] bg-white p-4 shadow-lg">
           {state === "sent" ? <div className="py-6 text-center text-sm font-medium text-pass-600">Thanks, sent.</div> : <>

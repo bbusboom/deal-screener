@@ -25,7 +25,7 @@ export async function signUp(email: string, password: string, username: string) 
   const { data: free, error: e1 } = await supabase.rpc("username_available", { u })
   if (e1) throw new Error("Couldn't check that username. Try again.")
   if (!free) throw new Error("That username is taken.")
-  const { data, error } = await supabase.auth.signUp({ email, password, options: { data: { username: u }, emailRedirectTo: location.origin } })
+  const { data, error } = await supabase.auth.signUp({ email, password, options: { data: { username: u }, emailRedirectTo: location.origin + (location.pathname.startsWith("/learn") ? "/learn" : "") } })
   if (error) throw error
   return { needsConfirm: !data.session }
 }

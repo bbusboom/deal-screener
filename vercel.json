@@ -1,5 +1,12 @@
 {
   "functions": {
     "api/*.ts": { "maxDuration": 120 }
-  }
+  },
+  "rewrites": [
+    { "source": "/learn", "destination": "/learn.html" },
+    { "source": "/learn/(.*)", "destination": "/learn.html" }
+  ],
+  "headers": [
+    { "source": "/learn-sw.js", "headers": [{ "key": "Cache-Control", "value": "no-cache" }, { "key": "Service-Worker-Allowed", "value": "/learn" }] }
+  ]
 }

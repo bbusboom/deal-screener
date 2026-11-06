@@ -1,3 +1,4 @@
+import { Icon } from "./components/Icons"
 import { useEffect, useState } from "react"
 import type { Session } from "@supabase/supabase-js"
 import { supabase, accountsEnabled, getSession, getProfile, setPath, signOut, type Path, type Profile } from "./lib/store"
@@ -58,26 +59,26 @@ export default function App() {
   const name = profile?.username || session?.user.email || null
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <header className="sticky top-0 z-20 border-b border-slate-200 bg-white/95 backdrop-blur">
+    <div className="min-h-screen">
+      <header className="sticky top-0 z-20 border-b border-white/10 bg-night/95 text-white backdrop-blur-xl">
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-3 px-4 md:px-8">
-          <div className="flex items-center gap-2">
-            <div className="grid h-8 w-8 place-items-center rounded-lg bg-brand-600 text-sm font-bold text-white">DS</div>
-            <div className="leading-tight"><div className="font-bold">Deal Screener</div><div className="hidden text-[11px] text-slate-400 sm:block">v1.0 · Pro underwriting</div></div>
+          <div className="flex items-center gap-2.5">
+            <div className="grid h-9 w-9 place-items-center rounded-xl bg-gradient-to-br from-gold-300 to-gold-500 text-sm font-bold text-[#1a1030] shadow-glow">DS</div>
+            <div className="leading-tight"><div className="font-bold">Deal Screener</div><div className="hidden text-[11px] text-white/50 sm:block">with Deal School AI</div></div>
           </div>
           {path && !choosing && (
-            <div className="flex rounded-lg bg-slate-100 p-1 text-sm font-semibold">
+            <div className="flex rounded-full border border-white/10 bg-white/5 p-1 text-sm font-semibold">
               {(["learner", "pro"] as Path[]).map(p => (
-                <button key={p} onClick={() => pick(p)} className={`rounded-md px-3 py-1.5 transition ${path === p ? "bg-white text-brand-600 shadow-sm" : "text-slate-500 hover:text-ink"}`}>
+                <button key={p} onClick={() => pick(p)} className={`rounded-full px-4 py-1.5 transition ${path === p ? "bg-white text-brand-900 shadow" : "text-white/60 hover:text-white"}`}>
                   {p === "learner" ? "Learn" : "Underwrite"}
                 </button>))}
             </div>)}
           <div className="flex items-center gap-3 text-sm">
-            <label className="hidden items-center gap-1.5 text-xs text-slate-500 lg:flex" title="Your home state sets the default for taxes, rent rules and policy">
-              Home state <StateSelect className="!py-1 !text-xs" value={homeState} onChange={v => setHomeState(session, v)} />
+            <label className="hidden items-center gap-1.5 text-xs text-white/50 lg:flex" title="Your home state sets the default for taxes, rent rules and policy">
+              Home state <StateSelect className="select-dark !py-1 !text-xs" value={homeState} onChange={v => setHomeState(session, v)} />
             </label>
-            {name && <span className="hidden text-slate-500 md:inline">{name}</span>}
-            {accountsEnabled ? <button className="btn" onClick={() => signOut()}>Sign out</button> : <span className="note hidden md:inline">Accounts not set up</span>}
+            {name && <span className="hidden text-white/60 md:inline">{name}</span>}
+            {accountsEnabled ? <button className="btn btn-ghost" onClick={() => signOut()}>Sign out</button> : <span className="hidden text-xs text-white/40 md:inline">Accounts not set up</span>}
           </div>
         </div>
       </header>
@@ -85,16 +86,20 @@ export default function App() {
       {!path || choosing ? <PathPicker username={profile?.username} current={path} onPick={pick} />
         : path === "learner" ? (
           <>
-            <div className="border-b border-slate-200 bg-white"><div className="mx-auto flex max-w-7xl gap-1 px-4 md:px-8">
-              {([["course", "Course"], ["challenges", "Challenges"], ["practice", "Practice a deal"]] as const).map(([k, label]) => (
-                <button key={k} onClick={() => setLearnTab(k)} className={`border-b-2 px-3 py-2.5 text-sm font-semibold ${learnTab === k ? "border-brand-600 text-brand-600" : "border-transparent text-slate-500 hover:text-ink"}`}>{label}</button>))}
-            </div></div>
+            <div className="relative overflow-hidden bg-night text-white">
+              <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(600px_200px_at_10%_0%,rgba(139,61,255,.30),transparent_70%),radial-gradient(500px_200px_at_95%_10%,rgba(255,179,107,.18),transparent_70%)]" />
+              <div className="relative mx-auto flex max-w-7xl gap-1 overflow-x-auto px-4 pt-3 md:px-8">
+                {([["course", "Course", Icon.course], ["challenges", "Challenges", Icon.challenge], ["practice", "Practice a deal", Icon.practice]] as const).map(([k, label, ic]) => (
+                  <button key={k} onClick={() => setLearnTab(k)} className={`group flex items-center gap-2 whitespace-nowrap rounded-t-xl px-4 py-2.5 text-sm font-semibold transition ${learnTab === k ? "bg-[#f3f5fb] text-brand-900" : "text-white/65 hover:bg-white/5 hover:text-white"}`}>
+                    <span className={learnTab === k ? "text-brand-600" : "text-white/45 group-hover:text-gold-300"}>{ic("h-4 w-4")}</span>{label}</button>))}
+              </div>
+            </div>
             {learnTab === "course" ? <Course session={session} onPractice={() => setLearnTab("practice")} /> : learnTab === "challenges" ? <Challenges session={session} /> : <LearnerApp session={session} toast={setToast} onOpenInPro={openInPro} />}
           </>)
         : <ProWorkspace key={proKey} session={session} toast={setToast} />}
 
       <footer className="mx-auto max-w-7xl px-4 pb-8 pt-4 text-xs text-slate-400 md:px-8">Screening and learning tool, not investment advice. Verify rent roll, T12, taxes after sale and insurance quotes.</footer>
-      {toast && <div className="fixed bottom-5 left-1/2 z-30 -translate-x-1/2 rounded-lg bg-ink px-4 py-2 text-sm text-white shadow-lg">{toast}</div>}
+      {toast && <div className="fixed bottom-5 left-1/2 z-30 -translate-x-1/2 rounded-full border border-white/10 bg-night px-5 py-2.5 text-sm text-white shadow-lift">{toast}</div>}
     </div>
   )
 }

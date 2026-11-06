@@ -83,7 +83,7 @@ export function StatementPane({ d, p, set }: PaneProps) {
           <button className="btn" onClick={snapshot} title="Copy the current underwriting into the Seller T12 column, as a starting point to edit">Fill T12 from inputs</button>
           {(has12 || has3) && <button className="btn" onClick={() => set({ t12: undefined, t3: undefined })}>Clear seller columns</button>}
         </div>}>
-        <p className="note mb-3">Enter the seller's trailing 12 months and the last 3 months annualized (× 4) as positive numbers. Importing a T12 on the Documents tab fills the first column. Shaded lines are where your underwriting is more optimistic than the seller's actuals: be ready to defend each one.</p>
+        <p className="note mb-3">Enter the seller's trailing 12 months and the last 3 months annualized (× 4) as positive numbers. Importing a T12 under Property › Documents fills the first column. Shaded lines are where your underwriting is more optimistic than the seller's actuals: be ready to defend each one.</p>
         <div className="overflow-x-auto"><table className="tbl">
           <thead><tr><th className="min-w-[200px]">Annual</th><th>Seller T12</th><th>T3 annualized</th><th>Underwritten yr 1</th>{showPU && <th>$/unit</th>}{showPU && <th>% EGI</th>}<th>UW − T12</th></tr></thead>
           <tbody>

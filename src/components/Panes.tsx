@@ -220,7 +220,7 @@ export function ExpensesPane({ d, p, set }: PaneProps) {
             <div className="grid grid-cols-3 gap-3">
               <Field label="Price ($)"><NumInput value={d.price} disabled onChange={() => {}} /></Field>
               <Field label="Assessment ratio (%)" hint="Share of value that is taxed."><NumInput value={ratio} step={1} onChange={setRatio} /></Field>
-              <Field label="Millage (per $1,000)" hint={st ? `Starting point from ${st.name} rentals.` : "Set your state on the Market tab."}><NumInput value={mills} step={0.5} onChange={setMills} /></Field>
+              <Field label="Millage (per $1,000)" hint={st ? `Starting point from ${st.name} rentals.` : "Set your state under Market › Location."}><NumInput value={mills} step={0.5} onChange={setMills} /></Field>
             </div>
             <p className="mt-3 text-sm">Estimated tax on your price: <b>{usd(calcTax)}</b> ({usd(calcTax / u)}/unit) vs. the {usd(d.tax)} in your model{d.tax > 0 && calcTax > d.tax * 1.1 ? <span className="text-fail-600">, {pct(calcTax / d.tax - 1, 0)} higher</span> : ""}.</p>
             <div className="mt-3 flex flex-wrap gap-2">

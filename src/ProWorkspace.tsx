@@ -1,8 +1,10 @@
+import type React from "react"
 import { useEffect, useMemo, useState } from "react"
 import type { Session } from "@supabase/supabase-js"
 import { type Deal, DEFAULTS, SAMPLE, norm, project, tests, allPass, maxPrice, usd, pct, xx } from "./lib/model"
 import { listDeals, saveDeal, deleteDeal, type SavedDeal } from "./lib/store"
 import { Kpi } from "./components/ui"
+import { Icon } from "./components/Icons"
 import { StatementPane } from "./components/StatementPane"
 import { ValueAddPane, InvestorsPane } from "./components/ValueAddPane"
 import { CompsPane } from "./components/CompsPane"
@@ -12,11 +14,21 @@ import ImportPane from "./components/ImportPane"
 import MarketPane from "./components/MarketPane"
 import { getHomeState } from "./lib/market"
 
-const TABS = [
-  ["summary", "Summary"], ["documents", "Documents"], ["market", "Market"], ["income", "Income"], ["expenses", "Expenses"], ["statement", "Statement"], ["valueadd", "Value Add"], ["comps", "Comps"], ["financing", "Financing"], ["investors", "Investors"],
-  ["projections", "Projections"], ["scenarios", "Scenarios"], ["ai", "Deal School AI"], ["deals", "Deals"],
+/** Workspace sections, each with its own pages. Page keys are also the URL hash, so old links keep working. */
+const SECTIONS = [
+  { key: "overview", label: "Overview", icon: Icon.overview, pages: [["summary", "Summary"]] },
+  { key: "property", label: "Property", icon: Icon.property, pages: [["income", "Rent & income"], ["expenses", "Expenses"], ["valueadd", "Value add"], ["documents", "Documents"]] },
+  { key: "market", label: "Market", icon: Icon.market, pages: [["market", "Location"], ["comps", "Comps"]] },
+  { key: "financials", label: "Financials", icon: Icon.financials, pages: [["statement", "Operating statement"], ["projections", "Projections"], ["scenarios", "Scenarios"]] },
+  { key: "capital", label: "Capital", icon: Icon.capital, pages: [["financing", "Debt"], ["investors", "Investors"]] },
+  { key: "advisor", label: "Advisor", icon: Icon.advisor, pages: [["ai", "Deal School AI"]] },
+  { key: "pipeline", label: "Pipeline", icon: Icon.pipeline, pages: [["deals", "Deals & buy box"]] },
 ] as const
-type Tab = typeof TABS[number][0]
+type Tab = "summary" | "income" | "expenses" | "valueadd" | "documents" | "market" | "comps" | "statement" | "projections" | "scenarios" | "financing" | "investors" | "ai" | "deals"
+type Section = { key: string; label: string; icon: (c?: string) => React.ReactElement; pages: readonly (readonly [Tab, string])[] }
+const SECS: readonly Section[] = SECTIONS
+const TABS = SECS.flatMap(s => s.pages)
+const sectionOf = (t: Tab) => SECS.find(s => s.pages.some(p => p[0] === t))!
 
 const CURRENT_KEY = "dealScreener.current.v1"
 function load<T>(key: string, fallback: T): T { try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : fallback } catch { return fallback } }
@@ -40,6 +52,9 @@ export default function ProWorkspace({ session, toast }: { session: Session | nu
   const valid = p.units > 0 && deal.price > 0
   const mp = useMemo(() => valid ? maxPrice(deal) : NaN, [deal, valid])
   const ok = allPass(t)
+  const sec = sectionOf(tab)
+  const [lastPage, setLastPage] = useState<Record<string, Tab>>({})
+  useEffect(() => { setLastPage(m => ({ ...m, [sec.key]: tab })) }, [tab])
   const go = (k: Tab) => { history.replaceState(null, "", "#" + k); setTab(k) }
   const pane = { d: deal, p, set, mp }
 
@@ -50,48 +65,68 @@ export default function ProWorkspace({ session, toast }: { session: Session | nu
 
   return (
     <>
-      <div className="border-b border-slate-200 bg-white">
-        <div className="mx-auto max-w-7xl px-4 pt-4 md:px-8">
-          <div className="flex flex-wrap items-center gap-2">
-            <input className="w-full max-w-md font-semibold" placeholder="Deal name" value={deal.name} onChange={e => set({ name: e.target.value })} />
-            <button className="btn btn-primary" onClick={save}>{dealId ? "Save" : "Save deal"}</button>
-            <button className="btn" onClick={() => { setDeal(norm({ ...DEFAULTS, state: getHomeState() })); setDealId(undefined); go("documents") }}>New deal</button>
+      <div className="relative overflow-hidden bg-night text-white">
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(600px_220px_at_10%_0%,rgba(79,107,237,.35),transparent_70%),radial-gradient(500px_200px_at_95%_10%,rgba(255,138,61,.18),transparent_70%)]" />
+        <div className="relative mx-auto max-w-7xl px-4 pt-5 md:px-8">
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="min-w-0 basis-full sm:basis-0 sm:flex-1">
+              <div className="text-[11px] font-semibold uppercase tracking-[.18em] text-gold-300">Underwriting workspace</div>
+              <input className="mt-0.5 w-full max-w-xl border-0 !bg-transparent px-0 font-display text-2xl font-semibold text-white shadow-none !ring-0 placeholder:text-white/30 md:text-3xl" placeholder="Name this deal" value={deal.name} onChange={e => set({ name: e.target.value })} />
+            </div>
+            <button className="btn btn-gold" onClick={save}>{dealId ? "Save" : "Save deal"}</button>
+            <button className="btn btn-ghost" onClick={() => { setDeal(norm({ ...DEFAULTS, state: getHomeState() })); setDealId(undefined); go("documents") }}>New deal</button>
           </div>
-          <nav className="-mb-px mt-3 flex gap-0.5 overflow-x-auto">
-            {TABS.map(([k, label]) => (
-              <button key={k} onClick={() => go(k)}
-                className={`whitespace-nowrap border-b-2 px-2 py-2.5 text-[13.5px] font-semibold transition ${tab === k ? "border-brand-600 text-brand-600" : "border-transparent text-slate-500 hover:text-ink"}`}>
-                {label}
-              </button>))}
+          <nav className="mt-4 flex gap-1 overflow-x-auto">
+            {SECS.map(s => { const on = s.key === sec.key; return (
+              <button key={s.key} onClick={() => go((lastPage[s.key] || s.pages[0][0]) as Tab)}
+                className={`group relative flex items-center gap-2 whitespace-nowrap rounded-t-xl px-4 py-2.5 text-sm font-semibold transition ${on ? "bg-[#f3f5fb] text-brand-900" : "text-white/65 hover:bg-white/5 hover:text-white"}`}>
+                <span className={on ? "text-brand-600" : "text-white/45 group-hover:text-gold-300"}>{s.icon("h-4 w-4")}</span>{s.label}
+              </button>) })}
           </nav>
         </div>
       </div>
+      {sec.pages.length > 1 && (
+        <div className="mx-auto max-w-7xl px-4 pt-4 md:px-8">
+          <div className="inline-flex flex-wrap gap-1 rounded-xl border border-slate-200/80 bg-white p-1 shadow-card">
+            {sec.pages.map(([k, label]) => (
+              <button key={k} onClick={() => go(k as Tab)} className={`rounded-lg px-3.5 py-1.5 text-sm font-medium transition ${tab === k ? "bg-brand-900 text-white shadow" : "text-slate-500 hover:bg-slate-50 hover:text-ink"}`}>{label}</button>))}
+          </div>
+        </div>)}
 
       <main className="mx-auto max-w-7xl space-y-4 px-4 py-5 md:px-8">
         {!valid ? (
-          <div className="rounded-xl border border-brand-100 bg-brand-50 px-5 py-4 text-brand-700">
-            <div className="text-lg font-bold">Enter a price and unit mix</div>
-            <div className="text-sm">Upload a rent roll, T12 or offering memo on Import Documents, enter it on Property &amp; Income, or load the sample deal from Buy Box &amp; Deals.</div>
+          <div className="card border-brand-100 bg-brand-50/60">
+            <div className="font-display text-xl font-semibold text-brand-900">Start with a price and a unit mix</div>
+            <div className="mt-1 text-sm text-slate-600">Upload a rent roll, T12 or offering memo under Property › Documents, type it in under Property › Rent &amp; income, or load the sample deal from Pipeline.</div>
           </div>
         ) : (
-          <div className={`rounded-xl border px-5 py-4 ${ok ? "border-pass-600/30 bg-pass-50 text-pass-600" : "border-fail-600/30 bg-fail-50 text-fail-600"}`}>
-            <div className="text-lg font-bold">{ok ? "Clears the buy box" : "Does not clear the buy box"}</div>
-            <div className="text-sm text-ink/80">
-              {ok ? "Every test passes at the asking price." : `Short on ${failNames(t).join(", ")}.`}{" "}
-              {isFinite(mp) ? <>Max price that passes every test: <b>{usd(mp)}</b> ({usd(mp / p.units)}/unit, {pct(mp / deal.price - 1, 1)} vs asking).</> : "No price passes every test with these terms."}
+          <div className={`card relative overflow-hidden !p-0`}>
+            <div className={`absolute inset-y-0 left-0 w-1.5 ${ok ? "bg-gradient-to-b from-pass-500 to-emerald-300" : "bg-gradient-to-b from-fail-500 to-gold-400"}`} />
+            <div className="flex flex-wrap items-center gap-x-6 gap-y-2 px-6 py-4">
+              <div className="flex items-center gap-3">
+                <span className={`grid h-9 w-9 place-items-center rounded-full ${ok ? "bg-pass-50 text-pass-600" : "bg-fail-50 text-fail-600"}`}>{ok ? Icon.check("h-5 w-5") : Icon.x("h-5 w-5")}</span>
+                <div>
+                  <div className="font-display text-lg font-semibold leading-tight">{ok ? "Clears your buy box" : "Doesn't clear your buy box"}</div>
+                  <div className="text-sm text-slate-500">{ok ? "Every test passes at the asking price." : `Short on ${failNames(t).join(", ")}.`}</div>
+                </div>
+              </div>
+              <div className="ml-auto text-right">
+                <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">Max price that passes every test</div>
+                <div className="num text-lg font-semibold text-brand-900">{isFinite(mp) ? <>{usd(mp)} <span className={`chip ${mp >= deal.price ? "bg-pass-50 text-pass-600" : "bg-gold-100 text-gold-700"}`}>{pct(mp / deal.price - 1, 1)} vs asking</span></> : "No price works"}</div>
+              </div>
             </div>
           </div>
         )}
 
         {valid && (
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-7">
-            <Kpi label="Price / unit" value={usd(p.y1.ppu)} tag={`${p.units} units`} />
-            <Kpi label="NOI, year 1" value={usd(p.y1.noi)} tag={`expense ratio ${pct(p.y1.expRatio, 1)}`} />
+            <Kpi label="Per unit" value={usd(p.y1.ppu)} tag={`${p.units} units`} />
+            <Kpi label="NOI" value={usd(p.y1.noi)} tag={`yr 1 · ${pct(p.y1.expRatio, 0)} exp ratio`} />
             <Kpi label="Cap rate" value={pct(p.y1.cap)} tag={`min ${deal.minCap}%`} state={t.cap} />
-            <Kpi label="DSCR, year 1" value={xx(p.y1.dscr)} tag={`min ${deal.minDscr}x`} state={t.dscr} />
-            <Kpi label="Cash on cash, yr 1" value={pct(p.y1.coc)} tag={`min ${deal.minCoc}%`} state={t.coc} />
-            <Kpi label="IRR" value={pct(p.irr)} tag={`${deal.hold} yr hold, min ${deal.minIrr}%`} state={t.irr} />
-            <Kpi label="Equity multiple" value={xx(p.em)} tag={`min ${deal.minEm}x`} state={t.em} />
+            <Kpi label="DSCR" value={xx(p.y1.dscr)} tag={`yr 1 · min ${deal.minDscr}x`} state={t.dscr} />
+            <Kpi label="Cash on cash" value={pct(p.y1.coc)} tag={`yr 1 · min ${deal.minCoc}%`} state={t.coc} />
+            <Kpi label="IRR" value={pct(p.irr)} tag={`${deal.hold} yr · min ${deal.minIrr}%`} state={t.irr} />
+            <Kpi label="Multiple" value={xx(p.em)} tag={`min ${deal.minEm}x`} state={t.em} />
           </div>
         )}
 

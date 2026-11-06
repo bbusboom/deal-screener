@@ -323,7 +323,7 @@ export const COURSE: Module[] = [
           { t: "p", text: "Politics third. Governors, legislatures, city councils and voters keep changing these rules: tax caps, eviction timelines, rent limits, insurance rules. Owner groups such as the Texas Apartment Association and the California Apartment Association lobby for owners; tenant advocacy groups push the other way. A good underwriter doesn't pick a side. They track what's in force, what's proposed and how likely it is to pass, then test the deal with and without it." },
           { t: "state" },
           { t: "terms", items: [["Effective tax rate", "Yearly property tax divided by the property's value."], ["Reassessment", "The county updating a property's taxable value, often after a sale."], ["Preemption", "A state law that stops cities from passing their own rules, such as rent control."], ["Rent stabilization", "A limit on how much rent on an existing unit can rise each year."]] },
-          { t: "tip", text: "On the Underwrite side, the Market tab runs these checks on your deal, pulls neighborhood data by ZIP, and can write a current policy briefing for the property's state." },
+          { t: "tip", text: "On the Underwrite side, Market › Location runs these checks on your deal, pulls neighborhood data by ZIP, and can write a current policy briefing for the property's state." },
         ],
       },
     ],
@@ -371,7 +371,7 @@ export const COURSE: Module[] = [
           { t: "p", text: "Economic occupancy (rent collected ÷ potential) is the number that matters. A building can be 96% leased and still collect only 88% of its potential." },
           { t: "p", text: "NOI vs NCF: brokers quote cap rates on NOI before replacement reserves. Lenders size loans on net cash flow, which is NOI after reserves. With $150,000 of NOI and $300 per unit of reserves on 20 units, NCF is $144,000. At a $2,000,000 price that's a 7.5% cap on NOI or a 7.2% cap on NCF: same building, two numbers." },
           { t: "terms", items: [["T3 annualized", "The last three months of income or expense multiplied by four, to show the current run rate."], ["Loss to lease", "Market rent minus in place rent, summed across units. It burns off as leases renew at market."], ["Economic occupancy", "Rent actually collected as a share of gross potential rent."], ["Net cash flow (NCF)", "NOI after replacement reserves; what lenders use for DSCR and debt yield."]] },
-          { t: "tip", text: "In the Underwrite workspace, the Statement tab builds this three column view and shades every line where your underwriting beats the seller's actuals." },
+          { t: "tip", text: "In the Underwrite workspace, Financials › Operating statement builds this three column view and shades every line where your underwriting beats the seller's actuals." },
         ],
       },
       {
@@ -382,7 +382,7 @@ export const COURSE: Module[] = [
           { t: "p", text: "Fixed rate loans (agency, bank, life company) have steady payments but often carry yield maintenance: a prepayment penalty equal to the lender's lost interest. Paying off $1,000,000 at 6.5% with four years left, when Treasuries yield 4.25%, costs about $81,000. Floating rate bridge loans pay SOFR plus a spread, are usually interest only, and require a rate cap that limits how high SOFR can go." },
           { t: "p", text: "The refinance trap: a buyer pays $10,000,000 for a building with $500,000 of NOI (a 5% cap) using an $8,000,000 bridge loan. Two years later NOI is $540,000, but cap rates have risen to 6%, so the building is worth $9,000,000. A 65% LTV permanent loan is only $5,850,000. The owners must bring about $2,150,000 of new cash to refinance. Many 2021 and 2022 bridge deals ran into exactly this." },
           { t: "terms", items: [["Loan constant", "Annual debt service per dollar of loan; 7.58% for a 6.5%, 30 year loan."], ["Yield maintenance", "A prepayment penalty that pays the lender the interest it loses when a fixed loan is paid off early."], ["Rate cap", "A contract bought at closing that pays the borrower if SOFR rises above a strike rate."], ["Bridge loan", "Short term, usually floating rate, interest only debt used to buy and reposition a property."]] },
-          { t: "tip", text: "The Financing tab sizes the loan three ways, models floating rates with a cap, prepayment penalties and a refinance in any year, and warns you when a refinance needs cash in." },
+          { t: "tip", text: "Capital › Debt sizes the loan three ways, models floating rates with a cap, prepayment penalties and a refinance in any year, and warns you when a refinance needs cash in." },
         ],
       },
       {
@@ -392,7 +392,7 @@ export const COURSE: Module[] = [
           { t: "example", title: "One unit", rows: [["Renovation cost", "$8,000"], ["Rent premium", "$100 a month = $1,200 a year"], ["Return on cost", "15%", true], ["Value created at a 6% cap: $1,200 ÷ 0.06", "$20,000"], ["Value per $1 spent", "2.5x", true]] },
           { t: "p", text: "Most sponsors want a return on cost of at least 15%. Below about 12%, the work isn't worth the risk. Prove the premium with renovated comps nearby, not the seller's projections." },
           { t: "p", text: "Don't forget the cost of doing the work: each unit sits empty for a few weeks, so year 1 income usually drops before it rises, and DSCR can dip below what a permanent lender allows. That's why renovations are often financed with bridge loans or a lender holdback." },
-          { t: "tip", text: "The Value Add tab builds a month by month renovation schedule and shows the before and after NOI, IRR and DSCR." },
+          { t: "tip", text: "Property › Value add builds a month by month renovation schedule and shows the before and after NOI, IRR and DSCR." },
         ],
       },
       {
@@ -403,7 +403,7 @@ export const COURSE: Module[] = [
           { t: "example", title: "$1,000,000 of equity: LPs $900,000, GP $100,000, 8% pref", rows: [["First $80,000 a year (the pref) to LPs", "$72,000"], ["First $80,000 a year to the GP", "$8,000"], ["Next $100,000 of profit, split 70/30: LPs", "$70,000"], ["Same $100,000: GP", "$30,000"], ["GP's pro rata share would have been", "$10,000"], ["Promote earned by the GP", "$20,000", true]] },
           { t: "p", text: "Sponsors also charge fees: an acquisition fee (1 to 3% of the price), an asset management fee (1 to 2% of income) and sometimes a disposition fee at sale. As an investor, compare the deal level IRR with the LP IRR after fees and promote. The gap is the price of the sponsor's work." },
           { t: "terms", items: [["GP / LP", "General partner (the sponsor who runs the deal) and limited partners (passive investors)."], ["Preferred return", "The return investors receive before the sponsor shares in profits."], ["Promote", "The sponsor's share of profits above its share of the equity; its reward for performance."], ["Hurdle", "An IRR level that changes the split once investors reach it."]] },
-          { t: "tip", text: "Turn on Syndication on the Investors tab to see LP and GP returns, fees and promote year by year." },
+          { t: "tip", text: "Turn on Syndication under Capital › Investors to see LP and GP returns, fees and promote year by year." },
         ],
       },
       {
@@ -412,7 +412,7 @@ export const COURSE: Module[] = [
           { t: "p", text: "Sale comps tell you what buyers pay per unit and at what cap rate. Broker cap rates are usually on the seller's trailing NOI before reserves, so compare your price against them on the same basis." },
           { t: "p", text: "The exit cap is the cap rate a future buyer will pay. Professionals set it above the going in cap, about 5 to 10 basis points per year of hold (25 to 75 bps), because the building will be older and rates may be higher. Every 50 bps of exit cap moves the sale price 7 to 9%." },
           { t: "example", title: "Exit cap sensitivity on $400,000 of exit NOI", rows: [["At a 6.0% cap", "$6,666,667"], ["At a 6.5% cap", "$6,153,846"], ["Difference", "−$512,821 (−7.7%)", true]] },
-          { t: "tip", text: "The Comps tab compares your rents and price with comps and can set the exit cap to the comp average plus the hold cushion in one click." },
+          { t: "tip", text: "Market › Comps compares your rents and price with comps and can set the exit cap to the comp average plus the hold cushion in one click." },
         ],
       },
     ],

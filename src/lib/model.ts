@@ -8,6 +8,12 @@ export interface UnitType {
   sf?: number
 }
 export interface OtherItem { label: string; amt: number }
+/** A user added line: income, operating expense, or capital item below NOI. */
+export type CustomKind = "income" | "expense" | "capex"
+/** year = $ per year, unitMonth = $ per unit per month, pctGpr / pctEgi = % of gross potential rent / effective gross income, once = one time $ in the start year. */
+export type CustomBasis = "year" | "unitMonth" | "pctGpr" | "pctEgi" | "once"
+export interface CustomLine { label: string; kind: CustomKind; basis: CustomBasis; amt: number; growth: number; start: number; end: number }
+export const BASIS_LABEL: Record<CustomBasis, string> = { year: "$ per year", unitMonth: "$ / unit / month", pctGpr: "% of GPR", pctEgi: "% of EGI", once: "one time $" }
 /** A statement column (seller T12 or T3 annualized): annual dollars by line. */
 export type StatementCol = Partial<Record<StatementKey, number>>
 export const STATEMENT_KEYS = ["gpr","ltl","vac","conc","bad","nru","other","tax","ins","util","rm","pay","adm","contract","turn","mkt","mgmt","res"] as const
@@ -41,6 +47,8 @@ export interface Deal {
   rg: number[]
   units: UnitType[]
   scen: Scenario[]
+  /** User added income, expense and capital lines. */
+  custom: CustomLine[]
   /** Seller's trailing 12 months and trailing 3 months annualized, for the operating statement. */
   t12?: StatementCol; t3?: StatementCol
 }
@@ -57,6 +65,7 @@ export const DEFAULTS: Deal = {
   name: "", price: 0, cc: 2.5, other: 0, vac: 7, conc: 0, bad: 0, nru: 0, ltlBurn: 0, otherItems: [],
   tax: 0, ins: 0, util: 0, rm: 0, pay: 0, adm: 0, contract: 0, turn: 0, mkt: 0, mgmt: 5, res: 300,
   taxNew: 0, taxResetYr: 0, capexUp: 0,
+  custom: [],
   ltv: 70, rate: 6.5, amort: 30, ioYrs: 0, loanFee: 1, term: 10, sizeMode: "ltv", sizeDscr: 1.25, sizeDy: 8, hold: 7, expG: 3, taxG: 3, insG: 5, exitCap: 6.5, sellCost: 2,
   minCap: 6, minDscr: 1.25, minCoc: 6, minIrr: 12, minEm: 1.6,
   rg: [], units: [{ type: "1 bed", count: 0, rent: 0 }], scen: [],
@@ -89,6 +98,11 @@ export function norm(input: Partial<Deal> & { io?: string } = {}): Deal {
   d.rg = d.rg.slice(0, d.hold).map((v: any) => Number(v) || 0)
   if (!Array.isArray(d.units) || !d.units.length) d.units = [{ type: "", count: 0, rent: 0 }]
   d.units = d.units.map((u: any) => ({ type: String(u.type ?? ""), count: Number(u.count) || 0, rent: Number(u.rent) || 0, market: Number(u.market) || 0, sf: Number(u.sf) || 0 }))
+  if (!Array.isArray(d.custom)) d.custom = []
+  d.custom = d.custom.map((c: any) => ({
+    label: String(c.label ?? ""), kind: ["income", "expense", "capex"].includes(c.kind) ? c.kind : "expense",
+    basis: ["year", "unitMonth", "pctGpr", "pctEgi", "once"].includes(c.basis) ? c.basis : "year",
+    amt: Number(c.amt) || 0, growth: isFinite(Number(c.growth)) ? Number(c.growth) : 3, start: Math.max(1, Math.round(Number(c.start) || 1)), end: Math.max(0, Math.round(Number(c.end) || 0)) }))
   if (!Array.isArray(d.otherItems)) d.otherItems = []
   d.otherItems = d.otherItems.map((o: any) => ({ label: String(o.label ?? ""), amt: Number(o.amt) || 0 }))
   if (d.otherItems.length) d.other = round2(d.otherItems.reduce((a: number, o: OtherItem) => a + o.amt, 0))
@@ -182,6 +196,8 @@ export interface YearRow {
   t: number; gpr: number; vacLoss: number; oth: number; egi: number
   /** Revenue deductions: loss to lease, concessions, bad debt, non-revenue units. */
   ltl: number; conc: number; bad: number; nru: number
+  /** Custom lines: total income, total operating expense, capital below NOI, and each line's value in d.custom order. */
+  custInc: number; custExp: number; capex: number; cust: number[]
   tax: number; ins: number; fixed: number; res: number; mgmt: number; opex: number
   /** noi is after replacement reserves (= lender net cash flow); noiBR is before reserves. */
   noi: number; noiBR: number
@@ -224,14 +240,27 @@ export function project(d0: Deal, o: Overrides = {}): Projection {
     const ltl = ltl1 * growth * burn
     const vacLoss = gpr * d.vac / 100, conc = gpr * (d.conc || 0) / 100, bad = gpr * (d.bad || 0) / 100
     const nru = (d.nru || 0) * avgMkt * growth
-    const egi = gpr - ltl - vacLoss - conc - bad - nru + oth
+    const cust = d.custom.map(() => 0)
+    const lineVal = (c: CustomLine, i: number, egiNow: number) => {
+      if (t < c.start || (c.end > 0 && t > c.end)) return 0
+      if (c.basis === "once") return t === c.start ? c.amt : 0
+      const g = Math.pow(1 + c.growth / 100, t - c.start)
+      const v = c.basis === "year" ? c.amt * g : c.basis === "unitMonth" ? c.amt * units * 12 * g
+        : c.basis === "pctGpr" ? gpr * c.amt / 100 : egiNow * c.amt / 100
+      return (cust[i] = v)
+    }
+    let custInc = 0
+    d.custom.forEach((c, i) => { if (c.kind === "income" && c.basis !== "pctEgi") { const v = lineVal(c, i, 0); cust[i] = v; custInc += v } })
+    const egi = gpr - ltl - vacLoss - conc - bad - nru + oth + custInc
+    let custExp = 0, capex = 0
+    d.custom.forEach((c, i) => { if (c.kind !== "income") { const v = lineVal(c, i, egi); cust[i] = v; if (c.kind === "expense") custExp += v; else capex += v } })
     const reset = d.taxResetYr > 0 && d.taxNew > 0 && t >= d.taxResetYr
     const tax = reset ? d.taxNew * Math.pow(1 + d.taxG / 100, t - d.taxResetYr) : d.tax * Math.pow(1 + d.taxG / 100, t - 1)
     const ins = d.ins * Math.pow(1 + d.insG / 100, t - 1)
     const fixed = fixed1 * Math.pow(1 + d.expG / 100, t - 1), res = d.res * units * Math.pow(1 + d.expG / 100, t - 1)
     const mgmt = egi * d.mgmt / 100
-    const opex = tax + ins + fixed + res + mgmt, noi = egi - opex
-    ops.push({ t, gpr, ltl, vacLoss, conc, bad, nru, oth, egi, tax, ins, fixed, res, mgmt, opex, noi, noiBR: noi + res })
+    const opex = tax + ins + fixed + res + mgmt + custExp, noi = egi - opex
+    ops.push({ t, gpr, ltl, vacLoss, conc, bad, nru, oth, custInc, custExp, capex, cust, egi, tax, ins, fixed, res, mgmt, opex, noi, noiBR: noi + res })
   }
 
   // Loan sizing: LTV, or the lesser of LTV, DSCR and debt yield (how agency and bank lenders actually size).
@@ -250,14 +279,14 @@ export function project(d0: Deal, o: Overrides = {}): Projection {
   const years: YearRow[] = ops.map(y => {
     const dy = debtYear(loan, d, y.t)
     return { ...y, ds: dy.ds, interest: dy.interest, principal: dy.principal, endBal: dy.endBal,
-      cf: y.noi - dy.ds, dscr: dy.ds > 0 ? y.noi / dy.ds : NaN, coc: equity > 0 ? (y.noi - dy.ds) / equity : NaN }
+      cf: y.noi - dy.ds - y.capex, dscr: dy.ds > 0 ? y.noi / dy.ds : NaN, coc: equity > 0 ? (y.noi - dy.ds - y.capex) / equity : NaN }
   })
   const hold = years.slice(0, N), exitYear = years[N], exitNoi = exitYear.noi
   const salePrice = d.exitCap > 0 ? exitNoi / (d.exitCap / 100) : NaN
   const sellCosts = salePrice * d.sellCost / 100, payoff = hold[N - 1].endBal
   const proceeds = salePrice - sellCosts - payoff
   const cfs = [-equity, ...hold.map(y => y.cf)]; cfs[N] += proceeds
-  const ucfs = [-(d.price + closing + capexUp), ...hold.map(y => y.noi)]; ucfs[N] += salePrice - sellCosts
+  const ucfs = [-(d.price + closing + capexUp), ...hold.map(y => y.noi - y.capex)]; ucfs[N] += salePrice - sellCosts
   const totalCf = hold.reduce((s, y) => s + y.cf, 0), totalBack = totalCf + proceeds
   const y1 = years[0]
   const potential = y1.gpr + y1.oth

@@ -65,7 +65,7 @@ export const TOOL_DEFS = [
     input_schema: { type: "object", properties: { target_irr_pct: { type: "number" }, target_year1_coc_pct: { type: "number" }, case: { type: "object" }, scenarios: { type: "array", items: { type: "object" } } } } },
   { name: "get_location", description: "The deal's state and what it means for underwriting: property tax level and how taxes reset after a sale, rent regulation and caps, income tax, owner groups, and checks against this deal's inputs with suggested changes.",
     input_schema: { type: "object", properties: {} } },
-  { name: "update_inputs", description: "Change inputs in the screener so every tab shows them. Only when the user asks to use a number. Keys: " + NUM_FIELDS.join(", ") + ", rg as one rent growth number for all years, and sizeMode ('ltv' or 'lesser' of LTV, DSCR and debt yield).",
+  { name: "update_inputs", description: "Change inputs in the screener so every tab shows them. Only when the user asks to use a number. Keys: " + NUM_FIELDS.join(", ") + ", rg as one rent growth number for all years, sizeMode ('ltv' or 'lesser' of LTV, DSCR and debt yield), and custom: the FULL list of added lines, each {label, kind: income|expense|capex, basis: year|unitMonth|pctGpr|pctEgi|once, amt, growth, start, end} (read current ones with get_deal first and include them).",
     input_schema: { type: "object", properties: { changes: { type: "object" } }, required: ["changes"] } },
 ] as const
 
@@ -114,6 +114,7 @@ export function runTool(name: string, input: any, deal: Deal): { result: unknown
       const next: any = structuredClone(d), applied: Record<string, number> = {}
       Object.entries(input?.changes || {}).forEach(([k, v]) => {
         if (k === "rg" && isFinite(Number(v))) { next.rg = next.rg.map(() => Number(v)); applied.rg = Number(v) }
+        else if (k === "custom" && Array.isArray(v)) { next.custom = v; (applied as any).custom = `${v.length} lines` }
         else if (k === "sizeMode" && (v === "ltv" || v === "lesser")) { next.sizeMode = v; (applied as any).sizeMode = v }
         else if ((NUM_FIELDS as readonly string[]).includes(k) && isFinite(Number(v))) { next[k] = Number(v); applied[k] = Number(v) }
       })

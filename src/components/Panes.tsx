@@ -7,6 +7,7 @@ import {
 import { Card, Field, NumInput, Row } from "./ui"
 import type { SavedDeal } from "../lib/store"
 import CashFlowChart from "./CashFlowChart"
+import { CustomLinesCard } from "./CustomLines"
 
 export interface PaneProps { d: Deal; p: Projection; set: (patch: Partial<Deal>) => void; mp: number }
 
@@ -112,6 +113,7 @@ export function IncomePane({ d, p, set }: PaneProps) {
             {items.length ? "+ Add line" : "Break other income into lines"}</button>
           {items.length > 0 && <p className="note mt-2">Total {usd(d.other)}/unit/mo. Underwrite only what the T12 actually collected; new RUBS or fees need a ramp.</p>}
         </Card>
+        <CustomLinesCard d={d} p={p} set={set} mp={0} kinds={["income"]} title="Added income lines" />
       </div>
       <Card title="Year 1 revenue">
         <table className="tbl"><tbody>
@@ -123,6 +125,7 @@ export function IncomePane({ d, p, set }: PaneProps) {
           {y.nru > 0 && <Row label={`Non revenue units (${d.nru})`} value={usd(-y.nru)} />}
           <Row label="Net rental income" value={usd(y.gpr - y.ltl - y.vacLoss - y.conc - y.bad - y.nru)} cls="sub" />
           <Row label="Other income" value={usd(y.oth)} />
+          {d.custom.map((c, i) => c.kind === "income" && p.years[0].cust[i] ? <Row key={i} label={c.label || "Added income"} value={usd(p.years[0].cust[i])} /> : null)}
           <Row label="Effective gross income" value={usd(y.egi)} cls="total" />
           <Row label="Economic occupancy" value={pct(y.econOcc, 1)} />
           <Row label="Gross rent multiplier" value={isFinite(y.grm) ? y.grm.toFixed(2) : "n/a"} />
@@ -186,6 +189,7 @@ export function ExpensesPane({ d, p, set }: PaneProps) {
             <Row label="Payroll" value={usd(-d.pay)} /><Row label="General & admin" value={usd(-d.adm)} />
             {d.mkt > 0 && <Row label="Marketing" value={usd(-d.mkt)} />}
             <Row label={`Management (${d.mgmt}% of EGI)`} value={usd(-y.mgmt)} />
+            {d.custom.map((c, i) => c.kind === "expense" && y.cust[i] ? <Row key={i} label={c.label || "Added expense"} value={usd(-y.cust[i])} /> : null)}
             <Row label="NOI before reserves" value={usd(y.noiBR)} cls="sub" />
             <Row label="Replacement reserves" value={usd(-y.res)} />
             <Row label="Net cash flow (NOI after reserves)" value={usd(y.noi)} cls="total" />
@@ -194,6 +198,7 @@ export function ExpensesPane({ d, p, set }: PaneProps) {
           </tbody></table>
         </Card>
       </div>
+      <CustomLinesCard d={d} p={p} set={set} mp={0} kinds={["expense", "capex"]} title="Added expense and capital lines" />
       <Card title="Property tax: underwrite the bill after you buy">
         <div className="grid gap-4 lg:grid-cols-2">
           <div>
@@ -315,14 +320,17 @@ export function ProjectionsPane({ d, p, set }: PaneProps) {
             {line("Gross potential rent", y => usd(y.gpr))}
             {line("Vacancy & credit loss", y => usd(-y.vacLoss))}
             {line("Other income", y => usd(y.oth))}
+            {d.custom.some(c => c.kind === "income") && line("Added income", y => usd(y.custInc))}
             {line("Effective gross income", y => usd(y.egi), "total")}
             {line("Property taxes", y => usd(-y.tax))}
             {line("Insurance", y => usd(-y.ins))}
             {line("Other operating", y => usd(-y.fixed))}
             {line("Management", y => usd(-y.mgmt))}
+            {d.custom.some(c => c.kind === "expense") && line("Added expenses", y => usd(-y.custExp))}
             {line("Reserves", y => usd(-y.res))}
             {line("Net operating income", y => usd(y.noi), "total")}
             {line("Debt service", y => usd(-y.ds), "", true)}
+            {d.custom.some(c => c.kind === "capex") && line("Capital expenditures", y => usd(-y.capex), "", true)}
             {line("Cash flow after debt", y => usd(y.cf), "total", true)}
             {line("DSCR", y => xx(y.dscr), "sub", true)}
             {line("Cash on cash", y => pct(y.coc), "sub", true)}
@@ -442,7 +450,7 @@ export function DealsPane({ d, set, saved, cloud, onSave, onOpen, onDelete, onSa
         </Card>
       </div>
       <Card title="How the numbers are calculated">
-        <p className="note leading-relaxed">Gross potential rent is booked at market rent. EGI = GPR − loss to lease − vacancy − concessions − bad debt − non revenue units + other income. NOI = EGI − operating expenses; management is a % of EGI and reserves are per unit, so the NOI used for cap rate, DSCR and debt yield is after reserves (lender net cash flow). Property tax can step up to a reassessed amount in a chosen year. Loan amount is the LTV loan, or the lesser of the LTV, DSCR and debt yield loans when that sizing is chosen. Rent and other income grow by the yearly rent growth; taxes, insurance and other expenses grow at their own rates. Debt service is interest only during the interest only period, then a standard amortizing payment. Cash flow = NOI − debt service. Equity = down payment + closing costs + loan fees + up front capex. Sale price = exit year NOI ÷ exit cap; net proceeds = sale price − selling costs − loan payoff. IRR uses the equity outflow at purchase, each year's cash flow and the net proceeds in the final year. Equity multiple = total cash returned ÷ equity. Max price is the highest price where every buy box test still passes, holding everything else constant.</p>
+        <p className="note leading-relaxed">Gross potential rent is booked at market rent. EGI = GPR − loss to lease − vacancy − concessions − bad debt − non revenue units + other income. NOI = EGI − operating expenses; management is a % of EGI and reserves are per unit, so the NOI used for cap rate, DSCR and debt yield is after reserves (lender net cash flow). Property tax can step up to a reassessed amount in a chosen year. Loan amount is the LTV loan, or the lesser of the LTV, DSCR and debt yield loans when that sizing is chosen. Rent and other income grow by the yearly rent growth; taxes, insurance and other expenses grow at their own rates. Debt service is interest only during the interest only period, then a standard amortizing payment. Added lines flow into EGI, operating expenses, or capital below NOI by type. Cash flow = NOI − debt service − capital expenditures. Equity = down payment + closing costs + loan fees + up front capex. Sale price = exit year NOI ÷ exit cap; net proceeds = sale price − selling costs − loan payoff. IRR uses the equity outflow at purchase, each year's cash flow and the net proceeds in the final year. Equity multiple = total cash returned ÷ equity. Max price is the highest price where every buy box test still passes, holding everything else constant.</p>
       </Card>
     </div>
   )

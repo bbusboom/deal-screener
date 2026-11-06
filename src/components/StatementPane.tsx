@@ -23,15 +23,21 @@ const EXP: Line[] = [
 
 /** Three column operating statement: seller T12, T3 annualized, underwritten. Same layout lenders and IC memos use. */
 export function StatementPane({ d, p, set }: PaneProps) {
-  const uw = underwrittenCol(p), U = colTotals(uw)
+  const units = p.units || 1
+  const uw = underwrittenCol(p), y1 = p.years[0]
+  // Underwritten totals come straight from the model so added lines are included.
+  const U = { egi: y1.egi, opexBR: y1.opex - y1.res, noi: y1.noiBR, ncf: y1.noi }
+  const added = (kind: "income" | "expense") => d.custom.map((c, i) => ({ c, v: y1.cust[i] || 0 })).filter(x => x.c.kind === kind && x.v)
+  const addedRow = (label: string, v: number, key: string) => (
+    <tr key={key} className="bg-brand-50/40"><td>{label} <span className="text-[10px] text-slate-400">added</span></td><td /><td />
+      <td className="num font-medium">{usd(v)}</td>{showPU && <td className="num text-slate-500">{usd(v / units)}</td>}{showPU && <td className="num text-slate-500">{U.egi > 0 ? pct(Math.abs(v) / U.egi, 1) : ""}</td>}<td /></tr>)
   const t12 = d.t12 || {}, t3 = d.t3 || {}
   const T = colTotals(t12), T3 = colTotals(t3)
   const has12 = Object.keys(t12).length > 0, has3 = Object.keys(t3).length > 0
   const [showPU, setShowPU] = useState(true)
   const setCol = (col: "t12" | "t3", k: StatementKey, v: number) => set({ [col]: { ...(d[col] || {}), [k]: v } } as any)
   const snapshot = () => { const c: StatementCol = {}; for (const [k, v] of Object.entries(uw)) c[k as StatementKey] = Math.round(v); set({ t12: c }) }
-  const units = p.units || 1
-
+  
   // Flag lines where the underwriting is more optimistic than the seller's actuals by > 5%.
   const flag = (k: StatementKey, revenue: boolean) => {
     if (!has12 || t12[k] === undefined) return ""
@@ -83,9 +89,11 @@ export function StatementPane({ d, p, set }: PaneProps) {
           <tbody>
             <tr className="head"><td colSpan={8}>Revenue</td></tr>
             {REV.map(l => line(l, true))}
+            {added("income").map((x, j) => addedRow(x.c.label || "Added income", x.v, "ai" + j))}
             {tot("Effective gross income", T.egi, T3.egi, U.egi)}
             <tr className="head"><td colSpan={8}>Operating expenses</td></tr>
             {EXP.map(l => line(l, false))}
+            {added("expense").map((x, j) => addedRow(x.c.label || "Added expense", -x.v, "ae" + j))}
             {tot("Total operating expenses", T.opexBR, T3.opexBR, U.opexBR, "sub")}
             {tot("Net operating income (before reserves)", T.noi, T3.noi, U.noi)}
             {line(reserves, false)}

@@ -1,7 +1,7 @@
 // Market › Supply & demand: who is moving in (population and renter household growth), how much new apartment
 // supply is coming (building permits), and the live competition around the property (AI scan of rents,
 // concessions and new buildings in lease up or under construction).
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { type RentComp, usd, pct } from "../lib/model"
 import { fetchMarket, cachedMarket, fetchCompetition, cachedCompetition, type MarketData, type AreaGrowth, type CompetitionScan } from "../lib/market"
 import { Card } from "./ui"
@@ -21,7 +21,8 @@ const LEVEL: Record<string, [string, string]> = {
 
 function GrowthTable({ zip, city, county }: { zip: MarketData["census"]; city: AreaGrowth | null; county: AreaGrowth | null }) {
   const cols: { name: string; pop: number | null; pg: number | null; renters: number | null; rg: number | null; rent: number | null; rentg: number | null; perYr: number | null; rentersPerYr: number | null }[] = []
-  if (zip) cols.push({ name: "ZIP", pop: zip.population, pg: zip.popGrowth5y, renters: null, rg: null, rent: zip.medianRent, rentg: zip.rentGrowth5y, perYr: null, rentersPerYr: null })
+  if (zip) cols.push({ name: "ZIP", pop: zip.population, pg: zip.popGrowth5y, renters: null, rg: null, rent: zip.medianRent, rentg: zip.rentGrowth5y,
+    perYr: zip.popGrowth5y != null && zip.population && zip.compareYear ? (zip.population - zip.population / (1 + zip.popGrowth5y)) / (zip.year - zip.compareYear) : null, rentersPerYr: null })
   for (const a of [city, county]) if (a) cols.push({ name: place(a.name.split(",")[0]), pop: a.population, pg: a.popGrowth5y, renters: a.renterHouseholds, rg: a.renterGrowth5y, rent: a.medianRent, rentg: a.rentGrowth5y, perYr: a.newResidentsPerYear, rentersPerYr: a.newRenterHouseholdsPerYear })
   if (!cols.length) return <p className="note">No growth data came back for this location.</p>
   const row = (l: string, f: (c: typeof cols[number]) => string, hi?: (c: typeof cols[number]) => boolean) =>
@@ -31,13 +32,13 @@ function GrowthTable({ zip, city, county }: { zip: MarketData["census"]; city: A
       <thead><tr><th /> {cols.map(c => <th key={c.name}>{c.name}</th>)}</tr></thead>
       <tbody>
         {row("Population", c => n0(c.pop))}
-        {row("Population growth, 5 yrs", c => g(c.pg), c => (c.pg ?? 0) > 0.05)}
+        {row("Population growth", c => g(c.pg), c => (c.pg ?? 0) > 0.05)}
         {row("New residents per year", c => c.perYr == null ? "—" : (c.perYr >= 0 ? "+" : "") + n0(c.perYr))}
         {row("Renter households", c => n0(c.renters))}
-        {row("Renter household growth, 5 yrs", c => g(c.rg), c => (c.rg ?? 0) > 0.05)}
+        {row("Renter household growth", c => g(c.rg), c => (c.rg ?? 0) > 0.05)}
         {row("New renter households per year", c => c.rentersPerYr == null ? "—" : (c.rentersPerYr >= 0 ? "+" : "") + n0(c.rentersPerYr))}
         {row("Median rent", c => c.rent == null ? "—" : usd(c.rent))}
-        {row("Rent growth, 5 yrs", c => g(c.rentg))}
+        {row("Rent growth", c => g(c.rentg))}
       </tbody>
     </table>
   )
@@ -65,6 +66,8 @@ export function SupplyPane({ d, p, set }: PaneProps) {
   const S = m?.supply, read = S?.read
   const city = place(m?.location?.placeName) || ((d.address || "").split(",").slice(-2, -1)[0] || "").trim()
 
+  // Market data cached from the Location page before supply existed (or without it): fetch fresh once.
+  useEffect(() => { if ((d.address || d.zip) && (!m || !m.supply) && !busy) pull() }, [])
   async function pull() { setBusy("data"); setErr(""); try { setM(await fetchMarket(d)) } catch (e: any) { setErr(e.message) } finally { setBusy("") } }
   async function runScan() { setBusy("scan"); setErr(""); try { setScan(await fetchCompetition(d, city)) } catch (e: any) { setErr(e.message) } finally { setBusy("") } }
 
@@ -111,7 +114,7 @@ export function SupplyPane({ d, p, set }: PaneProps) {
       <div className="grid gap-4 lg:grid-cols-2">
         <Card title="Who's moving in">
           {m ? <GrowthTable zip={m.census} city={S?.city ?? null} county={S?.county ?? null} /> : <p className="note">Pull the data to see population, household and renter growth for the ZIP, city and county. Rising renter households are the demand that fills new and existing apartments.</p>}
-          {S?.county && <p className="note mt-2">Census American Community Survey 5 year estimates, {S.county.compareYear ?? ""} to {S.county.year}. They lag by a year or two; fast growing cities are usually ahead of these numbers.</p>}
+          {(S?.county || m?.census) && <p className="note mt-2">Growth compares Census American Community Survey 5 year estimates for {S?.county?.year ?? m?.census?.year} with {S?.county?.compareYear ?? m?.census?.compareYear ?? "an earlier survey"}{m?.census?.compareYear && S?.county?.compareYear && m.census.compareYear !== S.county.compareYear ? ` (ZIP: ${m.census.compareYear})` : ""}. They lag by a year or two; fast growing cities are usually ahead of these numbers.</p>}
         </Card>
         <Card title="New apartment supply" right={read && <span className={`chip ${LEVEL[read.level][1]}`}>{LEVEL[read.level][0]}</span>}>
           {S?.permits ? <>

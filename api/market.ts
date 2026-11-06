@@ -56,8 +56,9 @@ async function census(zip: string) {
   let latest: any = null, year = 0
   for (const y of [2024, 2023]) { try { latest = await acs(zip, y); year = y; break } catch { /* try older */ } }
   if (!latest) throw new Error(process.env.CENSUS_API_KEY ? "no data for this ZIP" : "no data came back. If this keeps happening, add a free CENSUS_API_KEY.")
-  let past: any = null
-  try { past = await acs(zip, year - 5) } catch { /* growth is optional */ }
+  // 2019 and earlier ZIP (ZCTA) tables use a different geography, so fall back to the 2020 survey if needed.
+  let past: any = null, pastYear = 0
+  for (const y of [year - 5, year - 4]) { try { past = await acs(zip, y); pastYear = y; break } catch { /* growth is optional */ } }
   const L = latest
   const renterShare = L.occupied && L.renters != null ? L.renters / L.occupied : null
   const rentalVacancy = L.renters != null && L.forRent != null && L.renters + L.forRent > 0 ? L.forRent / (L.renters + L.forRent) : null
@@ -68,7 +69,7 @@ async function census(zip: string) {
     population: L.pop, medianIncome: L.income, medianRent: L.rent, medianHomeValue: L.value, medianRealEstateTaxes: L.taxes,
     renterShare, rentalVacancy, effectiveTaxRate: taxRate, medianYearBuilt: L.built,
     popGrowth5y: past ? growth(L.pop, past.pop) : null, rentGrowth5y: past ? growth(L.rent, past.rent) : null,
-    incomeGrowth5y: past ? growth(L.income, past.income) : null, compareYear: past ? year - 5 : null,
+    incomeGrowth5y: past ? growth(L.income, past.income) : null, compareYear: past ? pastYear : null,
   }
 }
 

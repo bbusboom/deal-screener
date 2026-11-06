@@ -21,6 +21,29 @@ const SCHEMA = `{
   "suggestions": { "marketRentNote": "", "concessionPct": 0, "vacancyPct": 0, "rentGrowthYear1Pct": 0, "rentGrowthYear2Pct": 0, "notes": [""] }
 }`
 
+/** Pull a JSON object out of model text: a ```json fence first, then the outermost braces. */
+function parseJson(text: string): any {
+  const fence = text.match(/```(?:json)?\s*([\s\S]*?)```/)
+  for (const cand of [fence?.[1], text.slice(text.indexOf("{"), text.lastIndexOf("}") + 1)]) {
+    if (!cand) continue
+    try { const o = JSON.parse(cand); if (o && typeof o === "object" && Array.isArray(o.properties)) return o } catch { /* next */ }
+  }
+  return null
+}
+const num = { type: "number" }, str = { type: "string" }
+const SCAN_TOOL = {
+  name: "submit_scan", description: "Submit the structured competition scan.",
+  input_schema: { type: "object", required: ["summary", "properties", "pipeline", "concessions", "suggestions"], properties: {
+    summary: str, pipeline: str, concessions: str,
+    properties: { type: "array", items: { type: "object", required: ["name", "status"], properties: {
+      name: str, address: str, distanceMi: num, yearBuilt: num, units: num,
+      status: { type: "string", enum: ["stabilized", "lease-up", "under construction", "planned"] }, delivery: str,
+      rents: { type: "array", items: { type: "object", properties: { type: str, rent: num } } },
+      concession: str, concessionWeeks: num, source: str } } },
+    suggestions: { type: "object", properties: { marketRentNote: str, concessionPct: num, vacancyPct: num, rentGrowthYear1Pct: num, rentGrowthYear2Pct: num, notes: { type: "array", items: str } } },
+  } },
+}
+
 export default async function handler(req: any, res: any) {
   if (req.method !== "POST") return res.status(405).json({ error: "POST only" })
   if (!process.env.ANTHROPIC_API_KEY) return res.status(503).json({ error: "Deal School AI isn't set up yet: add ANTHROPIC_API_KEY in the hosting settings." })
@@ -56,7 +79,7 @@ Rules: numbers are plain numbers (no $ or commas); rents are monthly asking rent
   try {
     for (let turn = 0; turn < 4; turn++) {
       const resp: any = await client.messages.create({
-        model, max_tokens: 4000, system, messages,
+        model, max_tokens: 6000, system, messages,
         tools: [{ type: "web_search_20250305", name: "web_search", max_uses: MAX_SEARCHES, user_location: { type: "approximate", country: "US", ...(city ? { city } : {}) } }] as any,
       })
       for (const blk of resp.content) {
@@ -71,10 +94,21 @@ Rules: numbers are plain numbers (no $ or commas); rents are monthly asking rent
     return res.status(status).json({ error: status === 429 ? "rate_limited" : /web_search|tool/i.test(msg) ? "Web search isn't enabled for this API key. Turn it on in the Claude Console." : "Competition scan hit an error: " + msg })
   }
 
-  const m = text.match(/\{[\s\S]*\}/)
-  let data: any = null
-  try { data = m ? JSON.parse(m[0]) : null } catch { /* fall through */ }
-  if (!data) return res.status(502).json({ error: "The scan came back in an unexpected format. Try again." })
+  let data: any = parseJson(text)
+  // The research pass often answers in prose. Convert it with a forced tool call so the shape is guaranteed.
+  if (!data && text.trim()) {
+    try {
+      const sourceList = [...seen].slice(0, 25).map(([url, title]) => `- ${title}: ${url}`).join("\n")
+      const resp: any = await client.messages.create({
+        model, max_tokens: 4000,
+        system: "Convert the research notes into the submit_scan tool call. Use only facts in the notes; leave unknown numbers at 0 and unknown text empty. Use the source URLs listed.",
+        messages: [{ role: "user", content: `Research notes:\n${text.slice(0, 30000)}\n\nSources:\n${sourceList}` }],
+        tools: [SCAN_TOOL] as any, tool_choice: { type: "tool", name: "submit_scan" } as any,
+      })
+      data = resp.content.find((b: any) => b.type === "tool_use")?.input || null
+    } catch { /* handled below */ }
+  }
+  if (!data) return res.status(502).json({ error: "The scan didn't return usable results. Try again in a minute." })
   const n = (v: any) => { const x = Number(v); return isFinite(x) && x > 0 ? x : 0 }
   data.properties = (Array.isArray(data.properties) ? data.properties : []).slice(0, 15).map((p: any) => ({
     name: clip(p.name, 80), address: clip(p.address, 120), distanceMi: n(p.distanceMi), yearBuilt: n(p.yearBuilt), units: n(p.units),

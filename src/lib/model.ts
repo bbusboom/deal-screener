@@ -100,6 +100,9 @@ export interface Deal {
   wf: Waterfall
   debt: DebtOpts
   rentComps: RentComp[]; saleComps: SaleComp[]
+  /** Unit level rent roll, if uploaded (see lib/rentroll). */
+  rr: { unit: string; type: string; sf: number; rent: number; market: number; status: "occupied" | "vacant" | "notice" | "nonrev"; start: string; end: string }[]
+  rrName: string
   /** Pipeline tracking. */
   status: DealStatus; bidDue: string; notes: string
   /** Seller's trailing 12 months and trailing 3 months annualized, for the operating statement. */
@@ -118,7 +121,7 @@ export const DEFAULTS: Deal = {
   name: "", price: 0, cc: 2.5, other: 0, vac: 7, conc: 0, bad: 0, nru: 0, ltlBurn: 0, otherItems: [],
   tax: 0, ins: 0, util: 0, rm: 0, pay: 0, adm: 0, contract: 0, turn: 0, mkt: 0, mgmt: 5, res: 300,
   taxNew: 0, taxResetYr: 0, capexUp: 0,
-  custom: [], va: { ...VA_DEFAULT }, lu: { ...LU_DEFAULT }, wf: { ...WF_DEFAULT }, debt: { ...DEBT_DEFAULT }, rentComps: [], saleComps: [], status: "Screening", bidDue: "", notes: "",
+  custom: [], va: { ...VA_DEFAULT }, lu: { ...LU_DEFAULT }, wf: { ...WF_DEFAULT }, debt: { ...DEBT_DEFAULT }, rentComps: [], saleComps: [], rr: [], rrName: "", status: "Screening", bidDue: "", notes: "",
   ltv: 70, rate: 6.5, amort: 30, ioYrs: 0, loanFee: 1, term: 10, sizeMode: "ltv", sizeDscr: 1.25, sizeDy: 8, hold: 7, expG: 3, taxG: 3, insG: 5, exitCap: 6.5, sellCost: 2,
   minCap: 6, minDscr: 1.25, minCoc: 6, minIrr: 12, minEm: 1.6,
   rg: [], units: [{ type: "1 bed", count: 0, rent: 0 }], scen: [],
@@ -156,6 +159,7 @@ export function norm(input: Partial<Deal> & { io?: string } = {}): Deal {
   d.va = { ...VA_DEFAULT, ...(d.va || {}) }; d.wf = { ...WF_DEFAULT, ...(d.wf || {}) }
   for (const k of Object.keys(VA_DEFAULT)) if (k !== "on" && k !== "upfront") d.va[k] = Math.max(0, Number(d.va[k]) || 0)
   for (const k of Object.keys(WF_DEFAULT)) if (k !== "on") d.wf[k] = Math.max(0, Number(d.wf[k]) || 0)
+  d.rr = Array.isArray(d.rr) ? d.rr.slice(0, 2000) : []; d.rrName = String(d.rrName ?? "")
   d.rentComps = (Array.isArray(d.rentComps) ? d.rentComps : []).map((c: any) => ({ name: String(c.name ?? ""), dist: Number(c.dist) || 0, built: Number(c.built) || 0, type: String(c.type ?? ""), rent: Number(c.rent) || 0, sf: Number(c.sf) || 0 }))
   d.saleComps = (Array.isArray(d.saleComps) ? d.saleComps : []).map((c: any) => ({ name: String(c.name ?? ""), date: String(c.date ?? ""), built: Number(c.built) || 0, units: Number(c.units) || 0, price: Number(c.price) || 0, cap: Number(c.cap) || 0 }))
   if (!(STATUSES as readonly string[]).includes(d.status)) d.status = "Screening"

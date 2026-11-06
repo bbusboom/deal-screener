@@ -5,6 +5,7 @@ import {
   project, tests, maxPrice, exitCapCheck, waterfall, weighted, scenCases, irr, norm,
 } from "./model.js"
 import { locationBrief } from "./checks.js"
+import { analyze as analyzeRR } from "./rentroll.js"
 
 export type Route = "learner" | "pro"
 
@@ -79,7 +80,8 @@ export function runTool(name: string, input: any, deal: Deal): { result: unknown
   switch (name) {
     case "get_deal": {
       const p = project(d), mp = maxPrice(d), W = weighted(d, scenCases(d.scen))
-      const { units, scen, ...inputs } = d
+      const { units, scen, rr, ...inputs } = d as any
+      if (rr?.length) (inputs as any).rent_roll = (() => { const a = analyzeRR(rr); return { units: a.total, physical_occupancy_pct: r2(a.physicalOcc * 100), month_to_month: a.mtm, below_market_10pct: a.below, by_type: a.types.map(t => ({ type: t.type, count: t.count, occupied: t.occupied, avg_in_place: r0(t.inPlace), avg_market: r0(t.market) })), expirations_next_12_months: a.months.map(m => m.count) } })()
       return { deal: d, result: { inputs, unit_mix: units, results: brief(p), max_price_passing_buy_box: isFinite(mp) ? mp : null,
         scenarios: W.runs.map((r, i) => ({ ...scen[i], irr_pct: r2(r.p.irr * 100), equity_multiple: r2(r.p.em) })), weighted_irr_pct: r2(W.irr * 100) } }
     }

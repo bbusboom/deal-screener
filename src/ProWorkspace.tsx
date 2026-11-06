@@ -5,6 +5,7 @@ import { listDeals, saveDeal, deleteDeal, type SavedDeal } from "./lib/store"
 import { Kpi } from "./components/ui"
 import { StatementPane } from "./components/StatementPane"
 import { ValueAddPane, InvestorsPane } from "./components/ValueAddPane"
+import { CompsPane } from "./components/CompsPane"
 import { SummaryPane, IncomePane, ExpensesPane, FinancingPane, ProjectionsPane, ScenariosPane, DealsPane, failNames } from "./components/Panes"
 import AiPanel from "./components/AiPanel"
 import ImportPane from "./components/ImportPane"
@@ -12,7 +13,7 @@ import MarketPane from "./components/MarketPane"
 import { getHomeState } from "./lib/market"
 
 const TABS = [
-  ["summary", "Summary"], ["documents", "Documents"], ["market", "Market"], ["income", "Income"], ["expenses", "Expenses"], ["statement", "Statement"], ["valueadd", "Value Add"], ["financing", "Financing"], ["investors", "Investors"],
+  ["summary", "Summary"], ["documents", "Documents"], ["market", "Market"], ["income", "Income"], ["expenses", "Expenses"], ["statement", "Statement"], ["valueadd", "Value Add"], ["comps", "Comps"], ["financing", "Financing"], ["investors", "Investors"],
   ["projections", "Projections"], ["scenarios", "Scenarios"], ["ai", "Deal School AI"], ["deals", "Deals"],
 ] as const
 type Tab = typeof TABS[number][0]
@@ -56,10 +57,10 @@ export default function ProWorkspace({ session, toast }: { session: Session | nu
             <button className="btn btn-primary" onClick={save}>{dealId ? "Save" : "Save deal"}</button>
             <button className="btn" onClick={() => { setDeal(norm({ ...DEFAULTS, state: getHomeState() })); setDealId(undefined); go("documents") }}>New deal</button>
           </div>
-          <nav className="-mb-px mt-3 flex gap-1 overflow-x-auto">
+          <nav className="-mb-px mt-3 flex gap-0.5 overflow-x-auto">
             {TABS.map(([k, label]) => (
               <button key={k} onClick={() => go(k)}
-                className={`whitespace-nowrap border-b-2 px-2.5 py-2.5 text-sm font-semibold transition ${tab === k ? "border-brand-600 text-brand-600" : "border-transparent text-slate-500 hover:text-ink"}`}>
+                className={`whitespace-nowrap border-b-2 px-2 py-2.5 text-[13.5px] font-semibold transition ${tab === k ? "border-brand-600 text-brand-600" : "border-transparent text-slate-500 hover:text-ink"}`}>
                 {label}
               </button>))}
           </nav>
@@ -100,6 +101,7 @@ export default function ProWorkspace({ session, toast }: { session: Session | nu
         {tab === "income" && <IncomePane {...pane} />}
         {tab === "statement" && <StatementPane {...pane} />}
         {tab === "valueadd" && <ValueAddPane {...pane} />}
+        {tab === "comps" && <CompsPane {...pane} />}
         {tab === "investors" && <InvestorsPane {...pane} />}
         {tab === "expenses" && <ExpensesPane {...pane} />}
         {tab === "financing" && <FinancingPane {...pane} />}

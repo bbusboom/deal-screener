@@ -57,6 +57,8 @@ export interface DebtOpts {
 export const DEBT_DEFAULT: DebtOpts = { type: "fixed", sofr: 4, sofrChg: 0, spread: 3, capOn: true, capStrike: 4.5, capCost: 0,
   prepay: "none", steps: "5,4,3,2,1", exitFee: 1, tsy: 4.25,
   refiOn: false, refiYr: 3, refiCap: 6, refiLtv: 70, refiDscr: 1.25, refiRate: 6, refiAmort: 30, refiIo: 0, refiCost: 1.5 }
+export interface RentComp { name: string; dist: number; built: number; type: string; rent: number; sf: number }
+export interface SaleComp { name: string; date: string; built: number; units: number; price: number; cap: number }
 export const WF_DEFAULT: Waterfall = { on: false, gpCo: 10, pref: 8, split1: 70, hurdle2: 15, split2: 50, acqFee: 2, amFee: 2, dispFee: 1 }
 export interface Scenario { name: string; prob: number; rg: number; vac: number; expG: number; exitCap: number }
 
@@ -91,6 +93,7 @@ export interface Deal {
   va: ValueAdd
   wf: Waterfall
   debt: DebtOpts
+  rentComps: RentComp[]; saleComps: SaleComp[]
   /** Seller's trailing 12 months and trailing 3 months annualized, for the operating statement. */
   t12?: StatementCol; t3?: StatementCol
 }
@@ -107,7 +110,7 @@ export const DEFAULTS: Deal = {
   name: "", price: 0, cc: 2.5, other: 0, vac: 7, conc: 0, bad: 0, nru: 0, ltlBurn: 0, otherItems: [],
   tax: 0, ins: 0, util: 0, rm: 0, pay: 0, adm: 0, contract: 0, turn: 0, mkt: 0, mgmt: 5, res: 300,
   taxNew: 0, taxResetYr: 0, capexUp: 0,
-  custom: [], va: { ...VA_DEFAULT }, wf: { ...WF_DEFAULT }, debt: { ...DEBT_DEFAULT },
+  custom: [], va: { ...VA_DEFAULT }, wf: { ...WF_DEFAULT }, debt: { ...DEBT_DEFAULT }, rentComps: [], saleComps: [],
   ltv: 70, rate: 6.5, amort: 30, ioYrs: 0, loanFee: 1, term: 10, sizeMode: "ltv", sizeDscr: 1.25, sizeDy: 8, hold: 7, expG: 3, taxG: 3, insG: 5, exitCap: 6.5, sellCost: 2,
   minCap: 6, minDscr: 1.25, minCoc: 6, minIrr: 12, minEm: 1.6,
   rg: [], units: [{ type: "1 bed", count: 0, rent: 0 }], scen: [],
@@ -143,6 +146,8 @@ export function norm(input: Partial<Deal> & { io?: string } = {}): Deal {
   d.va = { ...VA_DEFAULT, ...(d.va || {}) }; d.wf = { ...WF_DEFAULT, ...(d.wf || {}) }
   for (const k of Object.keys(VA_DEFAULT)) if (k !== "on" && k !== "upfront") d.va[k] = Math.max(0, Number(d.va[k]) || 0)
   for (const k of Object.keys(WF_DEFAULT)) if (k !== "on") d.wf[k] = Math.max(0, Number(d.wf[k]) || 0)
+  d.rentComps = (Array.isArray(d.rentComps) ? d.rentComps : []).map((c: any) => ({ name: String(c.name ?? ""), dist: Number(c.dist) || 0, built: Number(c.built) || 0, type: String(c.type ?? ""), rent: Number(c.rent) || 0, sf: Number(c.sf) || 0 }))
+  d.saleComps = (Array.isArray(d.saleComps) ? d.saleComps : []).map((c: any) => ({ name: String(c.name ?? ""), date: String(c.date ?? ""), built: Number(c.built) || 0, units: Number(c.units) || 0, price: Number(c.price) || 0, cap: Number(c.cap) || 0 }))
   d.debt = { ...DEBT_DEFAULT, ...(d.debt || {}) }
   for (const k of Object.keys(DEBT_DEFAULT)) if (typeof (DEBT_DEFAULT as any)[k] === "number") d.debt[k] = Math.max(k === "sofrChg" ? -1000 : 0, Number(d.debt[k]) || 0)
   d.debt.type = d.debt.type === "floating" ? "floating" : "fixed"

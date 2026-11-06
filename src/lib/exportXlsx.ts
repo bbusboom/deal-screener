@@ -74,7 +74,7 @@ export async function exportXlsx(d: Deal, p: Projection) {
     ["Year 1 DSCR", r4(y1.dscr)], ["Debt yield", r4(y1.debtYield)], ["Cash on cash, year 1", r4(y1.coc)], [],
     ["Hold (years)", d.hold], ["Levered IRR", r4(p.irr)], ["Unlevered IRR", r4(p.unlevIrr)], ["Equity multiple", r4(p.em)], ["Profit", r0(p.profit)],
     ["Sale price", r0(p.salePrice)], ["Net sale proceeds", r0(p.proceeds)],
-    [], ["Prepared with Deal Screener (getdealscreener.com). Screening tool, not investment advice."],
+    [], ["Prepared with Deal School (getdealscreener.com). Screening tool, not investment advice."],
   ], [34, 18])
 
   /* Inputs */
@@ -103,5 +103,5 @@ export async function exportXlsx(d: Deal, p: Projection) {
   }
 
   const safe = (d.name || "deal").replace(/[^\w\- ]+/g, "").trim().slice(0, 60) || "deal"
-  XLSX.writeFile(wb, `${safe} - Deal Screener.xlsx`)
+  XLSX.writeFile(wb, `${safe} - Deal School.xlsx`)
 }

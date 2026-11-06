@@ -37,7 +37,7 @@ export default function Auth({ initial = "signin", onDone, onBack, onSignedUp, a
       <div className="w-full max-w-md">
         <div className="mb-6 flex items-center justify-center gap-2 text-white">
           <div className="grid h-10 w-10 place-items-center rounded-lg bg-white/15 font-bold">DS</div>
-          <div><div className="text-xl font-bold leading-tight">{app ? "Deal School" : "Deal Screener"}</div><div className="text-xs text-white/70">{app ? "Same account as getdealscreener.com" : "with Deal School AI"}</div></div>
+          <div><div className="text-xl font-bold leading-tight">Deal School</div><div className="text-xs text-white/70">{app ? "Same account as getdealscreener.com" : "Underwriting training"}</div></div>
         </div>
         <form onSubmit={submit} className="rounded-lg bg-white p-6 shadow-xl">
           <h1 className="mb-4 text-lg font-bold">{title}</h1>
@@ -55,7 +55,7 @@ export default function Auth({ initial = "signin", onDone, onBack, onSignedUp, a
             {(mode === "signup" || mode === "forgot") && <button type="button" className="text-brand-600 hover:underline" onClick={() => setMode("signin")}>Back to sign in</button>}
           </div>
         </form>
-        {onBack && <p className="mt-4 text-center text-sm"><button type="button" className="text-white/80 underline hover:text-white" onClick={onBack}>← See what Deal Screener can do</button></p>}
+        {onBack && <p className="mt-4 text-center text-sm"><button type="button" className="text-white/80 underline hover:text-white" onClick={onBack}>← See what Deal School can do</button></p>}
         <p className="mt-3 text-center text-xs text-white/60">Underwriting tool for learning and screening deals. Not investment advice.</p>
       </div>
     </div>

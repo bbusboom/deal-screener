@@ -1,8 +1,8 @@
 <!-- Supabase → Authentication → Emails → Templates → Confirm signup
-     Subject: Welcome to Deal Screener! Confirm your email to start your first deal -->
+     Subject: Welcome to Deal School! Confirm your email to start your first deal -->
 <!DOCTYPE html>
 <html lang="en">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Welcome to Deal Screener</title></head>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Welcome to Deal School</title></head>
 <body style="margin:0;padding:0;background:#eef4fb;">
   <div style="display:none;max-height:0;overflow:hidden;">One click and you're in. Your first deal is waiting.</div>
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#eef4fb;padding:32px 12px;">
@@ -13,7 +13,7 @@
         <tr><td style="background:#0b1f33;padding:28px 32px;">
           <table role="presentation" cellpadding="0" cellspacing="0"><tr>
             <td style="background:#1f4e79;color:#ffffff;font-weight:700;font-size:15px;width:36px;height:36px;text-align:center;border-radius:8px;">DS</td>
-            <td style="padding-left:12px;color:#ffffff;font-size:18px;font-weight:700;">Deal Screener</td>
+            <td style="padding-left:12px;color:#ffffff;font-size:18px;font-weight:700;">Deal School</td>
           </tr></table>
           <h1 style="margin:22px 0 6px;color:#ffffff;font-size:26px;line-height:1.25;">Welcome{{ if .Data.username }}, {{ .Data.username }}{{ end }}! 🏢</h1>
           <p style="margin:0;color:#d9e6f5;font-size:15px;line-height:1.5;">You just joined the place where you learn real estate underwriting by doing real deals.</p>
@@ -42,7 +42,7 @@
         <!-- footer -->
         <tr><td style="padding:18px 32px 28px;">
           <p style="margin:0 0 10px;font-size:13px;line-height:1.5;color:#64748b;">Button not working? Paste this link into your browser:<br><a href="{{ .ConfirmationURL }}" style="color:#2563a6;word-break:break-all;">{{ .ConfirmationURL }}</a></p>
-          <p style="margin:0;font-size:12px;line-height:1.5;color:#94a3b8;">You're getting this because someone signed up for Deal Screener with {{ .Email }}. If that wasn't you, ignore this email and no account will be created.<br>Deal Screener is a learning and screening tool, not investment advice.</p>
+          <p style="margin:0;font-size:12px;line-height:1.5;color:#94a3b8;">You're getting this because someone signed up for Deal School with {{ .Email }}. If that wasn't you, ignore this email and no account will be created.<br>Deal School is a learning and screening tool, not investment advice.</p>
         </td></tr>
       </table>
     </td></tr>

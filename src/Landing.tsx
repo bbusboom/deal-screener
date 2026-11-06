@@ -97,7 +97,7 @@ export function Sky() {
 const Logo = () => (
   <div className="flex items-center gap-2">
     <div className="grid h-9 w-9 place-items-center rounded-lg bg-gradient-to-br from-[#ffd28a] to-[#ff8a3d] text-sm font-bold text-[#1a1030]">DS</div>
-    <div className="whitespace-nowrap font-bold leading-tight text-white">Deal Screener<div className="hidden text-[11px] font-normal text-white/60 sm:block">with Deal School AI</div></div>
+    <div className="whitespace-nowrap font-bold leading-tight text-white">Deal School<div className="hidden text-[11px] font-normal text-white/60 sm:block">Underwriting training</div></div>
   </div>
 )
 
@@ -262,24 +262,32 @@ function Story() {
 /* ---------- page ---------- */
 const COMPARE: [string, string, string, string][] = [
   ["Learn from the basics to IRR", "✓", "✓", "—"],
-  ["Practice on realistic deals and get scored", "✓", "Sometimes", "—"],
+  ["Timed Deal Checks scored against an answer key", "✓", "—", "—"],
+  ["Practice on realistic deals with seller traps built in", "✓", "Sometimes", "—"],
+  ["Learn and underwrite live deals in the same tool", "✓", "—", "—"],
   ["AI tutor that knows the lesson and your deal", "✓", "—", "—"],
   ["Upload real documents and model them", "✓", "—", "✓"],
   ["State tax, rent law and market data built in", "✓", "—", "Paid add-on"],
   ["Free to start", "✓", "Rarely", "Rarely"],
 ]
+const TEAMS: [string, string, boolean][] = [
+  ["A real curriculum", "Thirteen modules from rent rolls to IRR, with an AI tutor that knows the lesson they're on.", false],
+  ["Proof, not hope", "Deal Check times each person on a broker package and scores NOI, cap rate, DSCR and the call, so readiness is a number, not a guess.", false],
+  ["Your firm's standards", "Load your own buy box and expense assumptions so new hires learn your way, and see the whole team's progress in one view.", true],
+]
 const STEPS: [string, string][] = [
-  ["Create a free account", "Pick a path: learn underwriting from scratch, or jump straight into underwriting a deal."],
-  ["Learn by doing", "Work through lessons, challenges and practice deals. Mistakes are where the learning happens."],
-  ["Underwrite your own deals", "Upload the documents, check the market, stress test it, and decide with numbers you trust."],
+  ["Learn the basics", "Thirteen modules take a new hire from what a rent roll is to IRR, debt sizing and how an acquisitions team works."],
+  ["Practice and get scored", "Challenges hide the seller's tricks in real looking packages. Deal Check times them and scores the answer against a key."],
+  ["Underwrite live deals", "When they're ready, they work real deals in the same workspace: documents, market, financing and a clear answer."],
 ]
 const FAQ: [string, string][] = [
+  ["Can my whole team use it?", "Yes. Each person makes a free account and works at their own pace, on the website or the Deal School phone app. A team view where you see everyone's progress and Deal Check scores in one place is coming next."],
   ["Do I need to know anything about real estate?", "No. The Learn path starts with what a rental property earns and costs, and builds one step at a time. If you already underwrite, skip straight to the workspace."],
   ["Is it free?", "Yes, it's free to use while we build it out. We'll always keep a free way to learn."],
-  ["Is this investment advice?", "No. Deal Screener is a learning and screening tool. Always verify rent rolls, taxes and insurance with the actual documents and local professionals."],
+  ["Is this investment advice?", "No. Deal School is a learning and screening tool. Always verify rent rolls, taxes and insurance with the actual documents and local professionals."],
   ["Who built it?", "A University of Arkansas student who underwrites multifamily deals for a family real estate company, built around how real deals actually get screened."],
 ]
-const HEADLINE = ["Learn", "to", "underwrite", "real", "estate.", "Then", "underwrite", "real", "deals."]
+const HEADLINE = ["Train", "analysts", "on", "real", "deals.", "Know", "who's", "ready."]
 
 export default function Landing({ go }: { go: Go }) {
   const root = useRef<HTMLDivElement>(null)
@@ -296,6 +304,7 @@ export default function Landing({ go }: { go: Go }) {
           <Logo />
           <nav className="hidden gap-7 text-sm text-white/70 md:flex">
             <a href="#features" className="hover:text-white">What's inside</a>
+            <a href="#teams" className="hover:text-white">For teams</a>
             <a href="#different" className="hover:text-white">Why it's different</a>
             <a href="#how" className="hover:text-white">How it works</a>
             <a href="#faq" className="hover:text-white">FAQ</a>
@@ -312,17 +321,17 @@ export default function Landing({ go }: { go: Go }) {
         <section className="relative mx-auto grid min-h-[100svh] max-w-7xl items-center gap-14 px-4 pb-28 pt-28 md:grid-cols-[1.1fr_.9fr] md:px-8">
           <div>
             <div className="rise mb-6 inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3 py-1 text-xs font-medium text-white/80 backdrop-blur">
-              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[#ffd28a]" />Real estate underwriting, learned by doing</div>
+              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[#ffd28a]" />Underwriting training for acquisitions teams</div>
             <h1 className="serif text-[2.6rem] font-semibold leading-[1.05] md:text-7xl">
               {HEADLINE.map((w, i) => <span key={i} className="rise inline-block text-white" style={{ animationDelay: `${120 + i * 70}ms` }}><span className={i >= 5 ? "shine" : ""}>{w}</span>&nbsp;</span>)}
             </h1>
-            <p className="rise mt-6 max-w-xl text-lg text-white/70" style={{ animationDelay: "800ms" }}>Every number behind a rental property, from rent and expenses to cap rates, debt and IRR. Then a professional workspace and an AI partner to run your own deals.</p>
+            <p className="rise mt-6 max-w-xl text-lg text-white/70" style={{ animationDelay: "800ms" }}>Deal School teaches underwriting from the first rent roll to IRR, has new hires practice on realistic broker packages, and scores them with Deal Check. When they're ready, they underwrite live deals in the same workspace. Learning on your own? It works for you too.</p>
             <div className="rise mt-9 flex flex-wrap gap-3" style={{ animationDelay: "950ms" }}>
               <button onClick={() => go("signup")} className="rounded-full bg-gradient-to-r from-[#ffd28a] to-[#ff8a3d] px-6 py-3 font-semibold text-[#1a1030] shadow-[0_10px_40px_-8px_#ff8a3d] transition hover:-translate-y-0.5">Start free →</button>
               <a href="#features" className="rounded-full px-6 py-3 font-semibold text-white ring-1 ring-white/25 transition hover:bg-white/10">See what's inside</a>
             </div>
             <div className="rise mt-8 flex flex-wrap gap-x-6 gap-y-2 text-sm text-white/55" style={{ animationDelay: "1100ms" }}>
-              <span>✓ Free to start</span><span>✓ No experience needed</span><span>✓ Built the way lenders underwrite</span>
+              <span>✓ Free to start</span><span>✓ Scored practice deals</span><span>✓ Built by a working underwriter</span>
             </div>
           </div>
           <div className="rise" style={{ animationDelay: "600ms" }}><HeroMock /></div>
@@ -334,22 +343,38 @@ export default function Landing({ go }: { go: Go }) {
         {/* stats */}
         <section className="mx-auto max-w-6xl px-4 py-24 md:px-8">
           <Reveal className="glass grid grid-cols-2 gap-8 rounded-3xl px-6 py-10 text-center md:grid-cols-4">
-            {([[13, "", "course modules"], [8, "", "hands-on challenges"], [51, "", "states + DC with tax and rent rules"], [24, "/7", "AI tutor and deal partner"]] as const).map(([n, s, l]) => (
+            {([[13, "", "course modules"], [8, "", "hands-on challenges"], [3, "", "scored Deal Checks"], [51, "", "states + DC with tax and rent rules"]] as const).map(([n, s, l]) => (
               <div key={l}><div className="serif text-5xl font-semibold text-white"><CountUp to={n} suffix={s} /></div><div className="mt-1 text-sm text-white/55">{l}</div></div>))}
           </Reveal>
+        </section>
+
+        {/* for teams */}
+        <section id="teams" className="mx-auto max-w-6xl scroll-mt-20 px-4 py-16 md:px-8">
+          <Reveal className="max-w-2xl">
+            <div className="text-sm font-semibold uppercase tracking-[.2em] text-[#9cc4ff]">For teams</div>
+            <h2 className="serif mt-3 text-4xl font-semibold text-white md:text-5xl">New hires underwriting with confidence, sooner.</h2>
+            <p className="mt-4 text-white/65">Built inside a family real estate firm to train its own interns. Hand a new analyst Deal School on day one instead of a spreadsheet and a stack of old deals.</p>
+          </Reveal>
+          <div className="mt-10 grid gap-5 md:grid-cols-3">
+            {TEAMS.map(([t, b, soon], i) => (
+              <Reveal key={t} delay={i * 120} className="glass rounded-3xl p-6">
+                <div className="flex items-center gap-2"><h3 className="text-lg font-semibold text-white">{t}</h3>{soon && <span className="rounded-full border border-white/20 px-2 py-0.5 text-[11px] text-white/60">Coming soon</span>}</div>
+                <p className="mt-2 text-sm text-white/60">{b}</p>
+              </Reveal>))}
+          </div>
         </section>
 
         {/* why different */}
         <section id="different" className="mx-auto max-w-6xl scroll-mt-20 px-4 py-16 md:px-8">
           <Reveal className="max-w-2xl">
             <div className="text-sm font-semibold uppercase tracking-[.2em] text-[#ffd28a]">Why it's different</div>
-            <h2 className="serif mt-3 text-4xl font-semibold text-white md:text-5xl">A course, a practice field and a pro workspace in one place.</h2>
-            <p className="mt-4 text-white/65">Video courses teach but don't let you practice. Underwriting software runs numbers but doesn't teach. Deal Screener does both, with an AI partner that connects them.</p>
+            <h2 className="serif mt-3 text-4xl font-semibold text-white md:text-5xl">A course, a scored practice field and a real workspace in one place.</h2>
+            <p className="mt-4 text-white/65">Video courses teach but don't let anyone practice or prove they can do it. Underwriting software runs numbers but doesn't teach. Deal School does both, and shows you who's ready.</p>
           </Reveal>
           <Reveal delay={150} className="glass mt-10 overflow-x-auto rounded-3xl">
             <table className="w-full text-sm">
               <thead><tr className="border-b border-white/10 text-left">
-                <th className="px-5 py-4" /><th className="px-5 py-4 text-center font-semibold text-[#ffd28a]">Deal Screener</th>
+                <th className="px-5 py-4" /><th className="px-5 py-4 text-center font-semibold text-[#ffd28a]">Deal School</th>
                 <th className="px-5 py-4 text-center font-medium text-white/50">Video courses</th><th className="px-5 py-4 text-center font-medium text-white/50">Underwriting software</th>
               </tr></thead>
               <tbody>{COMPARE.map(([f, a, b, c]) => (
@@ -364,7 +389,7 @@ export default function Landing({ go }: { go: Go }) {
         {/* how */}
         <section id="how" className="mx-auto max-w-6xl scroll-mt-20 px-4 py-24 md:px-8">
           <Reveal><div className="text-sm font-semibold uppercase tracking-[.2em] text-[#9cc4ff]">How it works</div>
-            <h2 className="serif mt-3 text-4xl font-semibold text-white md:text-5xl">Three steps to your first deal.</h2></Reveal>
+            <h2 className="serif mt-3 text-4xl font-semibold text-white md:text-5xl">From first day to first deal.</h2></Reveal>
           <div className="relative mt-12 grid gap-6 md:grid-cols-3">
             <div className="absolute left-0 right-0 top-6 hidden h-px bg-gradient-to-r from-transparent via-white/25 to-transparent md:block" />
             {STEPS.map(([t, b], i) => (
@@ -390,14 +415,14 @@ export default function Landing({ go }: { go: Go }) {
         {/* final cta */}
         <section className="relative px-4 pb-40 pt-24 text-center">
           <Reveal>
-            <h2 className="serif mx-auto max-w-3xl text-4xl font-semibold text-white md:text-6xl">Your first deal is <span className="shine">waiting.</span></h2>
-            <p className="mx-auto mt-5 max-w-xl text-white/65">Create a free account and start with the five minute Cedar Ridge challenge. You'll never read a T12 the same way again.</p>
+            <h2 className="serif mx-auto max-w-3xl text-4xl font-semibold text-white md:text-6xl">Your next analyst <span className="shine">starts here.</span></h2>
+            <p className="mx-auto mt-5 max-w-xl text-white/65">Create a free account, take the five minute Cedar Ridge challenge, then try a Deal Check. You'll never read a T12 the same way again.</p>
             <button onClick={() => go("signup")} className="mt-9 rounded-full bg-gradient-to-r from-[#ffd28a] to-[#ff8a3d] px-8 py-3.5 font-semibold text-[#1a1030] shadow-[0_10px_50px_-8px_#ff8a3d] transition hover:-translate-y-0.5">Create your free account</button>
             <div className="mt-4 text-sm text-white/55">Already have one? <button onClick={() => go("signin")} className="underline hover:text-white">Sign in</button></div>
           </Reveal>
         </section>
 
-        <footer className="relative border-t border-white/10 bg-[#060a18]/80 py-6 text-center text-xs text-white/40 backdrop-blur">© {new Date().getFullYear()} Deal Screener · A learning and screening tool, not investment advice.</footer>
+        <footer className="relative border-t border-white/10 bg-[#060a18]/80 py-6 text-center text-xs text-white/40 backdrop-blur">© {new Date().getFullYear()} Deal School · A learning and screening tool, not investment advice.</footer>
       </div>
     </div>
   )

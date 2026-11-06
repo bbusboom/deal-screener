@@ -54,7 +54,7 @@ const LEARN: Slide[] = [
 
 const PRO: Slide[] = [
   { key: "docs", tag: "Documents", title: "Drop in the OM, T12 and rent roll. Skip the typing.",
-    body: "Deal Screener reads PDFs, Excel and photos, shows every value with where it came from, and changes nothing until you approve it. A unit level rent roll gives occupancy, loss to lease and lease expirations.",
+    body: "Deal School reads PDFs, Excel and photos, shows every value with where it came from, and changes nothing until you approve it. A unit level rent roll gives occupancy, loss to lease and lease expirations.",
     bullets: ["Seller T12 lands next to your underwriting", "Rent roll becomes your unit mix in one click", "Every number traceable to its source"],
     visual: <Panel glow="#2f6bffcc">
       {[["Offering memo.pdf", "Price, unit mix, pro forma"], ["T12 Sept 2026.xlsx", "Income and 18 expense lines"], ["Rent roll.csv", "48 units, 45 occupied"]].map(([f, d], i) =>
@@ -135,7 +135,7 @@ export default function PathPicker({ username, onPick }: { username?: string | n
       <div className="relative z-10">
         <section className="mx-auto flex min-h-[calc(100svh-64px)] max-w-5xl flex-col items-center justify-center px-4 text-center">
           <div className="rise text-sm text-white/60">{username ? `Welcome, ${username}.` : "Welcome."}</div>
-          <h1 className="rise serif mt-3 text-4xl font-semibold leading-tight text-white md:text-6xl" style={{ animationDelay: "120ms" }}>Two ways to use Deal Screener.</h1>
+          <h1 className="rise serif mt-3 text-4xl font-semibold leading-tight text-white md:text-6xl" style={{ animationDelay: "120ms" }}>Two ways to use Deal School.</h1>
           <p className="rise mt-5 max-w-2xl text-lg text-white/65" style={{ animationDelay: "250ms" }}>Learn underwriting from the ground up, or put it to work on a live deal. Scroll to see both, or jump straight in. You can switch any time from the top of the page.</p>
           <div className="rise mt-10 grid w-full max-w-3xl gap-4 sm:grid-cols-2" style={{ animationDelay: "400ms" }}>
             {([["learner", "Learn to underwrite", "New to underwriting, or training interns", "learn"], ["pro", "Underwrite a deal", "Working a live deal", "pro"]] as const).map(([p, t, who, id]) => (

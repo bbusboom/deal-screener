@@ -100,7 +100,7 @@ export default function App({ learnOnly = false }: { learnOnly?: boolean }) {
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-3 px-4 md:px-8">
           <div className="flex items-center gap-2.5">
             <div className="grid h-8 w-8 place-items-center rounded-md bg-gold-400 text-[13px] font-bold text-[#1c1305]">DS</div>
-            <div className="leading-tight"><div className="font-bold">{learnOnly ? "Deal School" : "Deal Screener"}</div><div className="hidden text-[11px] text-white/50 sm:block">{learnOnly ? "Learn to underwrite" : "with Deal School AI"}</div></div>
+            <div className="leading-tight"><div className="font-bold">Deal School</div><div className="hidden text-[11px] text-white/50 sm:block">{learnOnly ? "Learn to underwrite" : "Underwriting training"}</div></div>
           </div>
           {path && !choosing && !learnOnly && (
             <div className="flex rounded-full border border-white/10 bg-white/5 p-1 text-sm font-semibold">

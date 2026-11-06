@@ -109,7 +109,7 @@ export function MemoView({ d, p, mp, onClose, extra, closeLabel = "Close" }: { d
         <H>Risks and diligence items</H>
         {R.length ? <ul className="list-disc space-y-1 pl-5">{R.map(x => <li key={x}>{x}</li>)}</ul> : <p className="text-slate-600">No automatic flags. Verify the rent roll, T12, taxes after sale and an insurance quote.</p>}
 
-        <p className="mt-8 border-t border-slate-200 pt-2 text-[10px] text-slate-400">Prepared with Deal Screener (getdealscreener.com). A screening and learning tool, not investment advice. Figures depend on the inputs entered.</p>
+        <p className="mt-8 border-t border-slate-200 pt-2 text-[10px] text-slate-400">Prepared with Deal School (getdealscreener.com). A screening and learning tool, not investment advice. Figures depend on the inputs entered.</p>
       </div>
     </div>, document.body
   )

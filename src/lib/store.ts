@@ -119,7 +119,9 @@ export async function apiHeaders(): Promise<Record<string, string>> {
 }
 
 /* ---------- course progress ---------- */
-export interface Progress { lessons: Record<string, boolean>; quizzes: Record<string, { best: number; total: number; passed: boolean }>; last?: string }
+export interface Progress { lessons: Record<string, boolean>; quizzes: Record<string, { best: number; total: number; passed: boolean }>; last?: string
+  /** Challenge scores: puzzles store stars (0 to 3), duels store points (0 to 100). */
+  challenges?: Record<string, { best: number; tries: number }> }
 const LOCAL_PROGRESS = "dealScreener.course.progress"
 const emptyProgress = (): Progress => ({ lessons: {}, quizzes: {} })
 export async function getProgress(session: Session | null): Promise<Progress> {

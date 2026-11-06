@@ -80,11 +80,11 @@ export default function AiPanel({ deal, onDeal, fixedRoute, title = "Deal School
           <button className="btn" onClick={() => { try { localStorage.setItem(CODE_KEY, code) } catch {} setNeedCode(false); setError("") }}>Save code</button>
         </div>)}
       <div className="flex gap-2">
-        <textarea rows={1} className="min-h-[38px] flex-1 resize-y" placeholder={context ? "Ask a question about this lesson" : "Ask about this deal, or tell it what to change"} value={input}
+        <textarea rows={1} className="min-h-[38px] flex-1 resize-y" placeholder={context ? "Ask a question about this" : "Ask about this deal, or tell it what to change"} value={input}
           onChange={e => setInput(e.target.value)} onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); ask(input) } }} />
         <button className="btn btn-primary" disabled={busy} onClick={() => ask(input)}>Send</button>
       </div>
-      {context ? <p className="note mt-2">Deal School knows which lesson you're on. It can explain things differently, give more examples, or go deeper.</p> : <p className="note mt-2">Deal School runs its math through the same model as every tab, so its numbers match the screen. It can change inputs when you ask. It can't browse the web yet, so give it local comps and tax figures.</p>}
+      {context ? <p className="note mt-2">Deal School knows what you're working on. It can explain things differently, give more examples, or go deeper.</p> : <p className="note mt-2">Deal School runs its math through the same model as every tab, so its numbers match the screen. It can change inputs when you ask. It can't browse the web yet, so give it local comps and tax figures.</p>}
     </Card>
   )
 }

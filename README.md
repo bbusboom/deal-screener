@@ -1,6 +1,6 @@
 # Deal Screener
 
-A multifamily underwriting website with the **Deal School** AI agent built in. Started as a Claude artifact (v0.1 to v0.3), moved to a real web app in v0.4, added document import in v0.5, accounts with two paths (Learn and Underwrite) in v0.6, the Deal School course in v0.7, and Market check in v0.8.
+A multifamily underwriting website with the **Deal School** AI agent built in. Started as a Claude artifact (v0.1 to v0.3), moved to a real web app in v0.4, added document import in v0.5, accounts with two paths (Learn and Underwrite) in v0.6, the Deal School course in v0.7, Market check in v0.8, and Challenges in v0.9.
 
 ## What it does
 
@@ -17,6 +17,15 @@ A multifamily underwriting website with the **Deal School** AI agent built in. S
 ## Deal School course
 
 `src/learn/curriculum.ts` holds the 10 modules, lessons and quizzes. Photos load live from Wikimedia Commons with author and license credit (free licenses only), and each photo links to a Google Images search. Diagrams are drawn in code in `src/learn/Diagrams.tsx`. The worked example numbers come from the site's own model.
+
+## Challenges (v0.9)
+
+A Challenges tab on the Learn side (`src/learn/challenges.ts` for content, `Challenges.tsx` for the UI):
+
+- **Spot the seller's trick**: four documents (two T12s, a rent roll, an offering memo) with planted problems and honest lines that only look odd. Learners flag lines, check, and get up to 3 stars plus the dollar impact.
+- **Deal Duels**: four broker pitches in Arkansas, Texas, Ohio and Florida. Learners fix the seller's numbers, then pursue, renegotiate or pass, and are scored out of 100 on assumptions, the call and the offer. The reveal compares seller, learner and reality, all computed with the model. One duel is an honest deal on purpose.
+- Deal School sits beside each challenge with hint and explain buttons; it gives hints until the learner checks.
+- Best scores save to the account with course progress.
 
 ## Market check (v0.8)
 

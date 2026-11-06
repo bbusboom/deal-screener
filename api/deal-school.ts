@@ -23,7 +23,7 @@ export default async function handler(req: any, res: any) {
   if (history.some(m => typeof m.content !== "string" || m.content.length > MAX_CHARS)) return res.status(400).json({ error: "Message too long." })
 
   const lesson = typeof body.context === "string" && body.context.trim()
-    ? `\n\nThe user is studying this lesson in the Deal School course right now. Answer questions in its context, at its level, and use its Oak Ridge example when it helps. Only use the deal tools if they ask about the deal in the screener.\n---\n${body.context.slice(0, 4000)}\n---`
+    ? `\n\nThe user is working on this part of the Deal School course right now (a lesson or a challenge). Answer in its context and at its level, and use its worked examples when they help. If it's a challenge the user hasn't checked yet, give hints and questions, not the answers. Only use the deal tools if they ask about the deal in the screener.\n---\n${body.context.slice(0, 4000)}\n---`
     : ""
   let deal = norm(body.deal || {})
   let changed = false

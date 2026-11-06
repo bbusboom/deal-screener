@@ -1,0 +1,51 @@
+<!-- Supabase → Authentication → Emails → Templates → Confirm signup
+     Subject: Welcome to Deal Screener! Confirm your email to start your first deal -->
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Welcome to Deal Screener</title></head>
+<body style="margin:0;padding:0;background:#eef4fb;">
+  <div style="display:none;max-height:0;overflow:hidden;">One click and you're in. Your first deal is waiting.</div>
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#eef4fb;padding:32px 12px;">
+    <tr><td align="center">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:#ffffff;border-radius:14px;overflow:hidden;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#0f172a;">
+
+        <!-- header -->
+        <tr><td style="background:#0b1f33;padding:28px 32px;">
+          <table role="presentation" cellpadding="0" cellspacing="0"><tr>
+            <td style="background:#1f4e79;color:#ffffff;font-weight:700;font-size:15px;width:36px;height:36px;text-align:center;border-radius:8px;">DS</td>
+            <td style="padding-left:12px;color:#ffffff;font-size:18px;font-weight:700;">Deal Screener</td>
+          </tr></table>
+          <h1 style="margin:22px 0 6px;color:#ffffff;font-size:26px;line-height:1.25;">Welcome{{ if .Data.username }}, {{ .Data.username }}{{ end }}! 🏢</h1>
+          <p style="margin:0;color:#d9e6f5;font-size:15px;line-height:1.5;">You just joined the place where you learn real estate underwriting by doing real deals.</p>
+        </td></tr>
+
+        <!-- body -->
+        <tr><td style="padding:28px 32px 8px;">
+          <p style="margin:0 0 18px;font-size:16px;line-height:1.6;">One quick step: confirm your email so we can save your deals, course progress and challenge scores to your account.</p>
+          <table role="presentation" cellpadding="0" cellspacing="0" style="margin:6px 0 24px;"><tr><td style="border-radius:8px;background:#1f4e79;">
+            <a href="{{ .ConfirmationURL }}" style="display:inline-block;padding:14px 28px;color:#ffffff;font-size:16px;font-weight:700;text-decoration:none;border-radius:8px;">Confirm my email and start →</a>
+          </td></tr></table>
+
+          <p style="margin:0 0 10px;font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#64748b;">What's waiting for you</p>
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="font-size:15px;line-height:1.5;">
+            <tr><td style="padding:8px 0;vertical-align:top;width:34px;font-size:20px;">🎓</td><td style="padding:8px 0;"><b>The Deal School course.</b> Ten modules that take you from "what's NOI?" to IRR, with real photos, quizzes and an AI tutor under every lesson.</td></tr>
+            <tr><td style="padding:8px 0;vertical-align:top;font-size:20px;">🕵️</td><td style="padding:8px 0;"><b>Spot the seller's trick.</b> Find what's hiding in real looking T12s and rent rolls before it costs you.</td></tr>
+            <tr><td style="padding:8px 0;vertical-align:top;font-size:20px;">⏱️</td><td style="padding:8px 0;"><b>Deal Duels.</b> A broker pitches you a deal. Fix the numbers, make the call, and see what really happened.</td></tr>
+            <tr><td style="padding:8px 0;vertical-align:top;font-size:20px;">📊</td><td style="padding:8px 0;"><b>A pro underwriting workspace.</b> Upload a rent roll or T12, check the market in any state, and stress test the deal.</td></tr>
+          </table>
+
+          <div style="margin:22px 0 6px;padding:14px 16px;background:#eef4fb;border-radius:10px;font-size:14px;line-height:1.5;color:#173b5c;">
+            <b>Tip for day one:</b> start with the Challenges tab and try "Cedar Ridge Apartments." It takes five minutes and shows you the three seller traps that cost buyers the most money.
+          </div>
+        </td></tr>
+
+        <!-- footer -->
+        <tr><td style="padding:18px 32px 28px;">
+          <p style="margin:0 0 10px;font-size:13px;line-height:1.5;color:#64748b;">Button not working? Paste this link into your browser:<br><a href="{{ .ConfirmationURL }}" style="color:#2563a6;word-break:break-all;">{{ .ConfirmationURL }}</a></p>
+          <p style="margin:0;font-size:12px;line-height:1.5;color:#94a3b8;">You're getting this because someone signed up for Deal Screener with {{ .Email }}. If that wasn't you, ignore this email and no account will be created.<br>Deal Screener is a learning and screening tool, not investment advice.</p>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>

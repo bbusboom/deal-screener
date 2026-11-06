@@ -12,6 +12,7 @@ import { SupplyPane } from "./components/SupplyPane"
 import { MonthlyPane } from "./components/MonthlyPane"
 import { RentRollPane } from "./components/RentRollPane"
 import { TaxPane } from "./components/TaxPane"
+import { QuotesPane } from "./components/QuotesPane"
 import { SummaryPane, IncomePane, ExpensesPane, FinancingPane, ProjectionsPane, ScenariosPane, DealsPane, failNames } from "./components/Panes"
 import AiPanel from "./components/AiPanel"
 import ImportPane from "./components/ImportPane"
@@ -26,11 +27,11 @@ const SECTIONS = [
   { key: "property", label: "Property", icon: Icon.property, pages: [["income", "Rent & income"], ["rentroll", "Rent roll"], ["expenses", "Expenses"], ["valueadd", "Value add"], ["documents", "Documents"]] },
   { key: "market", label: "Market", icon: Icon.market, pages: [["market", "Location"], ["supply", "Supply & demand"], ["comps", "Comps"]] },
   { key: "financials", label: "Financials", icon: Icon.financials, pages: [["statement", "Operating statement"], ["monthly", "Monthly"], ["projections", "Projections"], ["scenarios", "Scenarios"], ["taxes", "Taxes"]] },
-  { key: "capital", label: "Capital", icon: Icon.capital, pages: [["financing", "Debt"], ["investors", "Investors"]] },
+  { key: "capital", label: "Capital", icon: Icon.capital, pages: [["financing", "Debt"], ["quotes", "Loan quotes"], ["investors", "Investors"]] },
   { key: "advisor", label: "Advisor", icon: Icon.advisor, pages: [["ai", "Deal School AI"]] },
   { key: "pipeline", label: "Pipeline", icon: Icon.pipeline, pages: [["deals", "Deals & buy box"]] },
 ] as const
-type Tab = "summary" | "taxes" | "rentroll" | "monthly" | "supply" | "income" | "expenses" | "valueadd" | "documents" | "market" | "comps" | "statement" | "projections" | "scenarios" | "financing" | "investors" | "ai" | "deals"
+type Tab = "summary" | "quotes" | "taxes" | "rentroll" | "monthly" | "supply" | "income" | "expenses" | "valueadd" | "documents" | "market" | "comps" | "statement" | "projections" | "scenarios" | "financing" | "investors" | "ai" | "deals"
 type Section = { key: string; label: string; icon: (c?: string) => React.ReactElement; pages: readonly (readonly [Tab, string])[] }
 const SECS: readonly Section[] = SECTIONS
 const TABS = SECS.flatMap(s => s.pages)
@@ -147,6 +148,7 @@ export default function ProWorkspace({ session, toast }: { session: Session | nu
         {tab === "monthly" && <MonthlyPane {...pane} />}
         {tab === "rentroll" && <RentRollPane {...pane} />}
         {tab === "taxes" && <TaxPane {...pane} />}
+        {tab === "quotes" && <QuotesPane {...pane} />}
         {tab === "investors" && <InvestorsPane {...pane} />}
         {tab === "expenses" && <ExpensesPane {...pane} />}
         {tab === "financing" && <FinancingPane {...pane} />}

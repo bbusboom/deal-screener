@@ -5,6 +5,8 @@ export interface Scenario { name: string; prob: number; rg: number; vac: number;
 
 export interface Deal {
   name: string
+  /** Location, used by Market check. Optional so old saved deals still load. */
+  state?: string; zip?: string; address?: string
   price: number; cc: number; other: number; vac: number
   tax: number; ins: number; util: number; rm: number; pay: number; adm: number; mgmt: number; res: number
   ltv: number; rate: number; amort: number; ioYrs: number; loanFee: number
@@ -57,6 +59,8 @@ export function norm(input: Partial<Deal> & { io?: string } = {}): Deal {
   if (!Array.isArray(d.units) || !d.units.length) d.units = [{ type: "", count: 0, rent: 0 }]
   d.units = d.units.map((u: any) => ({ type: String(u.type ?? ""), count: Number(u.count) || 0, rent: Number(u.rent) || 0 }))
   if (!Array.isArray(d.scen) || !d.scen.length) d.scen = defaultScen(d)
+  for (const k of ["state", "zip", "address"]) d[k] = typeof d[k] === "string" ? d[k] : ""
+  d.state = d.state.toUpperCase().slice(0, 2)
   return d as Deal
 }
 

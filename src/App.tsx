@@ -7,6 +7,8 @@ import PathPicker from "./components/PathPicker"
 import ProWorkspace from "./ProWorkspace"
 import LearnerApp from "./LearnerApp"
 import Course from "./learn/Course"
+import { StateSelect } from "./components/MarketPane"
+import { useHomeState, setHomeState, syncHomeState } from "./lib/market"
 
 export default function App() {
   const [ready, setReady] = useState(false)
@@ -16,16 +18,17 @@ export default function App() {
   const [recovery, setRecovery] = useState(false)
   const [toast, setToast] = useState("")
   const [proKey, setProKey] = useState(0)
+  const homeState = useHomeState()
   const [learnTab, setLearnTab] = useState<"course" | "practice">(() => { try { return (localStorage.getItem("dealScreener.learnTab") as any) || "course" } catch { return "course" } })
   useEffect(() => { try { localStorage.setItem("dealScreener.learnTab", learnTab) } catch {} }, [learnTab])
 
   useEffect(() => {
     let alive = true
-    getSession().then(async s => { if (!alive) return; setSession(s); setProfile(await getProfile(s)); setReady(true) })
+    getSession().then(async s => { if (!alive) return; setSession(s); syncHomeState(s); setProfile(await getProfile(s)); setReady(true) })
     if (!supabase) return () => { alive = false }
     const { data } = supabase.auth.onAuthStateChange(async (event, s) => {
       if (event === "PASSWORD_RECOVERY") setRecovery(true)
-      setSession(s); setProfile(await getProfile(s))
+      setSession(s); syncHomeState(s); setProfile(await getProfile(s))
     })
     return () => { alive = false; data.subscription.unsubscribe() }
   }, [])
@@ -50,7 +53,7 @@ export default function App() {
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-3 px-4 md:px-8">
           <div className="flex items-center gap-2">
             <div className="grid h-8 w-8 place-items-center rounded-lg bg-brand-600 text-sm font-bold text-white">DS</div>
-            <div className="leading-tight"><div className="font-bold">Deal Screener</div><div className="hidden text-[11px] text-slate-400 sm:block">v0.7 · Deal School course</div></div>
+            <div className="leading-tight"><div className="font-bold">Deal Screener</div><div className="hidden text-[11px] text-slate-400 sm:block">v0.8 · Market check</div></div>
           </div>
           {path && !choosing && (
             <div className="flex rounded-lg bg-slate-100 p-1 text-sm font-semibold">
@@ -60,6 +63,9 @@ export default function App() {
                 </button>))}
             </div>)}
           <div className="flex items-center gap-3 text-sm">
+            <label className="hidden items-center gap-1.5 text-xs text-slate-500 lg:flex" title="Your home state sets the default for taxes, rent rules and policy">
+              Home state <StateSelect className="!py-1 !text-xs" value={homeState} onChange={v => setHomeState(session, v)} />
+            </label>
             {name && <span className="hidden text-slate-500 md:inline">{name}</span>}
             {accountsEnabled ? <button className="btn" onClick={() => signOut()}>Sign out</button> : <span className="note hidden md:inline">Accounts not set up</span>}
           </div>

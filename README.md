@@ -1,6 +1,6 @@
 # Deal Screener
 
-A multifamily underwriting website with the **Deal School** AI agent built in. Started as a Claude artifact (v0.1 to v0.3), moved to a real web app in v0.4, added document import in v0.5, accounts with two paths (Learn and Underwrite) in v0.6, and the Deal School course in v0.7.
+A multifamily underwriting website with the **Deal School** AI agent built in. Started as a Claude artifact (v0.1 to v0.3), moved to a real web app in v0.4, added document import in v0.5, accounts with two paths (Learn and Underwrite) in v0.6, the Deal School course in v0.7, and Market check in v0.8.
 
 ## What it does
 
@@ -17,6 +17,16 @@ A multifamily underwriting website with the **Deal School** AI agent built in. S
 ## Deal School course
 
 `src/learn/curriculum.ts` holds the 10 modules, lessons and quizzes. Photos load live from Wikimedia Commons with author and license credit (free licenses only), and each photo links to a Google Images search. Diagrams are drawn in code in `src/learn/Diagrams.tsx`. The worked example numbers come from the site's own model.
+
+## Market check (v0.8)
+
+Each user picks a home state (header, saved to their account). Every deal has a state, address and ZIP on the **Market Check** tab:
+
+- **State rules** (`src/lib/states.ts`): property tax level and how it resets after a sale, rent regulation and caps, income tax, owner groups. Checked November 2026.
+- **Checks** (`src/lib/checks.ts`): flag a seller's tax bill below an estimate on your price, rent growth above a statewide cap, flood zones, rents vs the ZIP, vacancy, jobs and your loan rate vs the 10 year Treasury, with one click fixes. The AI uses the same checks through its `get_location` tool.
+- **Live data** (`api/market.ts`): Census ACS by ZIP, Census geocoder, FEMA flood zones, HUD Fair Market Rents, BLS county unemployment and FRED rates. All free; keys are optional except HUD and FRED (see `.env.example`).
+- **Policy briefing** (`api/policy.ts`): Claude with web search writes a neutral briefing on who holds office, rental laws in force, what's moving, owner and tenant groups, and what to change in the model. At most 5 searches per briefing (about $0.05 plus tokens), cached in the browser for a week. Web search has to be enabled for the organization in the Claude Console.
+- A new course lesson, "Location: taxes, rent rules and politics", with three new quiz questions in module 9.
 
 ## Project layout
 

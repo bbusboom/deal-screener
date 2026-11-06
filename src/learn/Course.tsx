@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useState } from "react"
 import type { Session } from "@supabase/supabase-js"
 import { COURSE, allLessons, glossary, type Block, type Module, type Lesson } from "./curriculum"
-import { getProgress, saveProgress, type Progress } from "../lib/store"
+import { getProgress, saveProgress, getSession, type Progress } from "../lib/store"
+import { StateSelect, StateSnapshot } from "../components/MarketPane"
+import { useHomeState, setHomeState } from "../lib/market"
 import { PRACTICE, norm } from "../lib/model"
 import Photo from "./Photo"
 import Diagram from "./Diagrams"
@@ -17,7 +19,21 @@ function blockText(b: Block): string {
   if (b.t === "example") return `${b.title}: ` + b.rows.map(r => `${r[0]} ${r[1]}`).join("; ")
   if (b.t === "terms") return b.items.map(([k, v]) => `${k}: ${v}`).join(" ")
   if (b.t === "photo") return `Photo: ${b.caption}`
+  if (b.t === "state") return "Interactive card showing the user's home state: property tax rate, income tax, rent regulation, reassessment after a sale, and owner groups."
   return ""
+}
+
+function StateBlock() {
+  const home = useHomeState()
+  return (
+    <div className="my-4 rounded-lg border border-brand-100 bg-white p-4">
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+        <div className="card-title !mb-0">Your state</div>
+        <StateSelect value={home} onChange={v => { getSession().then(s => setHomeState(s, v)) }} />
+      </div>
+      <StateSnapshot abbr={home} learner />
+    </div>
+  )
 }
 
 function Blocks({ blocks }: { blocks: Block[] }) {
@@ -38,6 +54,7 @@ function Blocks({ blocks }: { blocks: Block[] }) {
         <dl className="space-y-2 text-sm">{b.items.map(([k, v]) => <div key={k}><dt className="inline font-semibold">{k}: </dt><dd className="inline text-slate-600">{v}</dd></div>)}</dl>
       </div>)
     if (b.t === "calc") return <Calc key={i} c={b.c} />
+    if (b.t === "state") return <StateBlock key={i} />
     return null
   })}</>
 }

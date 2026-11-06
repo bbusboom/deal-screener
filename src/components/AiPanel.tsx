@@ -6,7 +6,7 @@ import { apiHeaders, CODE_KEY } from "../lib/store"
 type Msg = { role: "user" | "assistant"; content: string }
 
 const esc = (s: string) => s.replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]!))
-function mdLite(t: string) {
+export function mdLite(t: string) {
   return esc(t).replace(/\*\*(.+?)\*\*/g, "<b>$1</b>").split("\n")
     .map(l => /^\s*[-•]\s+/.test(l) ? `<li>${l.replace(/^\s*[-•]\s+/, "")}</li>` : l).join("\n")
     .replace(/(<li>.*<\/li>\n?)+/g, m => `<ul class="list-disc pl-5 my-1">${m.replace(/\n/g, "")}</ul>`).replace(/\n/g, "<br>")

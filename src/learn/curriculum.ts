@@ -10,6 +10,7 @@ export type Block =
   | { t: "tip"; text: string }
   | { t: "formula"; name: string; f: string }
   | { t: "calc"; c: "cap" | "dscr" | "coc" | "noi" }
+  | { t: "state" }
 
 export type DiagramKind = "flow" | "returns4" | "docs" | "waterfall" | "noi" | "capTriangle" | "capStack" | "dscr" | "cashflow" | "timeline" | "sensitivity"
 
@@ -312,12 +313,28 @@ export const COURSE: Module[] = [
           { t: "terms", items: [["Base case", "Your most likely set of assumptions."], ["Stress test", "Running the deal under bad but realistic scenarios."], ["Due diligence", "The checks done after an offer is accepted and before closing."]] },
         ],
       },
+      {
+        id: "m9l3", title: "Location: taxes, rent rules and politics", minutes: 8, blocks: [
+          { t: "p", text: "Put the same building in two different states and it can be worth very different amounts. Three things about location change the numbers: how the property is taxed, whether rents can be limited by law, and who is writing the rules." },
+          { t: "p", text: "Property tax first. The effective rate, tax paid as a share of value, runs from under 0.3% in Hawaii to over 2% in New Jersey. Rentals usually pay more than the owner occupied average because they don't get homestead breaks. And in most places the county moves the value toward your purchase price after you buy, so the seller's tax bill is not your tax bill." },
+          { t: "example", title: "Oak Ridge in a high tax state", rows: [["Taxes in our base example (1.3% of price)", "$26,000"], ["Same building at 2.11% of $2,000,000", "$42,200"], ["Extra tax per year", "$16,200"], ["NOI = $137,440 − $16,200", "$121,240", true], ["Cap rate at $2,000,000", "6.06%"], ["Value at a 6.5% market cap = $121,240 ÷ 6.5%", "$1,865,231", true], ["Value lost to the higher tax", "−$249,231"]] },
+          { t: "formula", name: "Rule of thumb", f: "Value lost ≈ extra yearly expense ÷ cap rate" },
+          { t: "p", text: "Rent rules second. California, Oregon and Washington cap yearly rent increases statewide, at roughly 5% to 10% depending on inflation. A few states such as New York and New Jersey let cities run their own rent control. About 32 states ban local rent control, so rents move with the market. If a cap applies, your rent growth assumption can't go above it, and regulated units may be worth less to the next buyer." },
+          { t: "p", text: "Politics third. Governors, legislatures, city councils and voters keep changing these rules: tax caps, eviction timelines, rent limits, insurance rules. Owner groups such as the Texas Apartment Association and the California Apartment Association lobby for owners; tenant advocacy groups push the other way. A good underwriter doesn't pick a side. They track what's in force, what's proposed and how likely it is to pass, then test the deal with and without it." },
+          { t: "state" },
+          { t: "terms", items: [["Effective tax rate", "Yearly property tax divided by the property's value."], ["Reassessment", "The county updating a property's taxable value, often after a sale."], ["Preemption", "A state law that stops cities from passing their own rules, such as rent control."], ["Rent stabilization", "A limit on how much rent on an existing unit can rise each year."]] },
+          { t: "tip", text: "On the Underwrite side, the Market Check tab runs these checks on your deal, pulls neighborhood data by ZIP, and can write a current policy briefing for the property's state." },
+        ],
+      },
     ],
     quiz: [
       { q: "A deal only hits its target when rents grow 5% a year and the exit cap is 1% below today. This deal is:", options: ["Very safe", "Fragile, it depends on optimistic assumptions", "Guaranteed", "Unaffected by the market"], answer: 1, why: "If it only works in the best case, small surprises can sink it." },
       { q: "Which is a red flag in a seller's numbers?", options: ["7% vacancy", "A 45% expense ratio", "No management fee on a self managed property", "A 1.35 DSCR"], answer: 2, why: "You'll pay for management. Leaving it out overstates NOI." },
       { q: "The deal misses targets at the asking price but works 8% lower. Best decision?", options: ["Pursue at asking", "Renegotiate", "Pass forever", "Ignore the numbers"], answer: 1, why: "Your underwriting gives you a price that works. Offer near it." },
       { q: "Due diligence happens:", options: ["Before looking at the OM", "After an offer is accepted, before closing", "After selling", "Only for loans"], answer: 1, why: "It's the verification period between agreement and closing." },
+      { q: "You're buying for $3,000,000 where the county reassesses after a sale at about 1.6% of value. The seller's tax bill is $24,000. What goes in your model?", options: ["$24,000", "About $48,000", "Nothing until the bill arrives", "The average of the two"], answer: 1, why: "Taxes reset toward your price: $3,000,000 × 1.6% = $48,000. Using the seller's bill overstates NOI by $24,000." },
+      { q: "At a 6.5% cap rate, an extra $10,000 a year in property tax lowers the property's value by about:", options: ["$10,000", "$65,000", "$154,000", "$650"], answer: 2, why: "Value lost ≈ $10,000 ÷ 6.5% ≈ $153,800." },
+      { q: "A state preempts rent control. That means:", options: ["Rents are capped statewide", "Cities can't pass their own rent control unless the state changes the law", "Landlords can't raise rents", "Rent control is required"], answer: 1, why: "Preemption blocks local rent control; rents move with the market until the state law changes." },
     ],
   },
   /* ------------------------------------------------------------------ 10 */

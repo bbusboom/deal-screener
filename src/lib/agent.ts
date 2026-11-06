@@ -4,6 +4,7 @@ import {
   type Deal, type Overrides, type Projection, NUM_FIELDS, TEST_NAMES, type TestKey,
   project, tests, maxPrice, weighted, scenCases, irr, norm,
 } from "./model.js"
+import { locationBrief } from "./checks.js"
 
 export type Route = "learner" | "pro"
 
@@ -57,6 +58,8 @@ export const TOOL_DEFS = [
     input_schema: { type: "object", properties: { scenarios: { type: "array", items: { type: "object" } } }, required: ["scenarios"] } },
   { name: "max_bid", description: "Highest purchase price that hits a target IRR and/or year 1 cash on cash, for one case (same fields as run_case) or for weighted scenarios.",
     input_schema: { type: "object", properties: { target_irr_pct: { type: "number" }, target_year1_coc_pct: { type: "number" }, case: { type: "object" }, scenarios: { type: "array", items: { type: "object" } } } } },
+  { name: "get_location", description: "The deal's state and what it means for underwriting: property tax level and how taxes reset after a sale, rent regulation and caps, income tax, owner groups, and checks against this deal's inputs with suggested changes.",
+    input_schema: { type: "object", properties: {} } },
   { name: "update_inputs", description: "Change inputs in the screener so every tab shows them. Only when the user asks to use a number. Keys: " + NUM_FIELDS.join(", ") + ", and rg as one rent growth number for all years.",
     input_schema: { type: "object", properties: { changes: { type: "object" } }, required: ["changes"] } },
 ] as const
@@ -110,6 +113,8 @@ export function runTool(name: string, input: any, deal: Deal): { result: unknown
       })
       return { deal: norm(next), result: { applied } }
     }
+    case "get_location":
+      return { deal: d, result: locationBrief(d) }
     default:
       return { deal: d, result: { error: "Unknown tool " + name } }
   }
@@ -122,15 +127,17 @@ Explain an idea in one or two plain sentences only when it first matters, then k
 If the user says something factually wrong, such as counting the mortgage in NOI or thinking a higher cap rate means a higher price, correct it right away in one friendly line.
 If the user makes a judgment call you disagree with, such as 0% vacancy or no management fee, say once in one line what most underwriters use, then use THEIR number. Later show their number next to a typical one so they see the dollar difference.
 Go along with whatever the user assumes about the future market. Don't argue forecasts.
+When taxes or rent growth come up, call get_location and explain in a line how the property's state changes them.
 Keep a beginner's first pass to year 1 numbers unless they ask about IRR or the hold period. Point them to the tab that shows what you're talking about: Summary, Property & Income, Expenses, Financing, Projections or Scenarios.`,
   pro: `You are Deal School, running inside the owner's Multifamily Deal Screener website on the PRO route. Act like a sharp analyst briefing a principal: concise, numbers first. Don't explain concepts unless asked.
 Model every variable that matters: rent growth by year, vacancy, expense, tax and insurance growth, tax after reassessment on the purchase price, rate and interest only period, exit cap, hold period.
 Build at least a downside, base and upside case with explicit assumptions, ask the owner to adjust them and put a probability on each, then run weighted_scenarios with THEIR weights. If an owner assumption is far outside normal ranges, say so once, then model it their way.
 Show breakpoints, such as the exit cap or rent growth where the deal misses target, and give a max bid with max_bid.
-You cannot browse the web here. For local comps, tax rates, supply and policy factors, use figures the owner gives you, label your own assumptions clearly, and never invent comps or sources.`,
+Call get_location for the state's tax, reassessment and rent rules and fold them into the cases (for example, cap rent growth where a statewide cap applies and reset taxes on the purchase price). You cannot browse the web here: for comps, supply, and current officials or bills, use figures the owner gives you or point them to Market Check's live data and policy briefing. Label your own assumptions and never invent comps or sources.`,
 }
 export const COMMON = `Always use the tools for numbers; never do arithmetic in your head. Call get_deal first in a conversation.
 Formatting: short paragraphs and simple lists with "- ". Use **bold** sparingly. No markdown tables; for comparisons use short lines like "Base: IRR 12.1%, CoC 6.2%".
+On politics, stay neutral: describe what laws and proposals do and what owners and tenant advocates each say, never which side is right or how to vote.
 This is decision support, not investment advice.`
 
 export { irr }

@@ -5,6 +5,9 @@ import { listDeals, saveDeal, type SavedDeal } from "./lib/store"
 import { Card, Field, NumInput } from "./components/ui"
 import AiPanel from "./components/AiPanel"
 import ImportPane from "./components/ImportPane"
+import MarketPane, { StateSelect } from "./components/MarketPane"
+import { stateBy, taxEstimate } from "./lib/states"
+import { useHomeState } from "./lib/market"
 
 const STEPS = ["Start", "Property", "Income", "Expenses", "NOI", "Value", "Financing", "Cash flow", "Review"] as const
 const CUR = "dealScreener.learner.current"
@@ -41,6 +44,7 @@ function choices(d: Deal, p: Projection) {
 }
 
 export default function LearnerApp({ session, toast, onOpenInPro }: { session: Session | null; toast: (m: string) => void; onOpenInPro: (d: Deal) => void }) {
+  const home = useHomeState()
   const [deal, setDeal] = useState<Deal>(() => norm(load(CUR, PRACTICE)))
   const [dealId, setDealId] = useState<string | undefined>(() => load<string | undefined>(CUR + ".id", undefined))
   const [step, setStep] = useState<number>(() => load(CUR + ".step", 0))
@@ -57,7 +61,7 @@ export default function LearnerApp({ session, toast, onOpenInPro }: { session: S
   const p = useMemo(() => project(deal), [deal])
   const valid = p.units > 0 && deal.price > 0
   const go = (n: number) => setStep(Math.max(0, Math.min(STEPS.length - 1, n)))
-  const start = (d: Deal, id?: string) => { setDeal(norm(d)); setDealId(id); setImporting(false); go(1) }
+  const start = (d: Deal, id?: string) => { setDeal(norm({ ...d, state: d.state || home })); setDealId(id); setImporting(false); go(1) }
   async function save() {
     try { const id = await saveDeal(session, deal, "learner", dealId); setDealId(id); toast("Progress saved"); listDeals(session, "learner").then(setMine).catch(() => {}) }
     catch (e: any) { toast("Couldn't save: " + (e?.message || e)) }
@@ -92,6 +96,8 @@ export default function LearnerApp({ session, toast, onOpenInPro }: { session: S
         <Field label="Property name"><input value={deal.name} onChange={e => set({ name: e.target.value })} /></Field>
         {N("price", "Purchase price ($)", 1000)}
         {N("cc", "Closing costs (% of price)", 0.1, <Hint>Usually 1% to 3% for title, legal, lender and inspection fees.</Hint>)}
+        <Field label="State the property is in"><StateSelect value={deal.state || ""} onChange={v => set({ state: v })} />
+          <Hint>{stateBy(deal.state) ? `We'll use ${stateBy(deal.state)!.name}'s tax and rent rules when we check the deal.` : "Taxes and rent rules depend on the state."}</Hint></Field>
       </div>
       <Math_ lines={[["Units (set on the next step)", String(p.units)], ["Price per unit = price ÷ units", valid ? usd(p.y1.ppu) : "—", true]]} />
     </Card>)
@@ -117,7 +123,7 @@ export default function LearnerApp({ session, toast, onOpenInPro }: { session: S
     <Card title="Step 3 · Operating expenses">
       <Explain>These are the costs of running the property. This is where seller numbers are most often too rosy. Two classic traps: <b>property tax</b> usually goes up after a sale because the county reassesses at the new price, and an owner who manages it themselves shows no <b>management fee</b>, but you'll pay one. The mortgage is <b>not</b> an operating expense.</Explain>
       <div className="grid gap-3 sm:grid-cols-2">
-        {N("tax", "Property taxes ($/yr)", 500, <Hint>Estimate on your purchase price, not the seller's bill.</Hint>)}
+        {N("tax", "Property taxes ($/yr)", 500, <Hint>Estimate on your purchase price, not the seller's bill.{stateBy(deal.state) && deal.price > 0 ? ` In ${stateBy(deal.state)!.name}, a rough estimate is ${usd(Math.round(taxEstimate(deal.price, stateBy(deal.state)) / 100) * 100)} a year.` : ""}</Hint>)}
         {N("ins", "Insurance ($/yr)", 500)}
         {N("util", "Utilities ($/yr)", 500)}
         {N("rm", "Repairs & maintenance ($/yr)", 500)}
@@ -207,6 +213,11 @@ export default function LearnerApp({ session, toast, onOpenInPro }: { session: S
           <div><div className="card-title">What you learned</div>
             <ul className="list-disc space-y-1 pl-5 text-sm"><li>NOI drives value, the loan and your returns.</li><li>A good cap rate can still fail the lender's DSCR test.</li><li>Small changes in vacancy or rate move cash flow a lot.</li><li>Seller numbers need checking, especially taxes.</li></ul></div>
         </div>
+        <details className="mt-5 rounded-lg border border-slate-200 p-3" open={!!deal.state}>
+          <summary className="cursor-pointer font-semibold">Check the market and your state</summary>
+          <p className="note mt-1">Where a property sits changes its taxes, how fast rents can grow and who's making the rules. Add the ZIP to compare with the neighborhood.</p>
+          <div className="mt-3"><MarketPane d={deal} set={set} session={session} route="learner" /></div>
+        </details>
         <div className="mt-5 flex flex-wrap gap-2"><button className="btn btn-primary" onClick={() => onOpenInPro(deal)}>Open this deal in the Pro workspace</button><button className="btn" onClick={() => go(0)}>Start another deal</button></div>
       </Card>)
   }

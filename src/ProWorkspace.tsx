@@ -6,9 +6,11 @@ import { Kpi } from "./components/ui"
 import { SummaryPane, IncomePane, ExpensesPane, FinancingPane, ProjectionsPane, ScenariosPane, DealsPane, failNames } from "./components/Panes"
 import AiPanel from "./components/AiPanel"
 import ImportPane from "./components/ImportPane"
+import MarketPane from "./components/MarketPane"
+import { getHomeState } from "./lib/market"
 
 const TABS = [
-  ["summary", "Summary"], ["documents", "Import Documents"], ["income", "Property & Income"], ["expenses", "Expenses"], ["financing", "Financing"],
+  ["summary", "Summary"], ["documents", "Import Documents"], ["market", "Market Check"], ["income", "Property & Income"], ["expenses", "Expenses"], ["financing", "Financing"],
   ["projections", "Projections"], ["scenarios", "Scenarios"], ["ai", "Deal School AI"], ["deals", "Buy Box & Deals"],
 ] as const
 type Tab = typeof TABS[number][0]
@@ -50,7 +52,7 @@ export default function ProWorkspace({ session, toast }: { session: Session | nu
           <div className="flex flex-wrap items-center gap-2">
             <input className="w-full max-w-md font-semibold" placeholder="Deal name" value={deal.name} onChange={e => set({ name: e.target.value })} />
             <button className="btn btn-primary" onClick={save}>{dealId ? "Save" : "Save deal"}</button>
-            <button className="btn" onClick={() => { setDeal(norm(DEFAULTS)); setDealId(undefined); go("documents") }}>New deal</button>
+            <button className="btn" onClick={() => { setDeal(norm({ ...DEFAULTS, state: getHomeState() })); setDealId(undefined); go("documents") }}>New deal</button>
           </div>
           <nav className="-mb-px mt-3 flex gap-1 overflow-x-auto">
             {TABS.map(([k, label]) => (
@@ -92,6 +94,7 @@ export default function ProWorkspace({ session, toast }: { session: Session | nu
 
         {tab === "summary" && (valid ? <SummaryPane {...pane} /> : null)}
         <div className={tab === "documents" ? "" : "hidden"}><ImportPane deal={deal} onApply={(patch, msg) => { set(patch); toast(msg); go("summary") }} /></div>
+        {tab === "market" && <MarketPane d={deal} set={set} session={session} route="pro" />}
         {tab === "income" && <IncomePane {...pane} />}
         {tab === "expenses" && <ExpensesPane {...pane} />}
         {tab === "financing" && <FinancingPane {...pane} />}
@@ -103,7 +106,7 @@ export default function ProWorkspace({ session, toast }: { session: Session | nu
           onOpen={i => { const r = saved![i]; setDeal(norm(r.data)); setDealId(r.id); go("summary") }}
           onDelete={async i => { await deleteDeal(session, saved![i].id).catch(() => {}); if (saved![i].id === dealId) setDealId(undefined); refresh() }}
           onSample={() => { setDeal(norm(SAMPLE)); setDealId(undefined) }}
-          onClear={() => { setDeal(norm(DEFAULTS)); setDealId(undefined) }} />}
+          onClear={() => { setDeal(norm({ ...DEFAULTS, state: getHomeState() })); setDealId(undefined) }} />}
       </main>
     </>
   )

@@ -8,9 +8,9 @@ import "../landing.css"
 type Slide = { key: string; tag: string; title: string; body: string; bullets: string[]; visual: ReactNode }
 
 const LEARN: Slide[] = [
-  { key: "course", tag: "Course", title: "Thirteen modules, from “what is NOI?” to how acquisitions teams work.",
+  { key: "course", tag: "Course", title: "Thirteen modules, from what NOI is to how an acquisitions team works.",
     body: "Short lessons with diagrams, worked examples and a quiz after every module. One real deal carries through the basics; later modules cover markets, supply and concessions, and the job itself.",
-    bullets: ["About 5 to 9 minutes a lesson", "Progress saved to your account", "Ask Deal School under any lesson"],
+    bullets: ["5 to 9 minutes a lesson", "Your progress saves as you go"],
     visual: <Panel glow="#2f6bffcc">
       <div className="text-xs font-medium text-slate-500">Your course</div>
       {[["1", "Real estate investing basics", 1], ["5", "Net operating income", 1], ["8", "Cash flow and returns", 0.6], ["12", "Markets: supply, demand and competition", 0], ["13", "Underwriting for an acquisitions team", 0]].map(([n, t, p], i) =>
@@ -20,9 +20,9 @@ const LEARN: Slide[] = [
             <div className="mt-1 h-1.5 rounded-full bg-slate-100"><div className="bar h-1.5 rounded-full bg-brand-800" style={{ width: `${Number(p) * 100}%`, animationDelay: `${300 + i * 120}ms` }} /></div></div>
         </div>)}
     </Panel> },
-  { key: "challenges", tag: "Challenges", title: "Catch what the seller hid. Make the call against the clock.",
+  { key: "challenges", tag: "Challenges", title: "Find the problem in the seller's numbers, then decide.",
     body: "Spot the trick hands you real looking T12s, rent rolls and offering memos with problems planted in them. Deal Duels put a broker's pitch in front of you: pursue, renegotiate or pass.",
-    bullets: ["Every miss shows its dollar cost", "Scored, so you can see yourself improve", "Deal School explains each trap"],
+    bullets: ["Each miss shows what it would have cost", "Scores, so you can see yourself get better"],
     visual: <Panel glow="#ff8a3dcc">
       <div className="mb-3 flex items-center gap-2 text-xs"><span className="rounded bg-slate-100 px-2 py-0.5 font-semibold text-slate-600">T12</span><span className="font-semibold">Cedar Ridge Apartments</span></div>
       <table className="tbl text-sm"><tbody>
@@ -35,7 +35,7 @@ const LEARN: Slide[] = [
     </Panel> },
   { key: "practice", tag: "Practice a deal", title: "Underwrite a full deal, one step at a time.",
     body: "Nine guided steps take you from the rent roll to a decision. Each step shows the math, what's typical, and what changes if you get it wrong.",
-    bullets: ["Hints when an input looks off", "Compare your numbers with typical", "Open it in the pro workspace when you're done"],
+    bullets: ["A hint when a number looks off", "Open it in the full workspace when you're done"],
     visual: <Panel glow="#12c7a3cc">
       <div className="flex items-center justify-between text-xs text-slate-500"><span>Maple Court · step 4 of 9</span><span className="num">44%</span></div>
       <div className="mt-2 h-1.5 rounded-full bg-slate-100"><div className="bar h-1.5 rounded-full bg-brand-800" style={{ width: "44%" }} /></div>
@@ -43,9 +43,9 @@ const LEARN: Slide[] = [
       <div className="mt-2 flex items-center gap-2"><input readOnly value="3" className="!w-20 text-right" /><span className="text-sm text-slate-500">% of gross rent</span></div>
       <div className="pop mt-3 rounded-md bg-amber-50 px-3 py-2 text-sm text-amber-800" style={{ animationDelay: "500ms" }}>That's low. Most underwriters use 5 to 8% even for a full building. It's your call; we'll show the difference at the end.</div>
     </Panel> },
-  { key: "tutor", tag: "Deal School AI", title: "A tutor that knows the lesson and your numbers.",
+  { key: "tutor", tag: "Deal School AI", title: "Ask questions without feeling dumb.",
     body: "Ask it to explain a term another way, check your math, or walk through a deal. It runs every number through the same model you see, so its answers match the screen.",
-    bullets: ["Under every lesson and challenge", "Hints first, answers when you ask", "Plain language, no jargon dumps"],
+    bullets: ["Hints first, the answer when you ask for it", "Under every lesson and challenge"],
     visual: <Panel glow="#8b3dffcc">
       <div className="pop ml-auto max-w-[80%] rounded-lg rounded-br-sm bg-brand-900 px-3 py-2 text-sm text-white" style={{ animationDelay: "150ms" }}>Why does the cap rate go up when I add vacancy?</div>
       <div className="pop mt-3 max-w-[90%] rounded-lg rounded-bl-sm bg-slate-100 px-3 py-2 text-sm text-slate-700" style={{ animationDelay: "600ms" }}>It doesn't. Vacancy lowers NOI, and cap rate is NOI ÷ price, so at the same price the cap rate goes <b>down</b>. Oak Ridge at 6% vacancy has $137,440 of NOI: a 6.87% cap at $2,000,000.</div>
@@ -53,27 +53,27 @@ const LEARN: Slide[] = [
 ]
 
 const PRO: Slide[] = [
-  { key: "docs", tag: "Documents", title: "Drop in the OM, T12 and rent roll. Skip the typing.",
+  { key: "docs", tag: "Documents", title: "Upload the OM, T12 and rent roll instead of typing them.",
     body: "Deal School reads PDFs, Excel and photos, shows every value with where it came from, and changes nothing until you approve it. A unit level rent roll gives occupancy, loss to lease and lease expirations.",
-    bullets: ["Seller T12 lands next to your underwriting", "Rent roll becomes your unit mix in one click", "Every number traceable to its source"],
+    bullets: ["The seller's T12 lands next to your numbers", "Every value shows where it came from"],
     visual: <Panel glow="#2f6bffcc">
       {[["Offering memo.pdf", "Price, unit mix, pro forma"], ["T12 Sept 2026.xlsx", "Income and 18 expense lines"], ["Rent roll.csv", "48 units, 45 occupied"]].map(([f, d], i) =>
         <div key={f} className="pop mb-2 flex items-center justify-between rounded-md border border-slate-200 px-3 py-2" style={{ animationDelay: `${150 + i * 200}ms` }}>
           <div><div className="text-sm font-medium">{f}</div><div className="text-xs text-slate-500">{d}</div></div><span className="text-xs font-semibold text-pass-600">read</span></div>)}
       <div className="pop mt-3 text-sm text-slate-600" style={{ animationDelay: "900ms" }}>23 values found. Review and apply →</div>
     </Panel> },
-  { key: "market", tag: "Market", title: "See the competition before it sees you.",
+  { key: "market", tag: "Market", title: "Know what you're competing with.",
     body: "Population and renter growth for the ZIP, city and county, apartment permits for the county, and a live scan of nearby rents, concessions and buildings in lease up.",
-    bullets: ["New supply flagged against your rent growth", "Comps by unit type in one click", "State tax, rent and insurance rules"],
+    bullets: ["New buildings checked against your rent growth", "Rent comps by unit type", "State tax, rent and insurance rules"],
     visual: <Panel glow="#ff8a3dcc">
       <div className="text-xs text-slate-500">Units permitted, 5+ unit buildings</div>
       <div className="mt-3 flex h-28 items-end gap-2">{[398, 582, 49, 218, 1497, 978, 1327].map((v, i) =>
         <div key={i} className="flex flex-1 flex-col items-center gap-1"><div className={`pop w-full rounded-t-sm ${i === 6 ? "bg-gold-400" : "bg-brand-800"}`} style={{ height: v / 1500 * 100, animationDelay: `${200 + i * 90}ms` }} /><span className="text-[10px] text-slate-400">{i === 6 ? "YTD" : 2020 + i}</span></div>)}</div>
       <div className="pop mt-3 rounded-md bg-fail-50 px-3 py-2 text-sm text-fail-700" style={{ animationDelay: "900ms" }}>Heavy new supply. Two lease ups nearby offer 6 to 8 weeks free.</div>
     </Panel> },
-  { key: "model", tag: "The model", title: "Underwrite the way lenders and investment committees do.",
-    body: "Seller T12 next to your numbers, loan sized on LTV, DSCR and debt yield, value add schedules, lease up, refinance and lender quotes, all in one model.",
-    bullets: ["Benchmarks flag every expense line", "Month by month cash flow", "After tax returns and investor waterfall"],
+  { key: "model", tag: "The model", title: "Build the full underwriting, the way lenders read it.",
+    body: "The seller's T12 next to your numbers with a reason for every change, the loan sized on LTV, DSCR and debt yield, a capex budget, value add, lease up, refinance and lender quotes.",
+    bullets: ["Expense lines checked against typical ranges", "Month by month cash flow"],
     visual: <Panel glow="#12c7a3cc">
       <table className="tbl text-[13px]"><thead><tr><th /><th>Seller T12</th><th>Underwritten</th></tr></thead><tbody>
         <tr><td>Effective gross income</td><td className="num">$551,900</td><td className="num">$544,122</td></tr>
@@ -84,9 +84,9 @@ const PRO: Slide[] = [
           <div className="h-2.5 flex-1 rounded-sm bg-slate-100"><div className="bar h-2.5 rounded-sm" style={{ width: `${w}%`, animationDelay: `${300 + i * 150}ms`, background: i === 1 ? "#167a4a" : "#94a3b8" }} /></div>
           <span className={`w-24 text-right font-mono ${i === 1 ? "font-semibold text-pass-700" : "text-slate-500"}`}>{v}</span></div>)}
     </Panel> },
-  { key: "decide", tag: "The decision", title: "Get to a price you can defend, and share it.",
-    body: "A clear pass or fail against your buy box, the max price that still works, and a two page investment memo, an Excel model or a read only link for partners and lenders.",
-    bullets: ["Max price that clears every test", "Investment memo PDF and Excel", "Pipeline to track every deal"],
+  { key: "decide", tag: "The decision", title: "Get to a price you can defend.",
+    body: "Pass or fail against your buy box, the most you can pay, your thesis and risks, and an investment memo, Excel model or read only link for whoever needs to see it.",
+    bullets: ["Investment memo PDF and Excel model", "A pipeline to track every deal"],
     visual: <Panel glow="#8b3dffcc">
       <div className="flex items-center justify-between"><div><div className="text-xs text-slate-500">Oak Ridge Apartments · 20 units</div><div className="text-xl font-semibold">Clears the buy box</div></div>
         <span className="rounded-md bg-pass-50 px-2 py-1 text-xs font-semibold text-pass-700">Pursue</span></div>

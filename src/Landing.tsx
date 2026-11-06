@@ -132,9 +132,9 @@ export const Panel = ({ children }: { children: ReactNode; glow?: string }) =>
   <div className="card-white w-full max-w-md rounded-xl p-5" style={{ boxShadow: "0 1px 0 #ffffff10, 0 24px 48px -28px #000000cc" }}>{children}</div>
 
 const STAGES: StageDef[] = [
-  { key: "learn", tag: "01 · Learn", title: "Start at “what is NOI?” Finish reading deals like a lender.",
-    body: "Thirteen modules carry one real deal from rent and expenses to cap rates, debt sizing, IRR and exit caps, with diagrams, calculators and quizzes.",
-    bullets: ["One worked deal through every lesson", "Deal School AI under each lesson", "Progress saved to your account"],
+  { key: "learn", tag: "01 · Learn", title: "Start with what NOI is. End up reading a T12 the way a lender does.",
+    body: "Thirteen modules. One deal follows you through the early ones, from rent and expenses to cap rate, loan size and IRR, and each module ends with a short quiz.",
+    bullets: ["Lessons run 5 to 9 minutes", "Stuck? Ask the AI about the lesson you're on"],
     accent: "#f4b24c", bg: "transparent",
     visual: <Panel glow="#2f6bffcc">
       <div className="text-xs font-semibold uppercase tracking-wide text-brand-500">Module 3 · Net operating income</div>
@@ -145,9 +145,9 @@ const STAGES: StageDef[] = [
       </div>
       <div className="pop mt-4 rounded-lg bg-pass-50 px-3 py-2 text-sm text-pass-600" style={{ animationDelay: "1150ms" }}>✓ Quiz: correct. Debt service is not an operating expense.</div>
     </Panel> },
-  { key: "trick", tag: "02 · Spot the trick", title: "Find what the seller hid before it costs you.",
-    body: "Real looking T12s, rent rolls and offering memos with problems planted in them. Every miss shows its dollar cost.",
-    bullets: ["$0 vacancy, stale tax bills, one time income", "Stars and a dollar impact score", "Deal School explains each trap"],
+  { key: "trick", tag: "02 · Spot the trick", title: "The seller's T12 isn't the deal.",
+    body: "Each challenge hands you a T12 or rent roll with something wrong in it: no vacancy, a tax bill from 2009, a one time payment counted as income. Miss it and you see what it would have cost you.",
+    bullets: ["Scored on what you catch", "Every trap explained afterward"],
     accent: "#f4b24c", bg: "transparent",
     visual: <Panel glow="#ff8a3dcc">
       <div className="mb-3 flex items-center gap-2 text-xs"><span className="rounded bg-slate-200 px-2 py-0.5 font-semibold text-slate-600">T12</span><span className="font-semibold">Cedar Ridge Apartments</span></div>
@@ -161,9 +161,9 @@ const STAGES: StageDef[] = [
       </tbody></table>
       <div className="pop mt-3 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-800" style={{ animationDelay: "1500ms" }}><b>★★☆</b> Real NOI is $191,701. Those lines hid about <b>$863,000</b> of value.</div>
     </Panel> },
-  { key: "duel", tag: "03 · Deal Duels", title: "A broker pitches. The clock runs. You make the call.",
-    body: "Fix the seller's numbers, then pursue, renegotiate or pass. See what really happened and get scored out of 100.",
-    bullets: ["Real markets in AR, TX, OH and FL", "Scored against model computed reality", "Timed, so it feels like the real thing"],
+  { key: "duel", tag: "03 · Deal Duels", title: "A broker calls with a deal. Make the call.",
+    body: "Fix the seller's numbers before the clock runs out, then pursue, go in lower, or pass. Afterward you see what the deal was really worth.",
+    bullets: ["Deals set in Arkansas, Texas, Ohio and Florida", "Scored out of 100"],
     accent: "#f4b24c", bg: "transparent",
     visual: <Panel glow="#ff3d7acc">
       <div className="flex items-start gap-3">
@@ -179,9 +179,9 @@ const STAGES: StageDef[] = [
         <div className="text-right text-xs text-white/70">True NOI $184,501<br />Fair price about $2.55M</div>
       </div>
     </Panel> },
-  { key: "uw", tag: "04 · Underwrite", title: "A workspace professionals recognize.",
-    body: "Seller T12 next to your underwriting, the lender's view of NCF, loan sizing on LTV, DSCR and debt yield, and exit cap discipline.",
-    bullets: ["Upload a rent roll, T12 or OM to fill it", "Benchmarks flag every expense line", "Scenarios, sensitivity and max bid"],
+  { key: "uw", tag: "04 · Underwrite", title: "The same workspace you'd use on a live deal.",
+    body: "The seller's T12 next to your numbers, with a place to write why you changed each line. The loan sized the way a lender sizes it. A capex budget, your thesis, and a memo you can hand to your boss.",
+    bullets: ["Upload the rent roll, T12 or OM instead of typing it", "Expense lines checked against typical ranges", "The most you can pay and still clear your buy box"],
     accent: "#f4b24c", bg: "transparent",
     visual: <Panel glow="#12c7a3cc">
       <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-emerald-600">Operating statement</div>
@@ -202,9 +202,9 @@ const STAGES: StageDef[] = [
           <span className={`w-24 shrink-0 text-right font-mono ${i === 1 ? "font-bold text-emerald-700" : "text-slate-500"}`}>{v}</span>
         </div>)}
     </Panel> },
-  { key: "market", tag: "05 · Market check", title: "Know the rules where you're buying.",
-    body: "Property tax after a sale, rent rules, flood zones, neighborhood rents and incomes, jobs and today's rates, for all 50 states and DC.",
-    bullets: ["Live Census, FEMA, HUD, BLS and FRED data", "One click fixes to your model", "Neutral briefing on local policy"],
+  { key: "market", tag: "05 · Market check", title: "Check the market before you fall for the building.",
+    body: "What happens to property taxes after the sale, rent rules, flood zones, area rents and incomes, jobs, and today's rates, for every state and DC.",
+    bullets: ["Pulled from Census, FEMA, HUD, BLS and FRED", "Policy summary written to stay neutral"],
     accent: "#f4b24c", bg: "transparent",
     visual: <Panel glow="#8b3dffcc">
       <div className="flex items-center justify-between"><div><div className="text-xs text-slate-400">Example</div><div className="font-semibold">Fayetteville, Arkansas</div></div><span className="rounded-full bg-violet-100 px-2.5 py-1 text-xs font-semibold text-violet-700">AR</span></div>
@@ -279,8 +279,8 @@ const COMPARE: [string, string, string, string][] = [
   ["Free to start", "✓", "Rarely", "Rarely"],
 ]
 const TEAMS: [string, string, boolean][] = [
-  ["A real curriculum", "Thirteen modules from rent rolls to IRR, with an AI tutor that knows the lesson they're on.", false],
-  ["Proof, not hope", "Deal Check times each person on a broker package and scores NOI, cap rate, DSCR and the call, so readiness is a number, not a guess.", false],
+  ["The basics, in order", "Thirteen modules from rent rolls to IRR. The AI tutor knows which lesson they're on, so questions get answered in context.", false],
+  ["A score, not a feeling", "Deal Check times each person on a broker package and scores NOI, cap rate, DSCR and the call, so readiness is a number, not a guess.", false],
   ["Your firm's standards", "Load your own buy box and expense assumptions so new hires learn your way, and see the whole team's progress in one view.", true],
 ]
 const FAQ: [string, string][] = [
@@ -288,7 +288,7 @@ const FAQ: [string, string][] = [
   ["Do I need to know anything about real estate?", "No. The Learn path starts with what a rental property earns and costs, and builds one step at a time. If you already underwrite, skip straight to the workspace."],
   ["Is it free?", "Yes, it's free to use while we build it out. We'll always keep a free way to learn."],
   ["Is this investment advice?", "No. Deal School is a learning and screening tool. Always verify rent rolls, taxes and insurance with the actual documents and local professionals."],
-  ["Who built it?", "A University of Arkansas student who underwrites multifamily deals for a family real estate company, built around how real deals actually get screened."],
+  ["Who built it?", "Blake Busboom, a University of Arkansas student who underwrites multifamily deals for a family real estate company, built around how real deals actually get screened."],
 ]
 const HEADLINE = ["Train", "analysts", "on", "real", "deals.", "Know", "who's", "ready."]
 
@@ -326,13 +326,13 @@ export default function Landing({ go }: { go: Go }) {
             <h1 className="serif text-[2.6rem] font-semibold leading-[1.05] md:text-7xl">
               {HEADLINE.map((w, i) => <span key={i} className="rise inline-block text-white" style={{ animationDelay: `${120 + i * 70}ms` }}><span className={i >= 5 ? "shine" : ""}>{w}</span>&nbsp;</span>)}
             </h1>
-            <p className="rise mt-6 max-w-xl text-lg text-white/70" style={{ animationDelay: "800ms" }}>Deal School teaches underwriting from the first rent roll to IRR, has new hires practice on realistic broker packages, and scores them with Deal Check. When they're ready, they underwrite live deals in the same workspace. Learning on your own? It works for you too.</p>
+            <p className="rise mt-6 max-w-xl text-lg text-white/70" style={{ animationDelay: "800ms" }}>Deal School teaches underwriting from the first rent roll to IRR, then tests it: new hires work realistic broker packages on a clock and get a score. When they're ready, they run live deals in the same workspace. Learning on your own works the same way.</p>
             <div className="rise mt-9 flex flex-wrap gap-3" style={{ animationDelay: "950ms" }}>
               <button onClick={() => go("signup")} className="rounded-md bg-[#f4b24c] px-6 py-3 font-semibold text-[#1c1305] transition hover:bg-[#ffc266]">Start free →</button>
               <a href="#features" className="rounded-md px-6 py-3 font-semibold text-white ring-1 ring-white/25 transition hover:bg-white/10">See what's inside</a>
             </div>
             <div className="rise mt-8 flex flex-wrap gap-x-6 gap-y-2 text-sm text-white/55" style={{ animationDelay: "1100ms" }}>
-              <span>✓ Free to start</span><span>✓ Scored practice deals</span><span>✓ Built by a working underwriter</span>
+              <span>Free to start. Built by an underwriter, not a software company.</span>
             </div>
           </div>
           <div className="rise" style={{ animationDelay: "600ms" }}><HeroMock /></div>
@@ -357,7 +357,7 @@ export default function Landing({ go }: { go: Go }) {
         <section id="teams" className="mx-auto max-w-6xl scroll-mt-20 px-4 py-16 md:px-8">
           <Reveal className="max-w-2xl">
             <div className="text-sm font-semibold uppercase tracking-[.2em] text-[#f4b24c]">For teams</div>
-            <h2 className="serif mt-3 text-4xl font-semibold text-white md:text-5xl">New hires underwriting with confidence, sooner.</h2>
+            <h2 className="serif mt-3 text-4xl font-semibold text-white md:text-5xl">Get new hires underwriting sooner.</h2>
             <p className="mt-4 text-white/65">Built inside a family real estate firm to train its own interns. Hand a new analyst Deal School on day one instead of a spreadsheet and a stack of old deals.</p>
           </Reveal>
           <div className="mt-10 grid gap-5 md:grid-cols-3">
@@ -373,8 +373,8 @@ export default function Landing({ go }: { go: Go }) {
         <section id="different" className="mx-auto max-w-6xl scroll-mt-20 px-4 py-16 md:px-8">
           <Reveal className="max-w-2xl">
             <div className="text-sm font-semibold uppercase tracking-[.2em] text-[#f4b24c]">Why it's different</div>
-            <h2 className="serif mt-3 text-4xl font-semibold text-white md:text-5xl">A course, a scored practice field and a real workspace in one place.</h2>
-            <p className="mt-4 text-white/65">Video courses teach but don't let anyone practice or prove they can do it. Underwriting software runs numbers but doesn't teach. Deal School does both, and shows you who's ready.</p>
+            <h2 className="serif mt-3 text-4xl font-semibold text-white md:text-5xl">Courses don't let you practice. Software doesn't teach.</h2>
+            <p className="mt-4 text-white/65">Most people learn underwriting from videos or by being handed a spreadsheet and an old deal. Deal School puts the lesson, the practice deal and the real model in one place, so the mistakes happen on practice deals instead of real ones.</p>
           </Reveal>
           <Reveal delay={150} className="glass mt-10 overflow-x-auto rounded-3xl">
             <table className="w-full text-sm">

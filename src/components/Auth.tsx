@@ -33,13 +33,13 @@ export default function Auth({ initial = "signin", onDone, onBack, onSignedUp }:
 
   const title = { signin: "Sign in", signup: "Create your account", forgot: "Reset your password", newpass: "Choose a new password" }[mode]
   return (
-    <div className="grid min-h-screen place-items-center bg-gradient-to-b from-brand-900 to-brand-700 px-4">
+    <div className="grid min-h-screen place-items-center bg-night px-4">
       <div className="w-full max-w-md">
         <div className="mb-6 flex items-center justify-center gap-2 text-white">
-          <div className="grid h-10 w-10 place-items-center rounded-xl bg-white/15 font-bold">DS</div>
+          <div className="grid h-10 w-10 place-items-center rounded-lg bg-white/15 font-bold">DS</div>
           <div><div className="text-xl font-bold leading-tight">Deal Screener</div><div className="text-xs text-white/70">with Deal School AI</div></div>
         </div>
-        <form onSubmit={submit} className="rounded-2xl bg-white p-6 shadow-xl">
+        <form onSubmit={submit} className="rounded-lg bg-white p-6 shadow-xl">
           <h1 className="mb-4 text-lg font-bold">{title}</h1>
           <div className="space-y-3">
             {mode !== "newpass" && <label className="block text-xs font-medium text-slate-500">Email<input className="mt-1 w-full" type="email" autoComplete="email" required value={email} onChange={e => setEmail(e.target.value)} /></label>}

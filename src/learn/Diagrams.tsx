@@ -177,5 +177,5 @@ function Funnel() {
 const MAP: Record<DiagramKind, () => React.ReactElement> = { supplyCycle: SupplyCycle, concession: Concession, funnel: Funnel, flow: Flow, returns4: Returns4, docs: Docs, waterfall: Waterfall, noi: Noi, capTriangle: CapTriangle, capStack: CapStack, dscr: Dscr, cashflow: Cashflow, timeline: Timeline, sensitivity: Sensitivity }
 export default function Diagram({ d, caption }: { d: DiagramKind; caption?: string }) {
   const D = MAP[d]
-  return <figure className="my-5 rounded-xl border border-slate-200 bg-white p-4"><div className="[&_svg]:h-auto [&_svg]:w-full">{<D />}</div>{caption && <figcaption className="note mt-2 text-center">{caption}</figcaption>}</figure>
+  return <figure className="my-5 rounded-lg border border-slate-200 bg-white p-4"><div className="[&_svg]:h-auto [&_svg]:w-full">{<D />}</div>{caption && <figcaption className="note mt-2 text-center">{caption}</figcaption>}</figure>
 }

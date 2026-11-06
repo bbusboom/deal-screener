@@ -8,7 +8,7 @@ export const Icon = {
   market: (c?: string) => <S className={c} d="M12 21s-7-6.2-7-11.5a7 7 0 0114 0C19 14.8 12 21 12 21zm0-9a2.5 2.5 0 100-5 2.5 2.5 0 000 5z" />,
   financials: (c?: string) => <S className={c} d="M4 20V10M10 20V4M16 20v-7M22 20H2" />,
   capital: (c?: string) => <S className={c} d="M3 10l9-6 9 6M5 10v8M9.5 10v8M14.5 10v8M19 10v8M3 21h18" />,
-  advisor: (c?: string) => <S className={c} d="M12 3l1.8 4.7L18.5 9.5l-4.7 1.8L12 16l-1.8-4.7L5.5 9.5l4.7-1.8L12 3zM19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8L19 15z" />,
+  advisor: (c?: string) => <S className={c} d="M21 12a8 8 0 01-11.6 7.1L4 20l1-4.6A8 8 0 1121 12zM8.5 12h.01M12 12h.01M15.5 12h.01" />,
   pipeline: (c?: string) => <S className={c} d="M4 5h16M4 5v14h4V5M10 5v10h4V5M16 5v6h4V5" />,
   course: (c?: string) => <S className={c} d="M2 8l10-5 10 5-10 5L2 8zm4 2.5V16c0 1.5 3 3 6 3s6-1.5 6-3v-5.5" />,
   challenge: (c?: string) => <S className={c} d="M12 2l2.6 6.6L21 9.2l-5 4.5 1.5 6.8L12 17l-5.5 3.5L8 13.7 3 9.2l6.4-.6L12 2z" />,

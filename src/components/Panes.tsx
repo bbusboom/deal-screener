@@ -25,7 +25,7 @@ export function SummaryPane({ d, p, mp }: PaneProps) {
   return (
     <div className="space-y-4">
       {memoOpen && <MemoView d={d} p={p} mp={mp} onClose={() => setMemoOpen(false)} />}
-      <div className="flex flex-wrap items-center gap-2 rounded-xl border border-brand-100 bg-brand-50 px-4 py-3">
+      <div className="flex flex-wrap items-center gap-2 rounded-lg border border-brand-100 bg-brand-50 px-4 py-3">
         <span className="mr-auto text-sm text-brand-700"><b>Share this deal:</b> an investment memo, the full model in Excel, or a read only link (anyone with the link sees the numbers; notes and the unit list stay private).</span>
         <button className="btn btn-primary" onClick={() => setMemoOpen(true)}>Investment memo (PDF)</button>
         <button className="btn" disabled={busy} onClick={async () => { setBusy(true); try { await exportXlsx(d, p) } finally { setBusy(false) } }}>{busy ? "Building…" : "Download Excel"}</button>

@@ -83,7 +83,7 @@ export default function ImportPane({ deal, onApply }: { deal: Deal; onApply: (pa
         <div onClick={() => inputRef.current?.click()}
           onDragOver={e => { e.preventDefault(); setDrag(true) }} onDragLeave={() => setDrag(false)}
           onDrop={e => { e.preventDefault(); setDrag(false); if (e.dataTransfer.files.length) add(e.dataTransfer.files) }}
-          className={`cursor-pointer rounded-xl border-2 border-dashed px-6 py-10 text-center transition ${drag ? "border-brand-500 bg-brand-50" : "border-slate-200 hover:border-brand-500 hover:bg-slate-50"}`}>
+          className={`cursor-pointer rounded-lg border-2 border-dashed px-6 py-10 text-center transition ${drag ? "border-brand-500 bg-brand-50" : "border-slate-200 hover:border-brand-500 hover:bg-slate-50"}`}>
           <div className="text-base font-semibold">Drop a rent roll, T12, offering memo or loan quote</div>
           <div className="note mt-1">PDF, Excel, CSV or a photo of the page. Claude reads each file and suggests values; nothing changes until you apply them.</div>
           <button className="btn btn-primary mt-4" onClick={e => { e.stopPropagation(); inputRef.current?.click() }}>Choose files</button>

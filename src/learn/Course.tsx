@@ -118,7 +118,7 @@ export default function Course({ session, onPractice }: { session: Session | nul
   /* ---------- home ---------- */
   if (view.kind === "home") return (
     <main className="mx-auto max-w-5xl px-4 py-6 md:px-8">
-      <div className="rounded-2xl bg-gradient-to-br from-brand-900 to-brand-600 p-6 text-white md:p-8">
+      <div className="rounded-lg bg-brand-900 p-6 text-white md:p-8">
         <div className="text-xs font-semibold uppercase tracking-wider text-brand-100">Deal School</div>
         <h1 className="mt-1 text-2xl font-bold md:text-3xl">Learn to underwrite real estate</h1>
         <p className="mt-2 max-w-2xl text-white/80">Thirteen modules that take you from what investment real estate is to how markets, competition and new supply move a deal, and how an acquisitions team works. Real photos, diagrams, worked examples, a quiz after each module, and Deal School AI for any question.</p>

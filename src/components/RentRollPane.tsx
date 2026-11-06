@@ -48,7 +48,7 @@ export function RentRollPane({ d, set }: PaneProps) {
         <button className="btn btn-gold" onClick={() => input.current?.click()}>{d.rr.length ? "Upload a new rent roll" : "Upload rent roll"}</button>
         {d.rr.length > 0 && <button className="btn" onClick={() => { set({ rr: [], rrName: "" }); setRaw(null); setDet(null) }}>Clear</button>}
       </div>
-      {err && <div className="rounded-xl bg-gold-50 px-4 py-3 text-sm text-gold-700">{err}</div>}
+      {err && <div className="rounded-lg bg-gold-50 px-4 py-3 text-sm text-gold-700">{err}</div>}
 
       {header && det && <Card title="Columns found">
         <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
@@ -84,7 +84,7 @@ export function RentRollPane({ d, set }: PaneProps) {
             <div className="flex h-[150px] items-end gap-1.5">
               {a.months.map(m => <div key={m.key} className="flex flex-1 flex-col items-center gap-1">
                 <div className="num text-[11px] font-semibold text-brand-900">{m.count || ""}</div>
-                <div className={`w-full rounded-t ${m.count / Math.max(1, a.total) > 0.15 ? "bg-gradient-to-t from-fail-500 to-gold-400" : "bg-gradient-to-t from-brand-600 to-brand-400"}`} style={{ height: Math.max(2, m.count / maxM * 110) }} />
+                <div className={`w-full rounded-t ${m.count / Math.max(1, a.total) > 0.15 ? "bg-fail-500" : "bg-brand-800"}`} style={{ height: Math.max(2, m.count / maxM * 110) }} />
                 <div className="text-[10px] text-slate-400">{m.label.split(" ")[0]}</div></div>)}
             </div>
             <table className="tbl mt-3"><tbody>

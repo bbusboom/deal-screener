@@ -25,7 +25,7 @@ function Home({ prog, open }: { prog: Progress; open: (v: View) => void }) {
   const duelPts = DUELS.reduce((s, d) => s + (c[d.id]?.best ?? 0), 0)
   return (
     <div className="space-y-6">
-      <div className="rounded-xl bg-brand-900 px-6 py-5 text-white">
+      <div className="rounded-lg bg-brand-900 px-6 py-5 text-white">
         <div className="text-xl font-bold">Challenges</div>
         <p className="mt-1 max-w-2xl text-sm text-brand-100">Short, real situations where you make the call. Catch what sellers hide, decide on deals against the clock, and see what actually happened. Wrong answers are where the learning is.</p>
         <div className="mt-4 flex flex-wrap gap-6 text-sm">
@@ -39,7 +39,7 @@ function Home({ prog, open }: { prog: Progress; open: (v: View) => void }) {
         <p className="note mb-3">A real looking document with problems planted in it. Click every line you wouldn't trust, then check. Some odd looking lines are fine, so don't flag everything.</p>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {TRICKS.map(t => (
-            <button key={t.id} onClick={() => open({ k: "trick", id: t.id })} className="rounded-xl border border-slate-200 bg-white p-4 text-left shadow-card transition hover:border-brand-500">
+            <button key={t.id} onClick={() => open({ k: "trick", id: t.id })} className="rounded-lg border border-slate-200 bg-white p-4 text-left shadow-card transition hover:border-brand-500">
               <div className="flex items-center justify-between text-xs"><span className="rounded bg-slate-100 px-2 py-0.5 font-semibold text-slate-600">{t.doc}</span><span className="text-slate-400">{DUEL_LEVEL[t.level]}</span></div>
               <div className="mt-2 font-semibold">{t.title}</div>
               <div className="mt-2 text-sm">{c[t.id] ? <Stars n={c[t.id].best} /> : <span className="text-slate-400">Not tried yet</span>}</div>
@@ -52,7 +52,7 @@ function Home({ prog, open }: { prog: Progress; open: (v: View) => void }) {
         <p className="note mb-3">A broker pitches you a deal. Read the clues, fix the seller's numbers, then pursue, renegotiate or pass. Scored out of 100 on your assumptions, your call and your offer.</p>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {DUELS.map(d => (
-            <button key={d.id} onClick={() => open({ k: "duel", id: d.id })} className="rounded-xl border border-slate-200 bg-white p-4 text-left shadow-card transition hover:border-brand-500">
+            <button key={d.id} onClick={() => open({ k: "duel", id: d.id })} className="rounded-lg border border-slate-200 bg-white p-4 text-left shadow-card transition hover:border-brand-500">
               <div className="flex items-center justify-between text-xs"><span className="rounded bg-slate-100 px-2 py-0.5 font-semibold text-slate-600">{stateBy(d.state)?.name}</span><span className="text-slate-400">{DUEL_LEVEL[d.level]} · {d.minutes} min</span></div>
               <div className="mt-2 font-semibold">{d.title}</div>
               <div className="text-xs text-slate-500">{d.seller.name} · {d.seller.units.reduce((s, u) => s + u.count, 0)} units · {usd(d.seller.price)}</div>

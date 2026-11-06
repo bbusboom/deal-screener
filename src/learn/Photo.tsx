@@ -54,7 +54,7 @@ export default function Photo({ titles, query, caption, google }: { titles: stri
   const gUrl = "https://www.google.com/search?tbm=isch&q=" + encodeURIComponent(google)
 
   return (
-    <figure className="my-5 overflow-hidden rounded-xl border border-slate-200 bg-white">
+    <figure className="my-5 overflow-hidden rounded-lg border border-slate-200 bg-white">
       {imgs === null ? <div className="grid h-64 place-items-center bg-slate-100 text-sm text-slate-400">Loading photo…</div>
         : cur ? (
           <div className="relative bg-slate-900">

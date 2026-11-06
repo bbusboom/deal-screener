@@ -52,7 +52,7 @@ function PermitChart({ data, ytd }: { data: { year: number; units5: number }[]; 
       {bars.map(b => (
         <div key={b.l} className="flex flex-1 flex-col items-center gap-1">
           <div className="num text-xs font-semibold text-brand-900">{n0(b.v)}</div>
-          <div className={`w-full rounded-t-lg ${b.ytd ? "bg-gradient-to-t from-gold-500 to-gold-300" : "bg-gradient-to-t from-brand-600 to-brand-400"}`} style={{ height: Math.max(3, b.v / max * H) }} />
+          <div className={`w-full rounded-t-sm ${b.ytd ? "bg-gold-400" : "bg-brand-800"}`} style={{ height: Math.max(3, b.v / max * H) }} />
           <div className="whitespace-nowrap text-[11px] text-slate-400">{b.l}</div>
         </div>))}
     </div>
@@ -104,7 +104,7 @@ export function SupplyPane({ d, p, set }: PaneProps) {
           <button className="btn btn-gold" disabled={!!busy} onClick={runScan}>{busy === "scan" ? "Scanning the market… (about a minute)" : scan ? "Rescan competition" : "Scan the competition"}</button>
         </div>
       )}
-      {err && <div className="rounded-xl bg-fail-50 px-4 py-3 text-sm text-fail-600">{err}</div>}
+      {err && <div className="rounded-lg bg-fail-50 px-4 py-3 text-sm text-fail-600">{err}</div>}
 
       {flags.length > 0 && <div className="card border-gold-200 bg-gold-50/60">
         <div className="card-title">What this means for your model</div>
@@ -147,10 +147,10 @@ export function SupplyPane({ d, p, set }: PaneProps) {
               </tr>))}</tbody>
           </table></div>
           <div className="mt-4 grid gap-4 md:grid-cols-2">
-            <div className="rounded-xl bg-slate-50 p-4"><div className="card-title">New buildings nearby ({leaseUp.length})</div><p className="text-sm text-slate-700">{scan.pipeline}</p></div>
-            <div className="rounded-xl bg-slate-50 p-4"><div className="card-title">Concessions</div><p className="text-sm text-slate-700">{scan.concessions}</p></div>
+            <div className="rounded-lg bg-slate-50 p-4"><div className="card-title">New buildings nearby ({leaseUp.length})</div><p className="text-sm text-slate-700">{scan.pipeline}</p></div>
+            <div className="rounded-lg bg-slate-50 p-4"><div className="card-title">Concessions</div><p className="text-sm text-slate-700">{scan.concessions}</p></div>
           </div>
-          <div className="mt-4 rounded-xl border border-brand-100 bg-brand-50/50 p-4">
+          <div className="mt-4 rounded-lg border border-brand-100 bg-brand-50/50 p-4">
             <div className="card-title">Suggested underwriting</div>
             {sug.marketRentNote && <p className="mb-2 text-sm text-slate-700">{sug.marketRentNote}</p>}
             <div className="flex flex-wrap gap-2">

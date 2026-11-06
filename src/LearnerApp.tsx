@@ -77,11 +77,11 @@ export default function LearnerApp({ session, toast, onOpenInPro }: { session: S
     <Card title="Pick a deal to work through">
       <Explain>We'll underwrite a property together, one step at a time: what it earns, what it costs to run, what it's worth, how the loan works and whether it's a good deal. You'll see the math with your own numbers at every step. Ask Deal School anything along the way.</Explain>
       <div className="grid gap-3 md:grid-cols-3">
-        <button className="rounded-xl border border-slate-200 p-4 text-left hover:border-brand-500" onClick={() => start(PRACTICE)}>
+        <button className="rounded-lg border border-slate-200 p-4 text-left hover:border-brand-500" onClick={() => start(PRACTICE)}>
           <div className="font-semibold">Practice deal</div><div className="note mt-1">Maple Court, a 24 unit apartment building. Best for a first run.</div></button>
-        <button className="rounded-xl border border-slate-200 p-4 text-left hover:border-brand-500" onClick={() => start({ ...DEFAULTS, name: "My deal", units: [{ type: "1 bed", count: 0, rent: 0 }] })}>
+        <button className="rounded-lg border border-slate-200 p-4 text-left hover:border-brand-500" onClick={() => start({ ...DEFAULTS, name: "My deal", units: [{ type: "1 bed", count: 0, rent: 0 }] })}>
           <div className="font-semibold">My own property</div><div className="note mt-1">Enter the numbers as we go. Missing one? We'll suggest a starting point.</div></button>
-        <button className="rounded-xl border border-slate-200 p-4 text-left hover:border-brand-500" onClick={() => setImporting(v => !v)}>
+        <button className="rounded-lg border border-slate-200 p-4 text-left hover:border-brand-500" onClick={() => setImporting(v => !v)}>
           <div className="font-semibold">Upload documents</div><div className="note mt-1">Rent roll, T12 or offering memo. Claude fills in what it finds.</div></button>
       </div>
       {importing && <div className="mt-4"><ImportPane deal={{ ...DEFAULTS, name: "" }} onApply={(patch, msg) => { start({ ...DEFAULTS, name: "My deal", ...patch }); toast(msg) }} /></div>}

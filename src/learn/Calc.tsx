@@ -8,7 +8,7 @@ const pct = (n: number) => isFinite(n) ? (n * 100).toFixed(2) + "%" : "—"
 
 function Box({ title, children, result }: { title: string; children: React.ReactNode; result: React.ReactNode }) {
   return (
-    <div className="my-5 rounded-xl border-2 border-dashed border-brand-100 bg-brand-50/40 p-4">
+    <div className="my-5 rounded-lg border-2 border-dashed border-brand-100 bg-brand-50/40 p-4">
       <div className="mb-3 text-xs font-semibold uppercase tracking-wider text-brand-600">Try it: {title}</div>
       <div className="grid gap-3 sm:grid-cols-3">{children}</div>
       <div className="mt-3 rounded-lg bg-white px-4 py-3 text-sm shadow-card">{result}</div>

@@ -121,7 +121,7 @@ export default function Course({ session, onPractice }: { session: Session | nul
       <div className="rounded-2xl bg-gradient-to-br from-brand-900 to-brand-600 p-6 text-white md:p-8">
         <div className="text-xs font-semibold uppercase tracking-wider text-brand-100">Deal School</div>
         <h1 className="mt-1 text-2xl font-bold md:text-3xl">Learn to underwrite real estate</h1>
-        <p className="mt-2 max-w-2xl text-white/80">Ten modules that take you from what investment real estate is to every metric a professional uses. Real photos, diagrams, worked examples, a quiz after each module, and Deal School AI for any question.</p>
+        <p className="mt-2 max-w-2xl text-white/80">Eleven modules that take you from what investment real estate is to every metric a professional uses. Real photos, diagrams, worked examples, a quiz after each module, and Deal School AI for any question.</p>
         <div className="mt-5 flex flex-wrap items-center gap-4">
           {resume && <button className="btn border-white bg-white text-brand-700 hover:bg-brand-50" onClick={() => setView({ kind: "lesson", id: resume.id })}>{lessonsDone ? "Continue" : "Start"}: {resume.title} →</button>}
           <div className="text-sm text-white/80">{lessonsDone} of {allLessons.length} lessons · {modsDone} of {COURSE.length} modules complete</div>

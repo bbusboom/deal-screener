@@ -17,16 +17,16 @@ export default function PathPicker({ username, current, onPick }: { username?: s
         <p className="mt-2 text-center text-slate-500">You can switch any time from the menu at the top.</p>
         <div className="mt-8 grid gap-5 md:grid-cols-2">
           {opt("learner", "Learn to underwrite", "New to underwriting", [
-            "A 10 module course from the basics to every underwriting metric",
+            "An 11 module course from the basics to pro underwriting",
             "Real photos, diagrams, worked examples and a quiz after each module",
             "Practice deals step by step, or bring your own property",
             "Deal School AI answers questions about every lesson",
           ], "Start learning")}
           {opt("pro", "Underwrite a deal", "Working a live deal", [
             "Import rent rolls, T12s, offering memos and loan quotes",
-            "Full hold period model, scenarios and sensitivity grids",
-            "Buy box tests and the max price that still passes",
-            "Pro route AI for weighted scenarios and max bid",
+            "Seller T12 vs your underwriting, lender loan sizing and comps",
+            "Value add, refinance, bridge loans and investor waterfalls",
+            "Investment memo PDF and Excel export, plus Pro AI",
           ], "Open the workspace")}
         </div>
       </div>

@@ -137,7 +137,7 @@ const Panel = ({ children, glow }: { children: ReactNode; glow: string }) =>
 
 const STAGES: StageDef[] = [
   { key: "learn", tag: "01 · Learn", title: "Start at “what is NOI?” Finish reading deals like a lender.",
-    body: "Ten modules carry one real deal from rent and expenses to cap rates, debt sizing, IRR and exit caps, with diagrams, calculators and quizzes.",
+    body: "Eleven modules carry one real deal from rent and expenses to cap rates, debt sizing, IRR and exit caps, with diagrams, calculators and quizzes.",
     bullets: ["One worked deal through every lesson", "Deal School AI under each lesson", "Progress saved to your account"],
     accent: "#9cc4ff", bg: "radial-gradient(80% 70% at 75% 50%, #2f6bff40, transparent 70%)",
     visual: <Panel glow="#2f6bffcc">
@@ -334,7 +334,7 @@ export default function Landing({ go }: { go: Go }) {
         {/* stats */}
         <section className="mx-auto max-w-6xl px-4 py-24 md:px-8">
           <Reveal className="glass grid grid-cols-2 gap-8 rounded-3xl px-6 py-10 text-center md:grid-cols-4">
-            {([[10, "", "course modules"], [8, "", "hands-on challenges"], [51, "", "states + DC with tax and rent rules"], [24, "/7", "AI tutor and deal partner"]] as const).map(([n, s, l]) => (
+            {([[11, "", "course modules"], [8, "", "hands-on challenges"], [51, "", "states + DC with tax and rent rules"], [24, "/7", "AI tutor and deal partner"]] as const).map(([n, s, l]) => (
               <div key={l}><div className="serif text-5xl font-semibold text-white"><CountUp to={n} suffix={s} /></div><div className="mt-1 text-sm text-white/55">{l}</div></div>))}
           </Reveal>
         </section>

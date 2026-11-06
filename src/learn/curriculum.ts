@@ -357,6 +357,74 @@ export const COURSE: Module[] = [
       { q: "Oak Ridge's cash on cash is 4.88% and the investor wants 6%. Which change helps most directly?", options: ["A lower purchase price", "A lower exit cap", "Higher vacancy", "A shorter hold"], answer: 0, why: "A lower price reduces the cash needed and the loan payment, raising cash on cash." },
       { q: "NOI rises $10,000 and the market cap rate is 6.5%. Roughly how much value is added?", options: ["$10,000", "$65,000", "$154,000", "$650,000"], answer: 2, why: "$10,000 ÷ 0.065 ≈ $153,846." },
     ],
+  },  /* ------------------------------------------------------------------ 11 */
+  {
+    id: "m11", num: 11, title: "Pro underwriting",
+    summary: "How professionals read a T12, size a loan, price a renovation, structure investors and pick an exit cap.",
+    lessons: [
+      {
+        id: "m11l1", title: "Reading the operating statement like a lender", minutes: 8, blocks: [
+          { t: "p", text: "Professionals lay three columns side by side: the seller's trailing 12 months (T12), the last 3 months annualized (T3, multiplied by 4), and their own underwritten year 1. The T12 shows the year; the T3 shows the trend. If the T3 is weaker, underwrite to the T3 unless you know why it dipped." },
+          { t: "p", text: "Rent is booked at market rent, then reduced. Loss to lease is the gap between market rent and what current leases actually pay. Below it come physical vacancy, concessions (free rent), bad debt (rent never collected) and non revenue units (model, office, employee or down units)." },
+          { t: "diagram", d: "waterfall", caption: "Revenue steps down from gross potential rent to effective gross income." },
+          { t: "example", title: "Oak Ridge with market rents of $1,050", rows: [["Gross potential rent at market (20 × $1,050 × 12)", "$252,000"], ["Loss to lease (in place $1,000)", "−$12,000"], ["Physical vacancy 6%", "−$15,120"], ["Concessions 1%", "−$2,520"], ["Bad debt 1%", "−$2,520"], ["Net rental income", "$219,840", true], ["Economic occupancy", "87.2%"]] },
+          { t: "p", text: "Economic occupancy (rent collected ÷ potential) is the number that matters. A building can be 96% leased and still collect only 88% of its potential." },
+          { t: "p", text: "NOI vs NCF: brokers quote cap rates on NOI before replacement reserves. Lenders size loans on net cash flow, which is NOI after reserves. With $150,000 of NOI and $300 per unit of reserves on 20 units, NCF is $144,000. At a $2,000,000 price that's a 7.5% cap on NOI or a 7.2% cap on NCF: same building, two numbers." },
+          { t: "terms", items: [["T3 annualized", "The last three months of income or expense multiplied by four, to show the current run rate."], ["Loss to lease", "Market rent minus in place rent, summed across units. It burns off as leases renew at market."], ["Economic occupancy", "Rent actually collected as a share of gross potential rent."], ["Net cash flow (NCF)", "NOI after replacement reserves; what lenders use for DSCR and debt yield."]] },
+          { t: "tip", text: "In the Underwrite workspace, the Statement tab builds this three column view and shades every line where your underwriting beats the seller's actuals." },
+        ],
+      },
+      {
+        id: "m11l2", title: "Sizing the loan and choosing debt", minutes: 9, blocks: [
+          { t: "p", text: "A lender doesn't just lend a percentage of the price. It calculates three maximum loans and gives you the smallest: one by loan to value, one by DSCR, and one by debt yield." },
+          { t: "example", title: "Oak Ridge: NOI $137,440, 6.5% rate, 30 year amortization", rows: [["LTV loan, 75% of $2,000,000", "$1,500,000"], ["DSCR loan: $137,440 ÷ 1.25 ÷ 0.0758 loan constant", "$1,449,633"], ["Debt yield loan: $137,440 ÷ 9%", "$1,527,111"], ["Loan you get (DSCR binds)", "$1,449,633", true]] },
+          { t: "p", text: "When rates are high, DSCR usually binds, so the loan is smaller than the LTV you were quoted and the equity check is bigger. Always size the loan this way before you promise a seller a price." },
+          { t: "p", text: "Fixed rate loans (agency, bank, life company) have steady payments but often carry yield maintenance: a prepayment penalty equal to the lender's lost interest. Paying off $1,000,000 at 6.5% with four years left, when Treasuries yield 4.25%, costs about $81,000. Floating rate bridge loans pay SOFR plus a spread, are usually interest only, and require a rate cap that limits how high SOFR can go." },
+          { t: "p", text: "The refinance trap: a buyer pays $10,000,000 for a building with $500,000 of NOI (a 5% cap) using an $8,000,000 bridge loan. Two years later NOI is $540,000, but cap rates have risen to 6%, so the building is worth $9,000,000. A 65% LTV permanent loan is only $5,850,000. The owners must bring about $2,150,000 of new cash to refinance. Many 2021 and 2022 bridge deals ran into exactly this." },
+          { t: "terms", items: [["Loan constant", "Annual debt service per dollar of loan; 7.58% for a 6.5%, 30 year loan."], ["Yield maintenance", "A prepayment penalty that pays the lender the interest it loses when a fixed loan is paid off early."], ["Rate cap", "A contract bought at closing that pays the borrower if SOFR rises above a strike rate."], ["Bridge loan", "Short term, usually floating rate, interest only debt used to buy and reposition a property."]] },
+          { t: "tip", text: "The Financing tab sizes the loan three ways, models floating rates with a cap, prepayment penalties and a refinance in any year, and warns you when a refinance needs cash in." },
+        ],
+      },
+      {
+        id: "m11l3", title: "Value add: pricing a renovation", minutes: 7, blocks: [
+          { t: "p", text: "A value add plan spends money on units to raise rent. The test is return on cost: the extra yearly rent divided by what you spend." },
+          { t: "formula", name: "Return on cost", f: "Annual rent premium ÷ renovation cost per unit" },
+          { t: "example", title: "One unit", rows: [["Renovation cost", "$8,000"], ["Rent premium", "$100 a month = $1,200 a year"], ["Return on cost", "15%", true], ["Value created at a 6% cap: $1,200 ÷ 0.06", "$20,000"], ["Value per $1 spent", "2.5x", true]] },
+          { t: "p", text: "Most sponsors want a return on cost of at least 15%. Below about 12%, the work isn't worth the risk. Prove the premium with renovated comps nearby, not the seller's projections." },
+          { t: "p", text: "Don't forget the cost of doing the work: each unit sits empty for a few weeks, so year 1 income usually drops before it rises, and DSCR can dip below what a permanent lender allows. That's why renovations are often financed with bridge loans or a lender holdback." },
+          { t: "tip", text: "The Value Add tab builds a month by month renovation schedule and shows the before and after NOI, IRR and DSCR." },
+        ],
+      },
+      {
+        id: "m11l4", title: "Syndications: who earns what", minutes: 8, blocks: [
+          { t: "p", text: "Many deals are bought by a sponsor (the general partner, GP) using money from investors (limited partners, LPs). The GP finds and runs the deal and usually invests 5 to 10% of the equity. The LPs provide the rest." },
+          { t: "diagram", d: "capStack", caption: "Debt sits at the bottom of the capital stack; investor and sponsor equity sit above it." },
+          { t: "p", text: "Cash is split by a waterfall. First, everyone is paid pro rata until investors earn the preferred return (the pref), often 6 to 8% a year. After that the split shifts toward the sponsor, for example 70% to LPs and 30% to the GP until LPs reach a 15% IRR, then 50/50." },
+          { t: "example", title: "$1,000,000 of equity: LPs $900,000, GP $100,000, 8% pref", rows: [["First $80,000 a year (the pref) to LPs", "$72,000"], ["First $80,000 a year to the GP", "$8,000"], ["Next $100,000 of profit, split 70/30: LPs", "$70,000"], ["Same $100,000: GP", "$30,000"], ["GP's pro rata share would have been", "$10,000"], ["Promote earned by the GP", "$20,000", true]] },
+          { t: "p", text: "Sponsors also charge fees: an acquisition fee (1 to 3% of the price), an asset management fee (1 to 2% of income) and sometimes a disposition fee at sale. As an investor, compare the deal level IRR with the LP IRR after fees and promote. The gap is the price of the sponsor's work." },
+          { t: "terms", items: [["GP / LP", "General partner (the sponsor who runs the deal) and limited partners (passive investors)."], ["Preferred return", "The return investors receive before the sponsor shares in profits."], ["Promote", "The sponsor's share of profits above its share of the equity; its reward for performance."], ["Hurdle", "An IRR level that changes the split once investors reach it."]] },
+          { t: "tip", text: "Turn on Syndication on the Investors tab to see LP and GP returns, fees and promote year by year." },
+        ],
+      },
+      {
+        id: "m11l5", title: "Comps and the exit cap", minutes: 6, blocks: [
+          { t: "p", text: "Rent comps are nearby properties of similar age and quality. They tell you what market rent really is, which sets loss to lease and the renovation premium. Compare like with like: asking vs effective rent, unit size, amenities and who pays utilities." },
+          { t: "p", text: "Sale comps tell you what buyers pay per unit and at what cap rate. Broker cap rates are usually on the seller's trailing NOI before reserves, so compare your price against them on the same basis." },
+          { t: "p", text: "The exit cap is the cap rate a future buyer will pay. Professionals set it above the going in cap, about 5 to 10 basis points per year of hold (25 to 75 bps), because the building will be older and rates may be higher. Every 50 bps of exit cap moves the sale price 7 to 9%." },
+          { t: "example", title: "Exit cap sensitivity on $400,000 of exit NOI", rows: [["At a 6.0% cap", "$6,666,667"], ["At a 6.5% cap", "$6,153,846"], ["Difference", "−$512,821 (−7.7%)", true]] },
+          { t: "tip", text: "The Comps tab compares your rents and price with comps and can set the exit cap to the comp average plus the hold cushion in one click." },
+        ],
+      },
+    ],
+    quiz: [
+      { q: "40 units have a market rent of $1,100 and in place rent of $1,050. What is annual loss to lease?", options: ["$2,000", "$24,000", "$42,000", "$50,400"], answer: 1, why: "$50 × 40 units × 12 months = $24,000." },
+      { q: "A lender's LTV limit gives $3.0M, DSCR gives $2.6M and debt yield gives $2.8M. What loan do you get?", options: ["$3.0M", "$2.8M", "$2.6M", "The average, $2.8M"], answer: 2, why: "Lenders lend the lesser of the three limits; here DSCR binds." },
+      { q: "A $10,000 renovation raises rent $125 a month. What is the return on cost?", options: ["1.25%", "12.5%", "15%", "8%"], answer: 2, why: "$125 × 12 = $1,500 a year; $1,500 ÷ $10,000 = 15%." },
+      { q: "How should the exit cap compare to the going in cap?", options: ["Lower, because rents grow", "The same", "Higher, by roughly 5 to 10 bps per hold year", "It doesn't matter"], answer: 2, why: "The building ages and rates can rise, so professionals assume a higher exit cap." },
+      { q: "What is the sponsor's promote?", options: ["Its acquisition fee", "Its share of profits above its share of the equity", "Its co-investment", "The preferred return"], answer: 1, why: "The promote is the extra profit share the GP earns for performance, beyond its pro rata share." },
+      { q: "A $150,000 roof replacement in year 3 affects which number?", options: ["NOI", "Cash flow, but not NOI", "Gross potential rent", "The cap rate"], answer: 1, why: "Capital expenditures sit below NOI: they reduce cash flow to owners but not NOI." },
+      { q: "When is a yield maintenance penalty largest?", options: ["When rates have risen", "When rates have fallen since the loan closed", "At maturity", "On floating rate loans"], answer: 1, why: "It pays the lender the interest it can no longer earn, which is largest when Treasury yields are below the loan rate." },
+    ],
   },
 ]
 

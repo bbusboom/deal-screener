@@ -132,6 +132,10 @@ export interface Deal {
   t12?: StatementCol; t3?: StatementCol
   /** Capital budget by line item. yr 0 = funded at closing (adds to equity); yr 1+ = spent from cash flow that year. */
   capexItems?: CapexItem[]
+  /** The analyst's case: why buy, what could go wrong and how it's handled, the call and the offer. */
+  ic?: IcCase
+  /** Due diligence checklist status by item key. */
+  dd?: Record<string, DdStatus>
   /** The analyst's reason for each underwritten line, especially where it differs from the T12. */
   why?: Partial<Record<StatementKey, string>>
 }
@@ -318,6 +322,9 @@ export interface YearRow {
 export interface RefiResult { yr: number; value: number; newLoan: number; oldBal: number; penalty: number; cost: number; cashOut: number; binding: "LTV" | "DSCR"; ltv: number }
 export interface VaSummary { units: number; budget: number; upfront: number; roc: number; finishYr: number; annualPremium: number }
 export interface LoanSizing { mode: SizeMode; ltvLoan: number; dscrLoan: number; dyLoan: number; binding: "LTV" | "DSCR" | "Debt yield"; maxLoan: number }
+export type DdStatus = "todo" | "doing" | "done" | "na"
+export interface IcRisk { risk: string; plan: string }
+export interface IcCase { thesis: string; risks: IcRisk[]; call: "" | "pursue" | "renegotiate" | "pass"; offer: number }
 export interface CapexItem { item: string; cost: number; yr: number; source?: string }
 
 export interface Projection {

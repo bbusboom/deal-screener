@@ -2,6 +2,7 @@
 import { useEffect } from "react"
 import type React from "react"
 import { createPortal } from "react-dom"
+import { DD_GROUPS } from "./ThesisPane"
 import { type Deal, type Projection, type StatementKey, usd, pct, xx, tests, allPass, TEST_NAMES, exitCapCheck, exitStress, waterfall, BENCH, benchFlag, type TestKey } from "../lib/model"
 
 function risks(d: Deal, p: Projection): string[] {
@@ -50,6 +51,16 @@ export function MemoView({ d, p, mp, onClose, extra, closeLabel = "Close" }: { d
             <div key={k} className="rounded border border-slate-200 px-2 py-1.5"><div className="text-[10px] uppercase text-slate-500">{k}</div><div className="font-mono text-base font-semibold">{v}</div></div>)}
         </div>
         {!ok && <p className="mt-2 text-slate-700">Short on: {(Object.entries(t) as [TestKey, boolean][]).filter(([, b]) => !b).map(([k]) => TEST_NAMES[k]).join(", ")}.</p>}
+
+        {(d.ic?.thesis?.trim() || d.ic?.call) && <>
+          <H>Thesis and recommendation</H>
+          {d.ic?.thesis?.trim() && <p className="whitespace-pre-wrap text-slate-800">{d.ic.thesis}</p>}
+          {d.ic?.call && <p className="mt-1.5 font-semibold">Recommendation: {d.ic.call === "pursue" ? `pursue at the asking price of ${usd(d.price)}` : d.ic.call === "pass" ? "pass" : `pursue at ${d.ic.offer ? usd(d.ic.offer) : "a lower price"}${d.ic.offer ? ` (${pct(d.ic.offer / d.price - 1, 1)} vs asking)` : ""}`}.</p>}
+          {(d.ic?.risks || []).some(r => r.risk.trim()) && <table className="mt-2 w-full"><tbody>
+            <tr className="text-[10px] uppercase text-slate-500"><td className="pb-1">Risk</td><td className="pb-1">How it's handled</td></tr>
+            {d.ic!.risks.filter(r => r.risk.trim()).map((r, j) => <tr key={j} className="border-b border-slate-100 align-top"><td className="w-1/2 py-1 pr-3">{r.risk}</td><td className="py-1 text-slate-700">{r.plan || "Not yet addressed"}</td></tr>)}
+          </tbody></table>}
+        </>}
 
         <div className="grid grid-cols-2 gap-8">
           <div>
@@ -119,6 +130,9 @@ export function MemoView({ d, p, mp, onClose, extra, closeLabel = "Close" }: { d
 
         <H>Risks and diligence items</H>
         {R.length ? <ul className="list-disc space-y-1 pl-5">{R.map(x => <li key={x}>{x}</li>)}</ul> : <p className="text-slate-600">No automatic flags. Verify the rent roll, T12, taxes after sale and an insurance quote.</p>}
+
+        {d.dd && Object.keys(d.dd).length > 0 && (() => { const items = DD_GROUPS.flatMap(([, xs]) => xs); const open = items.filter(([k]) => !["done", "na"].includes(d.dd![k] || "todo"))
+          return <><H>Due diligence</H><p className="text-slate-700">{items.length - open.length} of {items.length} items done or not applicable.{open.length ? ` Still open: ${open.map(([, l]) => l.toLowerCase()).join(", ")}.` : ""}</p></> })()}
 
         <p className="mt-8 border-t border-slate-200 pt-2 text-[10px] text-slate-400">Prepared with Deal School (getdealscreener.com). A screening and learning tool, not investment advice. Figures depend on the inputs entered.</p>
       </div>

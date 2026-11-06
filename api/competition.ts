@@ -75,7 +75,7 @@ Rules: numbers are plain numbers (no $ or commas); rents are monthly asking rent
   const model = process.env.MARKET_MODEL || process.env.POLICY_MODEL || process.env.ANTHROPIC_MODEL || "claude-sonnet-5-5"
   const messages: any[] = [{ role: "user", content: `Scan the competition for the apartment property at ${where}.` }]
   const seen = new Map<string, string>()
-  let text = ""
+  let text = "", stops: string[] = [], convertErr = ""
   try {
     for (let turn = 0; turn < 4; turn++) {
       const resp: any = await client.messages.create({
@@ -86,6 +86,7 @@ Rules: numbers are plain numbers (no $ or commas); rents are monthly asking rent
         if (blk.type === "text") text += blk.text
         if (blk.type === "web_search_tool_result" && Array.isArray(blk.content)) for (const r of blk.content) if (r.url) seen.set(r.url, r.title || r.url)
       }
+      stops.push(String(resp.stop_reason))
       if (resp.stop_reason !== "pause_turn") break
       messages.push({ role: "assistant", content: resp.content })
     }
@@ -106,9 +107,12 @@ Rules: numbers are plain numbers (no $ or commas); rents are monthly asking rent
         tools: [SCAN_TOOL] as any, tool_choice: { type: "tool", name: "submit_scan" } as any,
       })
       data = resp.content.find((b: any) => b.type === "tool_use")?.input || null
-    } catch { /* handled below */ }
+    } catch (e: any) { convertErr = String(e?.message || e).slice(0, 300) }
   }
-  if (!data) return res.status(502).json({ error: "The scan didn't return usable results. Try again in a minute." })
+  if (!data) {
+    console.error("competition scan failed", { stops, textLen: text.length, convertErr, head: text.slice(0, 500) })
+    return res.status(502).json({ error: "The scan didn't return usable results. Try again in a minute.", detail: { stops, textLength: text.length, searches: seen.size, convertErr, head: text.slice(0, 300) } })
+  }
   const n = (v: any) => { const x = Number(v); return isFinite(x) && x > 0 ? x : 0 }
   data.properties = (Array.isArray(data.properties) ? data.properties : []).slice(0, 15).map((p: any) => ({
     name: clip(p.name, 80), address: clip(p.address, 120), distanceMi: n(p.distanceMi), yearBuilt: n(p.yearBuilt), units: n(p.units),

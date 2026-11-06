@@ -142,7 +142,39 @@ function Sensitivity() {
     </svg>)
 }
 
-const MAP: Record<DiagramKind, () => React.ReactElement> = { flow: Flow, returns4: Returns4, docs: Docs, waterfall: Waterfall, noi: Noi, capTriangle: CapTriangle, capStack: CapStack, dscr: Dscr, cashflow: Cashflow, timeline: Timeline, sensitivity: Sensitivity }
+function SupplyCycle() {
+  const ph = [["Permit", "0", C.muted, 90], ["Construction", "18 to 30 months", C.brand2, 250], ["Lease up", "12 to 24 months", C.amber, 230], ["Stabilized", "", C.green, 140]] as const
+  let x = 30
+  return (
+    <svg viewBox="0 0 860 210"><Defs />
+      {ph.map(([h, sub, c, w]) => { const x0 = x; x += w + 12
+        return <g key={h}><rect x={x0} y={30} width={w} height={56} rx={10} fill={c} opacity={h === "Lease up" ? 1 : 0.9} />
+          {T(x0 + w / 2, 56, h, { size: 14, w: 700, c: "#fff" })}{sub && T(x0 + w / 2, 74, sub, { size: 11.5, c: "#ffffffcc" })}</g> })}
+      <path d="M 30 150 C 300 150, 360 150, 400 175 S 560 195, 620 175 S 760 150, 830 148" fill="none" stroke={C.red} strokeWidth={3} />
+      {T(130, 140, "Nearby rents and concessions", { size: 12, c: C.muted })}
+      {T(500, 205, "Concessions peak and rent growth stalls while new units lease up", { size: 12, w: 600, c: C.red })}
+      {T(430, 118, "The building you'll compete with was permitted 2 to 4 years before it hurts you", { size: 12.5, w: 600, c: C.brand })}
+    </svg>)
+}
+function Concession() {
+  const bars = [["New building, asking", 1400, C.brand2], ["New building, effective (8 weeks free)", 1201, C.amber], ["Your older building, in place", 1250, C.green]] as const
+  return (
+    <svg viewBox="0 0 860 190">
+      {bars.map(([l, v, c], i) => { const w = v / 1400 * 520, y = 20 + i * 54
+        return <g key={l}><rect x={260} y={y} width={w} height={36} rx={8} fill={c} />
+          {T(250, y + 23, l, { size: 12.5, a: "end" })}{T(268 + w, y + 23, "$" + v.toLocaleString(), { size: 14, w: 700, a: "start" })}</g> })}
+      {T(520, 182, "After the free weeks, the brand new unit costs less than yours", { size: 12.5, w: 600, c: C.red })}
+    </svg>)
+}
+function Funnel() {
+  const st = [["Deals screened", "100", 760], ["Fully underwritten", "20", 560], ["Offers (LOI)", "5", 360], ["Closed", "1", 180]] as const
+  return (
+    <svg viewBox="0 0 860 220">
+      {st.map(([l, n, w], i) => <g key={l}><rect x={430 - w / 2} y={10 + i * 50} width={w} height={42} rx={10} fill={[C.soft, "#dbe7f5", C.brand2, C.brand][i]} />
+        {T(430, 37 + i * 50, `${n}  ·  ${l}`, { size: 14, w: 700, c: i > 1 ? "#fff" : C.brand })}</g>)}
+    </svg>)
+}
+const MAP: Record<DiagramKind, () => React.ReactElement> = { supplyCycle: SupplyCycle, concession: Concession, funnel: Funnel, flow: Flow, returns4: Returns4, docs: Docs, waterfall: Waterfall, noi: Noi, capTriangle: CapTriangle, capStack: CapStack, dscr: Dscr, cashflow: Cashflow, timeline: Timeline, sensitivity: Sensitivity }
 export default function Diagram({ d, caption }: { d: DiagramKind; caption?: string }) {
   const D = MAP[d]
   return <figure className="my-5 rounded-xl border border-slate-200 bg-white p-4"><div className="[&_svg]:h-auto [&_svg]:w-full">{<D />}</div>{caption && <figcaption className="note mt-2 text-center">{caption}</figcaption>}</figure>

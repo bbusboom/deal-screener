@@ -19,7 +19,7 @@ export default function PathPicker({ username, current, onPick }: { username?: s
         <p className="mt-3 text-center text-white/60">You can switch any time from the menu at the top.</p>
         <div className="mt-10 grid gap-6 md:grid-cols-2">
           {opt("learner", "Learn to underwrite", "New to underwriting", [
-            "An 11 module course from the basics to pro underwriting",
+            "A 13 module course: the basics, pro underwriting, markets and supply, and how acquisitions teams work",
             "Real photos, diagrams, worked examples and a quiz after each module",
             "Practice deals step by step, or bring your own property",
             "Deal School AI answers questions about every lesson",

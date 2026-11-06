@@ -12,7 +12,7 @@ export type Block =
   | { t: "calc"; c: "cap" | "dscr" | "coc" | "noi" }
   | { t: "state" }
 
-export type DiagramKind = "flow" | "returns4" | "docs" | "waterfall" | "noi" | "capTriangle" | "capStack" | "dscr" | "cashflow" | "timeline" | "sensitivity"
+export type DiagramKind = "supplyCycle" | "concession" | "funnel" | "flow" | "returns4" | "docs" | "waterfall" | "noi" | "capTriangle" | "capStack" | "dscr" | "cashflow" | "timeline" | "sensitivity"
 
 export interface Lesson { id: string; title: string; minutes: number; blocks: Block[] }
 export interface Question { q: string; options: string[]; answer: number; why: string }
@@ -425,6 +425,130 @@ export const COURSE: Module[] = [
       { q: "A $150,000 roof replacement in year 3 affects which number?", options: ["NOI", "Cash flow, but not NOI", "Gross potential rent", "The cap rate"], answer: 1, why: "Capital expenditures sit below NOI: they reduce cash flow to owners but not NOI." },
       { q: "When is a yield maintenance penalty largest?", options: ["When rates have risen", "When rates have fallen since the loan closed", "At maturity", "On floating rate loans"], answer: 1, why: "It pays the lender the interest it can no longer earn, which is largest when Treasury yields are below the loan rate." },
     ],
+  },
+  /* ------------------------------------------------------------------ 12 */
+  {
+    id: "m12", num: 12, title: "Markets: supply, demand and competition",
+    summary: "Why new buildings drive concessions, what a pipeline of construction means for your purchase, and how jobs, people and interest rates move rents and values.",
+    lessons: [
+      {
+        id: "m12l1", title: "How rents are really set", minutes: 7, blocks: [
+          { t: "p", text: "Rent isn't set by what a building costs or what the seller wants. It's set by competition: how many apartments are empty in the area compared with how many people are looking. When renters have few choices, owners raise rents and stop offering specials. When there are lots of empty units nearby, owners cut rents or give free months to fill them." },
+          { t: "p", text: "That's why underwriting starts outside the property. Two identical buildings can be worth very different amounts depending on how much competition is coming down the street." },
+          { t: "example", title: "A county absorbing a wave of new units", rows: [["Existing apartments", "20,000"], ["Occupied at 94%", "18,800"], ["New units delivered this year", "1,500"], ["New renter households moving in", "600"], ["Occupied after one year", "19,400"], ["Market occupancy after one year: 19,400 ÷ 21,500", "90.2%", true]] },
+          { t: "p", text: "Demand grew, but supply grew faster. Every building in the market, including the one you're buying, now competes for renters at about 90% occupancy instead of 94%. Expect slower rent growth and more concessions until the extra units fill." },
+          { t: "terms", items: [["Absorption", "How many units the market fills in a period: new renter households plus renters moving between buildings."], ["Supply", "Apartments available or coming: existing units plus buildings under construction or permitted."], ["Market occupancy", "The share of all apartments in an area that are leased; the starting point for your vacancy assumption."]] },
+          { t: "tip", text: "Market › Supply & demand compares the county's new renter households each year with the apartment units permitted. Below 1.0x means supply is outrunning demand." },
+        ],
+      },
+      {
+        id: "m12l2", title: "New construction and what it means for your buy", minutes: 9, blocks: [
+          { t: "p", text: "A new building doesn't hurt nearby owners the day it's announced. It hurts them when it opens and has to lease 200 or 300 empty units fast. Developers need occupancy to refinance their construction loan, so lease ups compete hard: big specials, waived fees, gift cards." },
+          { t: "diagram", d: "supplyCycle", caption: "From permit to stabilized usually takes three to five years. The damage to nearby rents shows up during lease up." },
+          { t: "p", text: "So when you buy, look backward and forward: permits from the last two or three years tell you what will open during your first years of ownership. If you underwrite 3% rent growth right into a lease up wave, your first two years will miss." },
+          { t: "example", title: "Same building, two assumptions, $600,000 of potential rent", rows: [["Year 3 rent at 3% growth", "$636,540"], ["Year 3 rent if a lease up wave holds rent flat for 2 years", "$600,000"], ["Rent shortfall", "−$36,540"], ["Extra vacancy, 3 points", "−$18,000"], ["Matching concessions, 2% of rent", "−$12,000"], ["NOI shortfall", "−$66,540", true], ["Value lost at a 6.25% cap", "−$1,064,640", true]] },
+          { t: "p", text: "That's the cost of ignoring supply on one mid size deal: over a million dollars of value, and a weaker loan, because lenders size on NOI." },
+          { t: "p", text: "New supply doesn't hit every property equally. A brand new building competes most with other newer, higher rent properties. An older building with lower rents feels it less, unless the new building's specials bring its effective rent down to yours (next lesson). Location matters too: a project across town or aimed at a different renter matters less than one across the street." },
+          { t: "terms", items: [["Pipeline", "Apartments permitted or under construction that haven't opened yet."], ["Lease up", "The period after a new building opens while it fills; usually 12 to 24 months."], ["Stabilized", "Occupancy back to normal (around 93 to 95%) and specials mostly gone."]] },
+          { t: "tip", text: "When the competition scan shows lease ups nearby, slow your first two years of rent growth, add concessions, and check that your DSCR still works." },
+        ],
+      },
+      {
+        id: "m12l3", title: "Concessions: asking rent vs effective rent", minutes: 8, blocks: [
+          { t: "p", text: "A concession is a discount given to sign a lease: weeks free, a month off, waived fees. Owners use them instead of cutting the advertised rent because the asking rent stays high on paper, and renewals and appraisals often key off it." },
+          { t: "p", text: "Always convert a special into effective rent, the rent the tenant really pays over the lease. That's the number your property competes against." },
+          { t: "formula", name: "Effective rent", f: "(Asking rent × lease months − value of free time) ÷ lease months" },
+          { t: "example", title: "New lease up: $1,400 asking, 8 weeks free on a 13 month lease", rows: [["Rent over 13 months: $1,400 × 13", "$18,200"], ["One week of rent: $1,400 × 12 ÷ 52", "$323"], ["8 weeks free", "−$2,585"], ["Paid over the lease", "$15,615"], ["Effective rent: $15,615 ÷ 13", "$1,201", true], ["Discount from asking", "14.2%", true]] },
+          { t: "diagram", d: "concession", caption: "With the special, the new building is cheaper than your older one." },
+          { t: "p", text: "Now your tenants paying $1,250 can move into a brand new unit for $1,201 effective. You either match with your own concessions, accept more move outs, or both. That's why an increase in competition shows up first in concessions, then in vacancy, and only later in asking rents." },
+          { t: "p", text: "Why you need to understand it: sellers report rent rolls at asking or gross rent and record concessions on a separate line (or bury them). A T12 that shows strong gross rent but a growing concession line is a market getting softer. Underwrite concessions as a percent of gross potential rent, and use the T3, not the T12, to see the trend." },
+          { t: "terms", items: [["Concession", "A discount to sign or renew a lease, usually free weeks or months."], ["Asking rent", "The advertised rent before specials."], ["Effective rent", "What the tenant actually pays on average over the lease after specials."]] },
+          { t: "tip", text: "Property › Rent & income has a concessions line. Market › Supply & demand suggests a concession percentage from current specials nearby." },
+        ],
+      },
+      {
+        id: "m12l4", title: "Demand: people, jobs and affordability", minutes: 7, blocks: [
+          { t: "p", text: "Demand for apartments comes from new households that rent: people moving in for jobs, students, young adults leaving home, and owners who sell and rent. The best single signal is renter household growth; the best leading signal is job growth." },
+          { t: "p", text: "Look at three layers: the ZIP (who lives right around the building), the city, and the county or metro (where the jobs are). Fast population growth with slow renter household growth often means people are buying homes or living with roommates, not renting more apartments." },
+          { t: "p", text: "Affordability caps rent growth. Renters generally spend about 30% of income on rent. If the median renter household earns $48,000, about $1,200 a month is comfortable. Underwriting rents well above that needs a reason: a nicer building, a better location, or incomes that are rising." },
+          { t: "example", title: "Affordability check", rows: [["Median renter household income", "$48,000"], ["30% of income ÷ 12", "$1,200 a month"], ["Your post renovation rent target", "$1,325"], ["Gap to explain", "$125", true]] },
+          { t: "terms", items: [["Renter household growth", "New households that rent each year; the demand that fills apartments."], ["Rent to income", "Rent as a share of household income; above about 30% means renters are stretched."], ["Unemployment", "A rising rate in the county is an early warning for bad debt and slower leasing."]] },
+          { t: "tip", text: "Market › Supply & demand shows population and renter growth for the ZIP, city and county. Market › Location shows incomes, rents and county unemployment." },
+        ],
+      },
+      {
+        id: "m12l5", title: "Interest rates, cap rates and timing", minutes: 8, blocks: [
+          { t: "p", text: "Cap rates move with interest rates, because buyers compare a property's yield with what they could earn on safer investments and what they'll pay to borrow. When the 10 year Treasury rose from about 1.5% in 2021 to over 4%, apartment cap rates rose too, and values fell even where NOI held up." },
+          { t: "example", title: "Same $500,000 NOI, different market", rows: [["Value at a 4.50% cap (2021)", "$11,111,111"], ["Value at a 5.75% cap", "$8,695,652"], ["Change", "−21.7%", true]] },
+          { t: "p", text: "Negative leverage: when the loan costs more than the property yields, borrowing makes your cash return worse, not better. That's common today, and it changes how deals get bought." },
+          { t: "example", title: "$10M purchase at a 5.5% cap, 65% loan at 6.5%, 30 year amortization", rows: [["NOI", "$550,000"], ["Debt service on $6.5M (7.58% loan constant)", "−$493,013"], ["Cash flow", "$56,987"], ["Equity", "$3,500,000"], ["Cash on cash", "1.63%", true], ["Cap rate, as if you paid all cash", "5.50%"]] },
+          { t: "p", text: "With negative leverage, returns have to come from growing NOI (value add, rent growth) and from the exit. That's exactly why supply, concessions and exit cap discipline matter so much: there's no cushion if rents stall." },
+          { t: "terms", items: [["Negative leverage", "When the loan constant is higher than the cap rate, so debt lowers your cash on cash return."], ["Spread to Treasuries", "Cap rate minus the 10 year Treasury yield; a thin spread means prices are rich relative to rates."]] },
+          { t: "tip", text: "Market › Location shows today's 10 year Treasury and SOFR. Capital › Loan quotes shows how much each lender's terms change your cash on cash." },
+        ],
+      },
+    ],
+    quiz: [
+      { q: "A new 300 unit building opens two blocks away and is leasing up. What usually shows up first at nearby properties?", options: ["Asking rents drop right away", "More concessions and move outs", "Higher property taxes", "Lower insurance"], answer: 1, why: "Owners defend asking rent and compete with specials first; vacancy follows, and asking rents adjust last." },
+      { q: "A lease up asks $1,500 with 6 weeks free on a 12 month lease. About what is the effective rent?", options: ["$1,500", "$1,327", "$1,250", "$1,125"], answer: 1, why: "6 weeks is about 6 ÷ 52 of a year, 11.5%. $1,500 × (1 − 0.115) ≈ $1,327." },
+      { q: "Why look at permits from two or three years ago when buying today?", options: ["Permits show past rents", "They're the buildings that will open and lease up during your first years of ownership", "Lenders require it", "They set the tax rate"], answer: 1, why: "Construction takes 18 to 30 months, so recent permits become your competition right after you buy." },
+      { q: "The county adds 400 renter households a year and permits 1,200 apartment units a year. What should you expect?", options: ["Rising occupancy", "Supply outrunning demand: softer occupancy, more concessions", "No effect", "Higher cap rates only"], answer: 1, why: "Demand coverage is about 0.33x. New units must pull renters from existing buildings." },
+      { q: "A property's cap rate is 5.25% and the loan constant is 7.6%. What does adding more debt do to cash on cash?", options: ["Raises it", "Lowers it (negative leverage)", "Nothing", "Doubles it"], answer: 1, why: "Each borrowed dollar costs 7.6% a year but the property only yields 5.25% on it." },
+      { q: "A seller's T12 shows rising gross rent, but the concession line grew from 1% to 4% of rent in the last six months. What's the best read?", options: ["The market is strengthening", "The property is buying occupancy; effective rent is weaker than gross rent suggests", "Concessions don't matter", "Raise rent growth"], answer: 1, why: "Growing concessions hide softer effective rents. Use the T3 trend and underwrite the concessions." },
+    ],
+  },
+  /* ------------------------------------------------------------------ 13 */
+  {
+    id: "m13", num: 13, title: "Underwriting for an acquisitions team",
+    summary: "How the job works on a real team: the deal funnel, the 30 minute screen, building the model in order, the mistakes interns make, and writing the memo.",
+    lessons: [
+      {
+        id: "m13l1", title: "The deal funnel and your role", minutes: 6, blocks: [
+          { t: "p", text: "An acquisitions team looks at far more deals than it buys. Brokers send offering memos every week, and the team's edge comes from screening fast, underwriting the good ones carefully, and saying no quickly to the rest." },
+          { t: "diagram", d: "funnel", caption: "A typical year: most deals die at the screen." },
+          { t: "p", text: "As an intern or analyst, your job is to make the decision makers faster and better: get the numbers right, flag what's wrong with the seller's story, and give a clear recommendation with the reasons. A good \"no\" with a max price is as valuable as a \"yes\"." },
+          { t: "terms", items: [["Offering memorandum (OM)", "The broker's marketing package with the seller's numbers and story."], ["LOI", "Letter of intent: a non binding offer with price and key terms."], ["Best and final", "The last round of bids when several buyers are interested."], ["Investment committee (IC)", "The group that approves buying a deal, usually after reading a memo."]] },
+        ],
+      },
+      {
+        id: "m13l2", title: "The 30 minute screen", minutes: 8, blocks: [
+          { t: "p", text: "Before building a full model, answer one question: is this worth more of the team's time? Work through these in order and stop as soon as something kills the deal." },
+          { t: "example", title: "Screen checklist", rows: [["1. Price per unit vs recent sale comps", "Market › Comps"], ["2. In place NOI from the T12, with taxes reset to your price", "Property › Expenses"], ["3. Insurance and payroll sanity check per unit", "Property › Expenses"], ["4. Going in cap rate on your adjusted NOI", "Overview"], ["5. DSCR and loan size at today's rates", "Capital › Debt"], ["6. In place rents vs comps: room to grow or already at market?", "Market › Comps"], ["7. New supply and concessions nearby", "Market › Supply & demand"], ["8. Max price that still clears the buy box", "Overview", true]] },
+          { t: "p", text: "Write the result in two sentences: the price that works, and the one or two things that drive it. For example: \"Works at $4.2M, not the $4.8M ask. Seller's taxes reset by $34k after sale, and three lease ups within two miles mean flat rents for two years.\"" },
+          { t: "tip", text: "Upload the OM, T12 and rent roll under Property › Documents first; the site fills most inputs and you check them." },
+        ],
+      },
+      {
+        id: "m13l3", title: "Building the full underwriting, in order", minutes: 9, blocks: [
+          { t: "p", text: "When a deal passes the screen, build the model in this order. Each step depends on the one before it, so going out of order is how errors creep in." },
+          { t: "example", title: "Order of operations", rows: [["1. Rent roll: unit mix, occupancy, in place vs market, expirations", "Property › Rent roll"], ["2. Market: supply, demand, comps, concessions", "Market"], ["3. Revenue: market rent, loss to lease, vacancy, concessions, bad debt, other income", "Property › Rent & income"], ["4. Expenses: T12 and T3 side by side, then your underwritten numbers", "Financials › Operating statement"], ["5. Taxes after sale, real insurance quote, reserves", "Property › Expenses"], ["6. Business plan: renovations, lease up, capital items", "Property › Value add"], ["7. Debt: size the loan the lender's way, compare quotes", "Capital"], ["8. Growth, hold and exit cap above going in", "Financials › Projections"], ["9. Downside, base and upside cases", "Financials › Scenarios"], ["10. Investor returns after fees, if syndicated", "Capital › Investors"], ["11. Memo and recommendation", "Overview", true]] },
+          { t: "p", text: "Every assumption should have a source you can point to: a document, a comp, a quote, or the scan. When someone asks \"why 5% vacancy?\" the answer should never be \"it's the default.\"" },
+        ],
+      },
+      {
+        id: "m13l4", title: "The mistakes interns make most", minutes: 8, blocks: [
+          { t: "p", text: "These are the errors that most often make a deal look better than it is. Check every one before you hand in numbers." },
+          { t: "example", title: "Common mistakes and the fix", rows: [["Using the OM's pro forma instead of the T12", "Start from actuals; pro forma is the seller's best case"], ["Keeping the seller's property tax bill", "Reset taxes to your purchase price"], ["Trusting a low insurance number", "Get a quote; use the state range"], ["Underwriting asking rent", "Use effective rent after concessions"], ["0% or 3% vacancy because the building is full today", "Use at least 5 to 7% economic vacancy"], ["Rent growth that ignores new supply", "Check the pipeline; slow years 1 and 2"], ["Exit cap equal to or below going in cap", "Exit at going in plus 5 to 10 bps per year"], ["Loan sized at a quoted LTV", "Size on DSCR and debt yield too"], ["No capital budget for roofs, parking, HVAC", "Add capital lines and reserves", true]] },
+          { t: "p", text: "A good habit: after building the model, list every assumption that is better than the seller's actual numbers and write one sentence defending each. The operating statement's shaded lines show you where to start." },
+        ],
+      },
+      {
+        id: "m13l5", title: "Questions to ask the broker and the memo", minutes: 8, blocks: [
+          { t: "p", text: "Brokers know more than the OM says. A short list of sharp questions saves days and signals that you're a serious buyer." },
+          { t: "example", title: "Broker questions", rows: [["Why is the seller selling now?", "Loan maturity, fund ending, or a problem"], ["What's whisper price and how many offers do you expect?", "Sets your bid strategy"], ["Are concessions included in the T12 rent, and what's the trend?", "Effective rent"], ["What's been spent on capital in the last 3 years? Any roofs, plumbing, foundation work?", "Capital budget"], ["Any lease ups or new projects nearby that buyers are worried about?", "Supply risk"], ["Is the loan assumable? Prepayment terms?", "Financing"], ["Can we get the T3, a current rent roll and five years of loss runs?", "Diligence", true]] },
+          { t: "p", text: "The memo is how you are judged. Keep it to two pages: the recommendation and price up top, then the deal snapshot, the business plan, the market (supply, demand, competition), the risks with how you'd handle each, the returns and sensitivities, and what diligence still has to confirm. Lead with the answer; support it with the numbers." },
+          { t: "tip", text: "Overview › Investment memo (PDF) builds the two page memo from your model, including risk flags. Add your own thesis in the deal notes under Pipeline." },
+        ],
+      },
+    ],
+    quiz: [
+      { q: "You have 30 minutes on a new deal. What should you produce?", options: ["A full 10 year model", "A max price that works and the one or two things that drive it", "A list of every unit", "A tax projection"], answer: 1, why: "The screen decides whether the deal deserves more time. A price and the key reasons is what the team needs." },
+      { q: "Which should you start the expense underwriting from?", options: ["The OM pro forma", "The seller's T12 actuals, adjusted", "Last year's budget from a different property", "National averages only"], answer: 1, why: "Actuals are evidence; adjust them for taxes after sale, insurance quotes and your management plan." },
+      { q: "The building is 98% leased today. What vacancy should you underwrite?", options: ["2%", "0%", "At least 5 to 7% economic vacancy", "Whatever the seller says"], answer: 2, why: "Turnover, bad debt, concessions and non revenue units always cost something; lenders use 5% or more." },
+      { q: "Your model's going in cap is 5.6%. Which exit cap is most defensible for a 5 year hold?", options: ["5.0%", "5.6%", "6.0%", "4.5%"], answer: 2, why: "Going in plus 5 to 10 bps a year: 25 to 50 bps over five years puts the exit around 5.85% to 6.1%." },
+      { q: "What belongs at the top of an investment memo?", options: ["Photos", "The recommendation and price", "The full rent roll", "The broker's contact info"], answer: 1, why: "Decision makers read the first lines most. Lead with the answer and support it below." },
+    ],
+
   },
 ]
 

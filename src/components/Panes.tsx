@@ -60,7 +60,7 @@ export function SummaryPane({ d, p, mp }: PaneProps) {
       <details className="card group !py-0">
         <summary className="flex cursor-pointer list-none items-center gap-3 py-4 text-sm font-semibold text-ink">
           <span className="text-slate-400 transition group-open:rotate-90">›</span>Plain text deal memo
-          <span className="font-normal text-slate-500">for pasting into an email</span>
+          <span className="hidden font-normal text-slate-500 sm:inline">for pasting into an email</span>
           <button className="btn ml-auto" onClick={e => { e.preventDefault(); navigator.clipboard?.writeText(memo(d, p, mp)).then(() => { setCopied(true); setTimeout(() => setCopied(false), 2000) }).catch(() => {}) }}>{copied ? "Copied" : "Copy memo"}</button>
         </summary>
         <pre className="mb-4 max-h-96 overflow-auto whitespace-pre-wrap rounded-lg border border-slate-100 bg-slate-50 p-3 font-sans text-[13px]">{memo(d, p, mp)}</pre>
@@ -109,15 +109,29 @@ export function IncomePane({ d, p, set }: PaneProps) {
           </div>
         </Card>
         <Card title="Unit mix (monthly)">
-          <div className={`mb-1 text-xs text-slate-500 ${grid}`}><span>Unit type</span><span>Count</span><span>In place rent</span><span>Market rent</span><span>Avg SF</span><span /></div>
+          <div className={`mb-1 hidden text-xs text-slate-500 sm:grid ${grid}`}><span>Unit type</span><span>Count</span><span>In place rent</span><span>Market rent</span><span>Avg SF</span><span /></div>
           {units.map((u, i) => (
-            <div key={i} className={`mb-2 items-center ${grid}`}>
-              <input value={u.type} onChange={e => setUnit(i, { type: e.target.value })} />
-              <NumInput value={u.count} min={0} onChange={v => setUnit(i, { count: v })} />
-              <NumInput value={u.rent} min={0} step={5} onChange={v => setUnit(i, { rent: v })} />
-              <NumInput value={u.market || 0} min={0} step={5} onChange={v => setUnit(i, { market: v })} />
-              <NumInput value={u.sf || 0} min={0} step={10} onChange={v => setUnit(i, { sf: v })} />
-              <button className="text-slate-400 hover:text-fail-600" title="Remove" onClick={() => set({ units: units.length > 1 ? units.filter((_, j) => j !== i) : [{ type: "", count: 0, rent: 0 }] })}>✕</button>
+            <div key={i}>
+              {/* Phone: the unit type on its own row, then four labeled number fields. */}
+              <div className="mb-3 rounded-md border border-[#efefea] p-2.5 sm:hidden">
+                <div className="flex items-center gap-2">
+                  <input className="flex-1" value={u.type} placeholder="Unit type" onChange={e => setUnit(i, { type: e.target.value })} />
+                  <button className="px-1 text-slate-400 hover:text-fail-600" title="Remove" onClick={() => set({ units: units.length > 1 ? units.filter((_, j) => j !== i) : [{ type: "", count: 0, rent: 0 }] })}>✕</button>
+                </div>
+                <div className="mt-2 grid grid-cols-2 gap-2">
+                  {([["Count", "count", 1], ["In place rent", "rent", 5], ["Market rent", "market", 5], ["Avg SF", "sf", 10]] as const).map(([lab, k, st]) => (
+                    <label key={k} className="block"><span className="text-[11px] text-slate-500">{lab}</span>
+                      <NumInput className="w-full" value={(u as any)[k] || 0} min={0} step={st} onChange={v => setUnit(i, { [k]: v } as any)} /></label>))}
+                </div>
+              </div>
+              <div className={`mb-2 hidden items-center sm:grid ${grid}`}>
+                <input value={u.type} onChange={e => setUnit(i, { type: e.target.value })} />
+                <NumInput value={u.count} min={0} onChange={v => setUnit(i, { count: v })} />
+                <NumInput value={u.rent} min={0} step={5} onChange={v => setUnit(i, { rent: v })} />
+                <NumInput value={u.market || 0} min={0} step={5} onChange={v => setUnit(i, { market: v })} />
+                <NumInput value={u.sf || 0} min={0} step={10} onChange={v => setUnit(i, { sf: v })} />
+                <button className="text-slate-400 hover:text-fail-600" title="Remove" onClick={() => set({ units: units.length > 1 ? units.filter((_, j) => j !== i) : [{ type: "", count: 0, rent: 0 }] })}>✕</button>
+              </div>
             </div>
           ))}
           <button className="btn mt-1" onClick={() => set({ units: [...units, { type: "", count: 0, rent: 0 }] })}>+ Add unit type</button>

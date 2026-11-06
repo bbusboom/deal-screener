@@ -11,7 +11,7 @@ export default function CashFlowChart({ p }: { p: Projection }) {
     <div className="grid gap-5 md:grid-cols-[minmax(0,1fr)_240px]">
       <div>
         <div className="mb-1 text-xs font-medium text-slate-500">Cash flow after debt service, each year</div>
-        <svg viewBox={`0 0 ${W} ${H}`} className="h-auto w-full font-sans" role="img" aria-label="Cash flow to equity by year">
+        <svg viewBox={`0 0 ${W} ${H}`} className="cf-chart h-auto w-full font-sans" role="img" aria-label="Cash flow to equity by year">
           {[0.33, 0.66].map(f => <line key={f} x1={pad} x2={W - pad} y1={24 + (H - 50) * f} y2={24 + (H - 50) * f} stroke="#eeeeea" strokeDasharray="3 4" />)}
           <line x1={pad} x2={W - pad} y1={y0} y2={y0} stroke="#cbd5e1" />
           {vals.map((v, i) => {

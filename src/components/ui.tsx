@@ -3,7 +3,7 @@ import { useEffect, useRef, useState, type ReactNode } from "react"
 export function Card({ title, children, className = "", right }: { title?: string; children: ReactNode; className?: string; right?: ReactNode }) {
   return (
     <div className={`card ${className}`}>
-      {(title || right) && <div className="mb-3 flex items-center justify-between gap-3">{title && <h2 className="card-title !mb-0">{title}</h2>}{right}</div>}
+      {(title || right) && <div className="mb-3 flex flex-wrap items-center justify-between gap-x-3 gap-y-2">{title && <h2 className="card-title !mb-0">{title}</h2>}{right}</div>}
       {children}
     </div>
   )

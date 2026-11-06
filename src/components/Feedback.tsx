@@ -15,7 +15,7 @@ export default function Feedback({ session, page }: { session: Session | null; p
   return (
     <div className="fixed bottom-4 right-4 z-40 print:hidden">
       {open ? (
-        <div className="w-80 rounded-lg border border-[#e4e4de] bg-white p-4 shadow-lg">
+        <div className="w-[min(20rem,calc(100vw-2rem))] rounded-lg border border-[#e4e4de] bg-white p-4 shadow-lg">
           {state === "sent" ? <div className="py-6 text-center text-sm font-medium text-pass-600">Thanks, sent.</div> : <>
             <div className="flex items-center"><div className="font-semibold text-ink">Send feedback</div><button className="ml-auto text-slate-400 hover:text-ink" onClick={() => setOpen(false)} aria-label="Close">✕</button></div>
             <p className="mt-1 text-xs text-slate-500">Something confusing, broken or missing on this page? Say what you were trying to do.</p>
@@ -24,7 +24,9 @@ export default function Feedback({ session, page }: { session: Session | null; p
           </>}
         </div>
       ) : (
-        <button onClick={() => setOpen(true)} className="rounded-full border border-[#e4e4de] bg-white px-4 py-2 text-sm font-medium text-ink shadow-md hover:bg-slate-50">Feedback</button>
+        <button onClick={() => setOpen(true)} aria-label="Send feedback" className="flex items-center gap-2 rounded-full border border-[#e4e4de] bg-white p-2.5 text-sm font-medium text-ink shadow-md hover:bg-slate-50 sm:px-4 sm:py-2">
+          <svg viewBox="0 0 24 24" className="h-5 w-5 sm:h-4 sm:w-4" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="M21 12a8 8 0 01-11.6 7.1L4 20l1-4.6A8 8 0 1121 12z" /></svg>
+          <span className="hidden sm:inline">Feedback</span></button>
       )}
     </div>
   )

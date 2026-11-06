@@ -7,14 +7,15 @@
     @apply bg-[#f6f6f3] text-ink antialiased;
     font-feature-settings: "ss01", "cv11";
   }
-  input, select, textarea { @apply rounded-md border border-[#dcdcd5] bg-white px-2.5 py-1.5 text-sm text-ink outline-none transition placeholder:text-slate-400 hover:border-slate-300 focus:border-brand-600 focus:ring-2 focus:ring-brand-100; }
+  input, select, textarea { @apply min-w-0 rounded-md border border-[#dcdcd5] bg-white px-2.5 py-1.5 text-sm text-ink outline-none transition placeholder:text-slate-400 hover:border-slate-300 focus:border-brand-600 focus:ring-2 focus:ring-brand-100; }
   input:disabled, select:disabled { @apply bg-slate-50 text-slate-400; }
   input[type=checkbox] { @apply h-4 w-4 cursor-pointer rounded accent-brand-600 focus:ring-0; }
   h1, h2, h3 { @apply tracking-tight; }
   .font-display { letter-spacing: -0.02em; }
 }
 @layer components {
-  .card { @apply rounded-lg border border-[#e4e4de] bg-white p-5; }
+  .card { @apply min-w-0 rounded-lg border border-[#e4e4de] bg-white p-5; overflow-x: auto; }
+  @media (max-width: 640px) { .card { @apply p-4; } }
   .card-title { @apply mb-3 text-[13px] font-semibold text-ink; }
   .btn { @apply inline-flex items-center gap-1.5 rounded-md border border-[#dcdcd5] bg-white px-3 py-1.5 text-sm font-medium text-ink transition hover:bg-[#f3f3ef] disabled:opacity-50; }
   .btn-primary { @apply border-brand-900 bg-brand-900 text-white hover:bg-brand-800; }
@@ -27,6 +28,8 @@
   .tbl tbody tr:hover td { @apply bg-slate-50/70; }
   .tbl tr.total td { @apply border-t border-t-ink font-semibold text-ink; }
   .tbl tr.sub td { @apply text-xs text-slate-500; }
+  .tbl input, .tbl select { min-width: 5.5rem; }
+  @media (max-width: 640px) { .cf-chart text { font-size: 20px; } }
   .tbl tr.head td { @apply bg-[#f6f6f3] font-semibold text-ink; }
   .num { @apply font-mono tabular-nums; }
   .note { @apply text-xs leading-relaxed text-slate-500; }

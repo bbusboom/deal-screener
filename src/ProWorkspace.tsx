@@ -77,7 +77,7 @@ export default function ProWorkspace({ session, toast }: { session: Session | nu
           <div className="flex flex-wrap items-center gap-3">
             <div className="min-w-0 basis-full sm:basis-0 sm:flex-1">
               <div className="text-xs font-medium text-white/50">Underwriting workspace</div>
-              <input className="mt-0.5 w-full max-w-xl border-0 !bg-transparent px-0 font-display text-2xl font-semibold text-white shadow-none !ring-0 placeholder:text-white/30 md:text-[28px]" placeholder="Name this deal" value={deal.name} onChange={e => set({ name: e.target.value })} />
+              <input className="mt-0.5 w-full max-w-xl border-0 !bg-transparent px-0 font-display text-xl font-semibold text-white shadow-none !ring-0 placeholder:text-white/30 sm:text-2xl md:text-[28px]" placeholder="Name this deal" value={deal.name} onChange={e => set({ name: e.target.value })} />
             </div>
             {valid && <ShareMenu d={deal} p={p} mp={mp} />}
             <button className="btn btn-gold" onClick={save}>{dealId ? "Save" : "Save deal"}</button>

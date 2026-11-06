@@ -12,6 +12,7 @@ import AiPanel from "../components/AiPanel"
 
 type View = { kind: "home" } | { kind: "lesson"; id: string } | { kind: "quiz"; id: string } | { kind: "glossary" }
 const PASS = 0.8
+const VIEW_KEY = "dealScreener.course.view"
 
 function blockText(b: Block): string {
   if (b.t === "p" || b.t === "tip") return b.text
@@ -101,7 +102,14 @@ function QuizView({ mod, onDone, onBack }: { mod: Module; onDone: (score: number
 }
 
 export default function Course({ session, onPractice }: { session: Session | null; onPractice: () => void }) {
-  const [view, setView] = useState<View>({ kind: "home" })
+  const [view, setView] = useState<View>(() => {
+    try {
+      const v = JSON.parse(sessionStorage.getItem(VIEW_KEY) || "null") as View | null
+      if (v && (v.kind === "home" || v.kind === "glossary" || allLessons.some(l => l.id === (v as any).id) || COURSE.some(m => m.id === (v as any).id))) return v
+    } catch {}
+    return { kind: "home" }
+  })
+  useEffect(() => { try { sessionStorage.setItem(VIEW_KEY, JSON.stringify(view)) } catch {} }, [view])
   const [prog, setProg] = useState<Progress>({ lessons: {}, quizzes: {} })
   useEffect(() => { getProgress(session).then(setProg) }, [session?.user.id])
   useEffect(() => { scrollTo({ top: 0 }) }, [view])

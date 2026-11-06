@@ -279,7 +279,14 @@ function DuelPlayer({ x, onDone, onBack, onNext }: { x: Duel; onDone: (pts: numb
 /* ====================================================================== root */
 export default function Challenges({ session }: { session: Session | null }) {
   const [prog, setProg] = useState<Progress>({ lessons: {}, quizzes: {} })
-  const [view, setView] = useState<View>({ k: "home" })
+  const [view, setView] = useState<View>(() => {
+    try {
+      const v = JSON.parse(sessionStorage.getItem("dealScreener.challenges.view") || "null") as View | null
+      if (v && (v.k === "home" || (v.k === "trick" && TRICKS.some(t => t.id === v.id)) || (v.k === "duel" && DUELS.some(d => d.id === v.id)))) return v
+    } catch {}
+    return { k: "home" }
+  })
+  useEffect(() => { try { sessionStorage.setItem("dealScreener.challenges.view", JSON.stringify(view)) } catch {} }, [view])
   useEffect(() => { getProgress(session).then(setProg) }, [session?.user.id])
   const done = (id: string, score: number) => setProg(p => { const n = record(p, id, score); saveProgress(session, n); return n })
   const open = (v: View) => { setView(v); scrollTo({ top: 0 }) }

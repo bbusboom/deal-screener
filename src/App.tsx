@@ -31,19 +31,46 @@ export default function App() {
   useEffect(() => { try { localStorage.setItem("dealScreener.learnTab", learnTab) } catch {} }, [learnTab])
 
   useEffect(() => {
-    let alive = true
-    getSession().then(async s => { if (!alive) return; setSession(s); if (s) { try { localStorage.setItem(HAS_ACCOUNT, "1") } catch {} } syncHomeState(s); syncTemplates(s); setProfile(await getProfile(s)); setReady(true) })
+    let alive = true, uid: string | null = null
+    getSession().then(async s => {
+      if (!alive) return
+      uid = s?.user.id ?? null
+      setSession(s); if (s) { try { localStorage.setItem(HAS_ACCOUNT, "1") } catch {} }
+      syncHomeState(s); syncTemplates(s); setProfile(await getProfile(s)); setReady(true)
+    })
     if (!supabase) return () => { alive = false }
-    const { data } = supabase.auth.onAuthStateChange(async (event, s) => {
+    // Supabase re-checks the login whenever the tab regains focus and fires SIGNED_IN or TOKEN_REFRESHED.
+    // Those must not reload the profile (that is what sent people back to the path picker): only a real
+    // change of user does. Work is deferred so no Supabase call runs inside the auth lock.
+    const { data } = supabase.auth.onAuthStateChange((event, s) => {
       if (event === "PASSWORD_RECOVERY") setRecovery(true)
-      setSession(s); syncHomeState(s); setProfile(await getProfile(s))
+      const next = s?.user.id ?? null
+      setSession(prev => (prev?.user.id === next && prev?.access_token === s?.access_token ? prev : s))
+      if (next === uid) return
+      uid = next
       if (s) { try { localStorage.setItem(HAS_ACCOUNT, "1") } catch {} }
+      setTimeout(async () => {
+        if (!alive) return
+        syncHomeState(s)
+        const p = await getProfile(s)
+        if (alive && uid === next) setProfile(p)
+      }, 0)
     })
     return () => { alive = false; data.subscription.unsubscribe() }
   }, [])
+  // Keep the scroll position across a reload (a browser can discard a background tab and reload it on return).
+  useEffect(() => {
+    if (!ready) return
+    const k = "dealScreener.scroll." + location.hash
+    try { const y = Number(sessionStorage.getItem(k)); if (y > 0) requestAnimationFrame(() => setTimeout(() => scrollTo({ top: y }), 60)) } catch {}
+    const save = () => { try { sessionStorage.setItem("dealScreener.scroll." + location.hash, String(scrollY)) } catch {} }
+    const vis = () => { if (document.visibilityState === "hidden") save() }
+    addEventListener("pagehide", save); document.addEventListener("visibilitychange", vis)
+    return () => { removeEventListener("pagehide", save); document.removeEventListener("visibilitychange", vis) }
+  }, [ready])
   useEffect(() => { if (!toast) return; const t = setTimeout(() => setToast(""), 2200); return () => clearTimeout(t) }, [toast])
 
-  const pick = async (path: Path) => { await setPath(session, path); setProfile(p => ({ ...(p || { id: "local", username: null }), path })); setChoosing(false); history.replaceState(null, "", location.pathname) }
+  const pick = (path: Path) => { setProfile(p => ({ ...(p || { id: "local", username: null }), path })); setChoosing(false); history.replaceState(null, "", location.pathname); void setPath(session, path) }
   const openInPro = (d: Deal) => {
     try { localStorage.setItem("dealScreener.current.v1", JSON.stringify(d)); localStorage.setItem("dealScreener.current.v1.id", "null") } catch {}
     setProKey(k => k + 1); pick("pro"); setToast("Opened in the Pro workspace")

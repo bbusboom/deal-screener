@@ -49,17 +49,31 @@ export async function accessToken() { return (await getSession())?.access_token 
 
 /* ---------- profile ---------- */
 const LOCAL_PATH = "dealScreener.path"
+const pathKey = (uid: string) => `dealScreener.path.${uid}`
+const cachedPath = (uid: string): Path | null => { try { return localStorage.getItem(pathKey(uid)) as Path | null } catch { return null } }
+const cachePath = (uid: string, path: Path | null) => { try { if (path) localStorage.setItem(pathKey(uid), path) } catch {} }
 export async function getProfile(session: Session | null): Promise<Profile> {
   if (!supabase || !session) {
     let path: Path | null = null; try { path = localStorage.getItem(LOCAL_PATH) as Path | null } catch {}
     return { id: "local", username: null, path }
   }
-  const { data } = await supabase.from("profiles").select("id, username, path").eq("id", session.user.id).maybeSingle()
-  return data ? (data as Profile) : { id: session.user.id, username: session.user.user_metadata?.username ?? null, path: null }
+  const uid = session.user.id, fallback = cachedPath(uid)
+  try {
+    const { data, error } = await supabase.from("profiles").select("id, username, path").eq("id", uid).maybeSingle()
+    if (error) throw error
+    // A slow or failed read must never send someone back to the path picker: fall back to the path saved on this browser.
+    const prof = (data as Profile | null) || { id: uid, username: session.user.user_metadata?.username ?? null, path: null }
+    const path = prof.path || fallback
+    cachePath(uid, path)
+    return { ...prof, path }
+  } catch {
+    return { id: uid, username: session.user.user_metadata?.username ?? null, path: fallback }
+  }
 }
 export async function setPath(session: Session | null, path: Path) {
   if (!supabase || !session) { try { localStorage.setItem(LOCAL_PATH, path) } catch {} return }
-  await supabase.from("profiles").upsert({ id: session.user.id, path })
+  cachePath(session.user.id, path)
+  try { await supabase.from("profiles").upsert({ id: session.user.id, path }) } catch {}
 }
 
 /* ---------- deals ---------- */

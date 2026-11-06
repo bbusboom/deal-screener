@@ -249,7 +249,7 @@ export default function LearnerApp({ session, toast, onOpenInPro }: { session: S
                   .filter(r => step >= (r[2] as number)).map(([a, b]) => <tr key={a as string}><td>{a}</td><td className="num">{valid ? b : "—"}</td></tr>)}
               </tbody></table>
             </Card>)}
-          <AiPanel deal={deal} fixedRoute="learner" title="Ask Deal School" compact onDeal={d => setDeal(norm(d))} />
+          <AiPanel storeKey="practice" deal={deal} fixedRoute="learner" title="Ask Deal School" compact onDeal={d => setDeal(norm(d))} />
         </aside>
       </div>
     </main>

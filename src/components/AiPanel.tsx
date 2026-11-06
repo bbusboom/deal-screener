@@ -1,4 +1,4 @@
-import { useRef, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import type { Deal } from "../lib/model"
 import { Card } from "./ui"
 import { apiHeaders, CODE_KEY } from "../lib/store"
@@ -20,9 +20,12 @@ const REVIEW = {
   pro: "Underwrite the deal in the screener. Give a quick screen, then propose downside, base and upside scenarios over the hold with explicit assumptions, show breakpoints, and ask me to adjust and weight them.",
 }
 
-export default function AiPanel({ deal, onDeal, fixedRoute, title = "Deal School AI", compact = false, context, greeting, reviewLabel, reviewPrompt }: { deal: Deal; onDeal: (d: Deal) => void; fixedRoute?: "learner" | "pro"; title?: string; compact?: boolean; context?: string; greeting?: string; reviewLabel?: string; reviewPrompt?: string }) {
+export default function AiPanel({ deal, onDeal, fixedRoute, title = "Deal School AI", compact = false, context, greeting, reviewLabel, reviewPrompt, storeKey }: { storeKey?: string; deal: Deal; onDeal: (d: Deal) => void; fixedRoute?: "learner" | "pro"; title?: string; compact?: boolean; context?: string; greeting?: string; reviewLabel?: string; reviewPrompt?: string }) {
   const [route, setRoute] = useState<"learner" | "pro">(fixedRoute || "learner")
-  const [msgs, setMsgs] = useState<Msg[]>([])
+  // The conversation survives a reload of this tab, so leaving and coming back doesn't lose it.
+  const sk = storeKey ? "dealScreener.chat." + storeKey : ""
+  const [msgs, setMsgs] = useState<Msg[]>(() => { try { return sk ? JSON.parse(sessionStorage.getItem(sk) || "[]") : [] } catch { return [] } })
+  useEffect(() => { if (sk) try { sessionStorage.setItem(sk, JSON.stringify(msgs.slice(-40))) } catch {} }, [sk, msgs])
   const [input, setInput] = useState("")
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState("")

@@ -153,7 +153,7 @@ export default function ProWorkspace({ session, toast }: { session: Session | nu
         {tab === "financing" && <FinancingPane {...pane} />}
         {tab === "projections" && <ProjectionsPane {...pane} />}
         {tab === "scenarios" && <ScenariosPane {...pane} metric={metric} setMetric={setMetric} />}
-        <div className={tab === "ai" ? "" : "hidden"}><AiPanel deal={deal} fixedRoute="pro" title="Deal School AI · Pro route" onDeal={d => setDeal(norm(d))} /></div>
+        <div className={tab === "ai" ? "" : "hidden"}><AiPanel storeKey="pro" deal={deal} fixedRoute="pro" title="Deal School AI · Pro route" onDeal={d => setDeal(norm(d))} /></div>
         {tab === "deals" && <DealsPane {...pane} saved={saved} cloud={!!session}
           onSave={save}
           onOpen={i => { const r = saved![i]; setDeal(norm(r.data)); setDealId(r.id); go("summary") }}

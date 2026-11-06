@@ -218,7 +218,7 @@ export default function Course({ session, onPractice }: { session: Session | nul
             </div>
           </article>
           <div className="mt-5">
-            <AiPanel key={l.id} deal={norm(PRACTICE)} fixedRoute="learner" compact title="Ask Deal School about this lesson" context={ctx}
+            <AiPanel key={l.id} storeKey={"lesson." + l.id} deal={norm(PRACTICE)} fixedRoute="learner" compact title="Ask Deal School about this lesson" context={ctx}
               greeting={`Questions about "${l.title}"? Ask anything, like "why do we subtract vacancy?" or "explain this like I'm new."`}
               reviewLabel="Explain this lesson another way" reviewPrompt={`Explain the main idea of the lesson "${l.title}" in a different way than the lesson did, with a simple everyday example, in under 150 words.`}
               onDeal={() => {}} />

@@ -1,11 +1,11 @@
 /* Landing page motion and atmosphere. Everything here is scoped under .lp. */
-.lp { --sy: 0; background: #060a18; color: #e8eefb; }
+.lp { --sy: 0; background: #0b1226; color: #e8eefb; }
 .lp .serif { font-family: "Fraunces", Georgia, serif; font-optical-sizing: auto; letter-spacing: -0.01em; }
 
 /* ---------- fixed night sky ---------- */
 .lp-sky { position: fixed; inset: 0; z-index: 0; overflow: hidden; pointer-events: none;
-  background: radial-gradient(120% 80% at 50% 110%, #1b2a5c 0%, #0b1330 45%, #060a18 80%); }
-.lp-blob { position: absolute; border-radius: 9999px; filter: blur(90px); opacity: .55; mix-blend-mode: screen; will-change: transform; }
+  background: linear-gradient(180deg, #0b1226 0%, #0e1830 100%); }
+.lp-blob { display: none; position: absolute; border-radius: 9999px; filter: blur(90px); opacity: .55; mix-blend-mode: screen; will-change: transform; }
 .lp-blob.b1 { width: 55vw; height: 55vw; left: -12vw; top: -18vw; background: #2f6bff; animation: drift1 22s ease-in-out infinite alternate; }
 .lp-blob.b2 { width: 45vw; height: 45vw; right: -10vw; top: 5vh; background: #8b3dff; animation: drift2 26s ease-in-out infinite alternate; opacity: .4; }
 .lp-blob.b3 { width: 40vw; height: 40vw; left: 30vw; top: 35vh; background: #ff8a3d; animation: drift3 30s ease-in-out infinite alternate; opacity: .28; }
@@ -13,7 +13,7 @@
 @keyframes drift1 { to { transform: translate(18vw, 12vh) scale(1.15); } }
 @keyframes drift2 { to { transform: translate(-14vw, 18vh) scale(.9); } }
 @keyframes drift3 { to { transform: translate(-20vw, -10vh) scale(1.2); } }
-.lp-stars { position: absolute; inset: 0; background-image:
+.lp-stars { display: none; position: absolute; inset: 0; background-image:
   radial-gradient(1px 1px at 12% 18%, #fff8 50%, transparent 51%), radial-gradient(1px 1px at 72% 12%, #fff9 50%, transparent 51%),
   radial-gradient(1.5px 1.5px at 38% 8%, #fffa 50%, transparent 51%), radial-gradient(1px 1px at 88% 30%, #fff7 50%, transparent 51%),
   radial-gradient(1px 1px at 56% 26%, #fff6 50%, transparent 51%), radial-gradient(1px 1px at 22% 36%, #fff5 50%, transparent 51%),
@@ -22,34 +22,33 @@
 .lp-skyline { position: absolute; left: 0; right: 0; bottom: 0; width: 100%; height: auto; }
 .lp-skyline.far { opacity: .55; transform: translateY(calc(var(--sy) * 0.06px)); }
 .lp-skyline.near { transform: translateY(calc(var(--sy) * 0.14px)); }
-.lp .w { fill: #ffd28a; }
+.lp .w { fill: #f4b24c; }
 .lp .w.cool { fill: #9cc4ff; }
-.lp .tw { animation: twinkle 7s ease-in-out infinite; }
+.lp .tw { }
 @keyframes twinkle { 0%, 100% { opacity: 1 } 45% { opacity: 1 } 50% { opacity: .15 } 60% { opacity: .15 } 65% { opacity: 1 } }
-.lp-vignette { position: absolute; inset: 0; background: linear-gradient(to bottom, transparent 55%, #060a18 100%); }
+.lp-vignette { position: absolute; inset: 0; background: linear-gradient(to bottom, transparent 55%, #0e1830 100%); }
 
 /* ---------- hero entrance ---------- */
 .lp .rise { opacity: 0; transform: translateY(26px); animation: rise .9s cubic-bezier(.2,.7,.2,1) forwards; }
 @keyframes rise { to { opacity: 1; transform: none; } }
-.lp .float { animation: float 7s ease-in-out infinite; }
+.lp .float { }
 @keyframes float { 50% { transform: translateY(-12px) rotate(-.4deg); } }
-.lp .glow-blue { box-shadow: 0 0 0 1px #ffffff14, 0 30px 80px -20px #2f6bffaa, 0 0 120px -30px #8b3dff99; }
+.lp .glow-blue { box-shadow: 0 1px 0 #ffffff10, 0 20px 40px -24px #000000aa; }
 .lp .cue { animation: cue 2.2s ease-in-out infinite; }
 @keyframes cue { 0%, 100% { transform: translateY(0); opacity: .5 } 50% { transform: translateY(8px); opacity: 1 } }
-.lp .shine { background: linear-gradient(180deg, #fff1d6 10%, #ffb36b 95%); -webkit-background-clip: text; background-clip: text; color: transparent;
-  filter: drop-shadow(0 0 24px #ff8a3d55); }
+.lp .shine { color: #f4b24c; }
 @keyframes shine { to { background-position: -250% 0; } }
 
 /* ---------- pinned story ---------- */
 .lp-stage-bg { position: absolute; inset: 0; transition: background 1s ease; }
 .lp-stage { position: absolute; inset: 0; display: flex; align-items: center; pointer-events: none;
-  opacity: 0; transform: translateY(70px) scale(.97); filter: blur(6px);
-  transition: opacity .7s ease, transform .9s cubic-bezier(.2,.7,.2,1), filter .7s ease; }
-.lp-stage.past { transform: translateY(-70px) scale(.97); }
+  opacity: 0; transform: translateY(40px);
+  transition: opacity .6s ease, transform .7s cubic-bezier(.2,.7,.2,1); }
+.lp-stage.past { transform: translateY(-40px); }
 .lp-stage.on { opacity: 1; transform: none; filter: none; pointer-events: auto; }
-.lp-stage .visual { transition: transform 1s cubic-bezier(.2,.7,.2,1) .08s; transform: translateX(40px) rotate(1.5deg); }
+.lp-stage .visual { transition: transform .8s cubic-bezier(.2,.7,.2,1) .05s; transform: translateX(24px); }
 .lp-stage.on .visual { transform: none; }
-.lp-stage.past .visual { transform: translateX(-30px) rotate(-1deg); }
+.lp-stage.past .visual { transform: translateX(-16px); }
 
 /* things that animate each time a stage becomes active */
 .lp-stage .pop { opacity: 0; transform: translateY(10px); }
@@ -64,16 +63,20 @@
 .lp-stage.on .ring { animation: ring 8s linear forwards; }
 @keyframes ring { to { stroke-dashoffset: 113; } }
 
-.lp-progress { height: 2px; background: linear-gradient(90deg, #ffd28a, #9cc4ff); transform-origin: left; transform: scaleX(var(--p, 0)); }
+.lp-progress { height: 2px; background: #f4b24c; transform-origin: left; transform: scaleX(var(--p, 0)); }
 
 /* ---------- scroll reveals ---------- */
 .lp .reveal { opacity: 0; transform: translateY(40px); transition: opacity .8s ease, transform .9s cubic-bezier(.2,.7,.2,1); }
 .lp .reveal.in { opacity: 1; transform: none; }
 
-.lp .glass { background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.1); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); }
+.lp .glass { background: #121d3a; border: 1px solid rgba(255,255,255,.08); }
 .lp .card-white { background: #fff; color: #0f172a; }
 
 @media (prefers-reduced-motion: reduce) {
   .lp *, .lp *::before, .lp *::after { animation-duration: .001ms !important; animation-iteration-count: 1 !important; transition-duration: .001ms !important; }
   .lp .rise, .lp-stage .pop { opacity: 1; transform: none; }
 }
+
+/* Phones: slides render as normal stacked sections instead of pinned scroll stages. */
+.lp-stage.lp-flat { position: static; display: block; opacity: 1; transform: none; pointer-events: auto; }
+.lp-stage.lp-flat .visual { transform: none; }

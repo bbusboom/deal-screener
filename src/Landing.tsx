@@ -17,6 +17,15 @@ export function useScrollVar(root: React.RefObject<HTMLDivElement | null>) {
   }, [root])
 }
 /** Which stage of a tall pinned section is on screen. Also writes --p (0..1) on the section for the progress bar. */
+/** Scroll distance per pinned slide, in viewport heights. Lower means less scrolling to get through the slides. */
+export const STAGE_VH = 45
+/** Phones skip the pinned slides and show them as normal stacked sections, so scrolling never feels stuck. */
+export function useIsPhone() {
+  const q = "(max-width: 767px)"
+  const [m, setM] = useState(() => typeof matchMedia !== "undefined" && matchMedia(q).matches)
+  useEffect(() => { const mq = matchMedia(q), f = () => setM(mq.matches); mq.addEventListener("change", f); return () => mq.removeEventListener("change", f) }, [])
+  return m
+}
 export function useStage(ref: React.RefObject<HTMLElement | null>, n: number) {
   const [stage, setStage] = useState(0)
   useEffect(() => {
@@ -41,19 +50,6 @@ export function Reveal({ children, className = "", delay = 0 }: { children: Reac
     io.observe(el); return () => io.disconnect()
   }, [])
   return <div ref={ref} className={`reveal ${className}`} style={{ transitionDelay: `${delay}ms` }}>{children}</div>
-}
-function CountUp({ to, suffix = "" }: { to: number; suffix?: string }) {
-  const ref = useRef<HTMLSpanElement>(null), [v, setV] = useState(0)
-  useEffect(() => {
-    const el = ref.current; if (!el) return
-    const io = new IntersectionObserver(([e]) => {
-      if (!e.isIntersecting) return; io.disconnect()
-      const t0 = performance.now(), run = (t: number) => { const k = Math.min(1, (t - t0) / 1400); setV(Math.round(to * (1 - Math.pow(1 - k, 3)))); if (k < 1) requestAnimationFrame(run) }
-      requestAnimationFrame(run)
-    }, { threshold: 0.5 })
-    io.observe(el); return () => io.disconnect()
-  }, [to])
-  return <span ref={ref}>{v}{suffix}</span>
 }
 
 /* ---------- night skyline ---------- */
@@ -96,7 +92,7 @@ export function Sky() {
 /* ---------- pieces ---------- */
 const Logo = () => (
   <div className="flex items-center gap-2">
-    <div className="grid h-9 w-9 place-items-center rounded-lg bg-gradient-to-br from-[#ffd28a] to-[#ff8a3d] text-sm font-bold text-[#1a1030]">DS</div>
+    <div className="grid h-9 w-9 place-items-center rounded-lg bg-[#f4b24c] text-sm font-bold text-[#1c1305]">DS</div>
     <div className="whitespace-nowrap font-bold leading-tight text-white">Deal School<div className="hidden text-[11px] font-normal text-white/60 sm:block">Underwriting training</div></div>
   </div>
 )
@@ -122,7 +118,7 @@ function HeroMock() {
         </div>
         <div className="mt-1 flex justify-between text-[10px] text-slate-400"><span>Cash flow years 1 to 5</span><span>Sale</span></div>
       </div>
-      <div className="card-white absolute -bottom-8 -left-8 hidden w-64 rounded-xl p-3 text-sm shadow-2xl sm:block" style={{ boxShadow: "0 20px 60px -15px #ff8a3d88" }}>
+      <div className="card-white absolute -bottom-8 -left-8 hidden w-64 rounded-xl p-3 text-sm shadow-2xl sm:block" style={{ boxShadow: "0 16px 40px -20px #000000aa" }}>
         <div className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-amber-600">Deal School AI</div>
         <p className="text-slate-700">The seller's taxes are from 2009. On your price, budget about <b>$32,600</b>, not $14,200.</p>
       </div>
@@ -132,14 +128,14 @@ function HeroMock() {
 
 /* ---------- the five uses, as stages ---------- */
 type StageDef = { key: string; tag: string; title: string; body: string; bullets: string[]; accent: string; bg: string; visual: ReactNode }
-export const Panel = ({ children, glow }: { children: ReactNode; glow: string }) =>
-  <div className="card-white w-full max-w-md rounded-2xl p-5" style={{ boxShadow: `0 0 0 1px #ffffff18, 0 40px 100px -25px ${glow}, 0 0 140px -40px ${glow}` }}>{children}</div>
+export const Panel = ({ children }: { children: ReactNode; glow?: string }) =>
+  <div className="card-white w-full max-w-md rounded-xl p-5" style={{ boxShadow: "0 1px 0 #ffffff10, 0 24px 48px -28px #000000cc" }}>{children}</div>
 
 const STAGES: StageDef[] = [
   { key: "learn", tag: "01 · Learn", title: "Start at “what is NOI?” Finish reading deals like a lender.",
     body: "Thirteen modules carry one real deal from rent and expenses to cap rates, debt sizing, IRR and exit caps, with diagrams, calculators and quizzes.",
     bullets: ["One worked deal through every lesson", "Deal School AI under each lesson", "Progress saved to your account"],
-    accent: "#9cc4ff", bg: "radial-gradient(80% 70% at 75% 50%, #2f6bff40, transparent 70%)",
+    accent: "#f4b24c", bg: "transparent",
     visual: <Panel glow="#2f6bffcc">
       <div className="text-xs font-semibold uppercase tracking-wide text-brand-500">Module 3 · Net operating income</div>
       <div className="mt-3 space-y-2 font-mono text-sm">
@@ -152,7 +148,7 @@ const STAGES: StageDef[] = [
   { key: "trick", tag: "02 · Spot the trick", title: "Find what the seller hid before it costs you.",
     body: "Real looking T12s, rent rolls and offering memos with problems planted in them. Every miss shows its dollar cost.",
     bullets: ["$0 vacancy, stale tax bills, one time income", "Stars and a dollar impact score", "Deal School explains each trap"],
-    accent: "#ffd28a", bg: "radial-gradient(80% 70% at 75% 50%, #ff8a3d38, transparent 70%)",
+    accent: "#f4b24c", bg: "transparent",
     visual: <Panel glow="#ff8a3dcc">
       <div className="mb-3 flex items-center gap-2 text-xs"><span className="rounded bg-slate-200 px-2 py-0.5 font-semibold text-slate-600">T12</span><span className="font-semibold">Cedar Ridge Apartments</span></div>
       <table className="tbl text-sm"><tbody>
@@ -168,15 +164,15 @@ const STAGES: StageDef[] = [
   { key: "duel", tag: "03 · Deal Duels", title: "A broker pitches. The clock runs. You make the call.",
     body: "Fix the seller's numbers, then pursue, renegotiate or pass. See what really happened and get scored out of 100.",
     bullets: ["Real markets in AR, TX, OH and FL", "Scored against model computed reality", "Timed, so it feels like the real thing"],
-    accent: "#ff9ab8", bg: "radial-gradient(80% 70% at 75% 50%, #ff3d7a33, transparent 70%)",
+    accent: "#f4b24c", bg: "transparent",
     visual: <Panel glow="#ff3d7acc">
       <div className="flex items-start gap-3">
         <div className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-slate-800 text-xs font-bold text-white">BR</div>
         <div className="pop rounded-2xl rounded-tl-sm bg-slate-100 px-3 py-2 text-sm text-slate-700" style={{ animationDelay: "200ms" }}>32 units in Little Rock, 7.1% cap on the seller's actuals. Best and final is Friday. You in?</div>
-        <svg viewBox="0 0 40 40" className="h-11 w-11 shrink-0 -rotate-90"><circle cx="20" cy="20" r="18" fill="none" stroke="#f1f5f9" strokeWidth="4" /><circle className="ring" cx="20" cy="20" r="18" fill="none" stroke="#ff3d7a" strokeWidth="4" strokeLinecap="round" /></svg>
+        <svg viewBox="0 0 40 40" className="h-11 w-11 shrink-0 -rotate-90"><circle cx="20" cy="20" r="18" fill="none" stroke="#f1f5f9" strokeWidth="4" /><circle className="ring" cx="20" cy="20" r="18" fill="none" stroke="#f4b24c" strokeWidth="4" strokeLinecap="round" /></svg>
       </div>
       <div className="mt-4 grid grid-cols-3 gap-2 text-sm font-semibold">
-        {["Pursue", "Renegotiate", "Pass"].map((b, i) => <div key={b} className={`pop rounded-lg border px-2 py-2 text-center ${b === "Renegotiate" ? "border-[#ff3d7a] bg-[#ff3d7a] text-white" : "border-slate-200 text-slate-600"}`} style={{ animationDelay: `${500 + i * 120}ms` }}>{b}</div>)}
+        {["Pursue", "Renegotiate", "Pass"].map((b, i) => <div key={b} className={`pop rounded-lg border px-2 py-2 text-center ${b === "Renegotiate" ? "border-[#0c1533] bg-[#0c1533] text-white" : "border-slate-200 text-slate-600"}`} style={{ animationDelay: `${500 + i * 120}ms` }}>{b}</div>)}
       </div>
       <div className="pop mt-4 flex items-center justify-between rounded-lg bg-slate-900 px-4 py-3 text-white" style={{ animationDelay: "1100ms" }}>
         <div><div className="text-[11px] uppercase tracking-wide text-white/50">Your score</div><div className="text-2xl font-bold">86<span className="text-sm text-white/50"> / 100</span></div></div>
@@ -186,7 +182,7 @@ const STAGES: StageDef[] = [
   { key: "uw", tag: "04 · Underwrite", title: "A workspace professionals recognize.",
     body: "Seller T12 next to your underwriting, the lender's view of NCF, loan sizing on LTV, DSCR and debt yield, and exit cap discipline.",
     bullets: ["Upload a rent roll, T12 or OM to fill it", "Benchmarks flag every expense line", "Scenarios, sensitivity and max bid"],
-    accent: "#7cf0c8", bg: "radial-gradient(80% 70% at 75% 50%, #12c7a333, transparent 70%)",
+    accent: "#f4b24c", bg: "transparent",
     visual: <Panel glow="#12c7a3cc">
       <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-emerald-600">Operating statement</div>
       <table className="tbl text-[13px]">
@@ -209,7 +205,7 @@ const STAGES: StageDef[] = [
   { key: "market", tag: "05 · Market check", title: "Know the rules where you're buying.",
     body: "Property tax after a sale, rent rules, flood zones, neighborhood rents and incomes, jobs and today's rates, for all 50 states and DC.",
     bullets: ["Live Census, FEMA, HUD, BLS and FRED data", "One click fixes to your model", "Neutral briefing on local policy"],
-    accent: "#c9a8ff", bg: "radial-gradient(80% 70% at 75% 50%, #8b3dff40, transparent 70%)",
+    accent: "#f4b24c", bg: "transparent",
     visual: <Panel glow="#8b3dffcc">
       <div className="flex items-center justify-between"><div><div className="text-xs text-slate-400">Example</div><div className="font-semibold">Fayetteville, Arkansas</div></div><span className="rounded-full bg-violet-100 px-2.5 py-1 text-xs font-semibold text-violet-700">AR</span></div>
       <div className="mt-4 grid grid-cols-2 gap-2 text-sm">
@@ -221,12 +217,24 @@ const STAGES: StageDef[] = [
 ]
 
 function Story() {
-  const ref = useRef<HTMLElement>(null), stage = useStage(ref, STAGES.length)
+  const ref = useRef<HTMLElement>(null), stage = useStage(ref, STAGES.length), phone = useIsPhone()
   const jump = (i: number) => { const el = ref.current; if (!el) return; const total = el.offsetHeight - innerHeight; scrollTo({ top: el.offsetTop + total * (i + 0.5) / STAGES.length, behavior: "smooth" }) }
+  if (phone) return (
+    <section id="features" className="space-y-20 py-16">
+      {STAGES.map(s => (
+        <div key={s.key} className="lp-stage lp-flat on">
+          <div className="mx-auto w-full max-w-6xl px-5">
+            <div className="text-sm font-semibold uppercase tracking-[.2em]" style={{ color: s.accent }}>{s.tag}</div>
+            <h2 className="serif mt-3 text-3xl font-semibold leading-tight text-white">{s.title}</h2>
+            <p className="mt-3 text-white/70">{s.body}</p>
+            <div className="visual mt-6 flex justify-center">{s.visual}</div>
+          </div>
+        </div>))}
+    </section>)
   return (
-    <section ref={ref} id="features" className="relative" style={{ height: `${STAGES.length * 100}vh` }}>
+    <section ref={ref} id="features" className="relative" style={{ height: `calc(100svh + ${STAGES.length * STAGE_VH}vh)` }}>
       <div className="sticky top-0 h-[100svh] overflow-hidden">
-        {STAGES.map((s, i) => <div key={s.key} className="lp-stage-bg" style={{ background: s.bg, opacity: i === stage ? 1 : 0, transition: "opacity 1s ease" }} />)}
+        {STAGES.map((s, i) => <div key={s.key} className="lp-stage-bg" style={{ background: s.bg, opacity: i === stage ? 1 : 0, transition: "opacity .5s ease" }} />)}
         <div className="absolute inset-x-0 top-16 z-10"><div className="lp-progress" /></div>
         {/* stage list */}
         <nav className="absolute left-6 top-1/2 z-10 hidden -translate-y-1/2 space-y-3 xl:block">
@@ -275,11 +283,6 @@ const TEAMS: [string, string, boolean][] = [
   ["Proof, not hope", "Deal Check times each person on a broker package and scores NOI, cap rate, DSCR and the call, so readiness is a number, not a guess.", false],
   ["Your firm's standards", "Load your own buy box and expense assumptions so new hires learn your way, and see the whole team's progress in one view.", true],
 ]
-const STEPS: [string, string][] = [
-  ["Learn the basics", "Thirteen modules take a new hire from what a rent roll is to IRR, debt sizing and how an acquisitions team works."],
-  ["Practice and get scored", "Challenges hide the seller's tricks in real looking packages. Deal Check times them and scores the answer against a key."],
-  ["Underwrite live deals", "When they're ready, they work real deals in the same workspace: documents, market, financing and a clear answer."],
-]
 const FAQ: [string, string][] = [
   ["Can my whole team use it?", "Yes. Each person makes a free account and works at their own pace, on the website or the Deal School phone app. A team view where you see everyone's progress and Deal Check scores in one place is coming next."],
   ["Do I need to know anything about real estate?", "No. The Learn path starts with what a rental property earns and costs, and builds one step at a time. If you already underwrite, skip straight to the workspace."],
@@ -306,12 +309,11 @@ export default function Landing({ go }: { go: Go }) {
             <a href="#features" className="hover:text-white">What's inside</a>
             <a href="#teams" className="hover:text-white">For teams</a>
             <a href="#different" className="hover:text-white">Why it's different</a>
-            <a href="#how" className="hover:text-white">How it works</a>
             <a href="#faq" className="hover:text-white">FAQ</a>
           </nav>
           <div className="flex items-center gap-2">
             <button onClick={() => go("signin")} className="whitespace-nowrap rounded-md px-2.5 py-1.5 text-sm font-medium text-white/85 hover:bg-white/10">Sign in</button>
-            <button onClick={() => go("signup")} className="whitespace-nowrap rounded-full bg-white px-4 py-1.5 text-sm font-semibold text-[#0b1330] shadow-[0_0_30px_-5px_#ffd28a] transition hover:shadow-[0_0_40px_0_#ffd28a]">Create account</button>
+            <button onClick={() => go("signup")} className="whitespace-nowrap rounded-md bg-white px-4 py-1.5 text-sm font-semibold text-[#0b1330] transition hover:bg-white/90">Create account</button>
           </div>
         </div>
       </header>
@@ -320,40 +322,30 @@ export default function Landing({ go }: { go: Go }) {
         {/* hero */}
         <section className="relative mx-auto grid min-h-[100svh] max-w-7xl items-center gap-14 px-4 pb-28 pt-28 md:grid-cols-[1.1fr_.9fr] md:px-8">
           <div>
-            <div className="rise mb-6 inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3 py-1 text-xs font-medium text-white/80 backdrop-blur">
-              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[#ffd28a]" />Underwriting training for acquisitions teams</div>
+            <div className="rise mb-5 text-sm font-medium text-[#f4b24c]">Underwriting training for acquisitions teams</div>
             <h1 className="serif text-[2.6rem] font-semibold leading-[1.05] md:text-7xl">
               {HEADLINE.map((w, i) => <span key={i} className="rise inline-block text-white" style={{ animationDelay: `${120 + i * 70}ms` }}><span className={i >= 5 ? "shine" : ""}>{w}</span>&nbsp;</span>)}
             </h1>
             <p className="rise mt-6 max-w-xl text-lg text-white/70" style={{ animationDelay: "800ms" }}>Deal School teaches underwriting from the first rent roll to IRR, has new hires practice on realistic broker packages, and scores them with Deal Check. When they're ready, they underwrite live deals in the same workspace. Learning on your own? It works for you too.</p>
             <div className="rise mt-9 flex flex-wrap gap-3" style={{ animationDelay: "950ms" }}>
-              <button onClick={() => go("signup")} className="rounded-full bg-gradient-to-r from-[#ffd28a] to-[#ff8a3d] px-6 py-3 font-semibold text-[#1a1030] shadow-[0_10px_40px_-8px_#ff8a3d] transition hover:-translate-y-0.5">Start free →</button>
-              <a href="#features" className="rounded-full px-6 py-3 font-semibold text-white ring-1 ring-white/25 transition hover:bg-white/10">See what's inside</a>
+              <button onClick={() => go("signup")} className="rounded-md bg-[#f4b24c] px-6 py-3 font-semibold text-[#1c1305] transition hover:bg-[#ffc266]">Start free →</button>
+              <a href="#features" className="rounded-md px-6 py-3 font-semibold text-white ring-1 ring-white/25 transition hover:bg-white/10">See what's inside</a>
             </div>
             <div className="rise mt-8 flex flex-wrap gap-x-6 gap-y-2 text-sm text-white/55" style={{ animationDelay: "1100ms" }}>
               <span>✓ Free to start</span><span>✓ Scored practice deals</span><span>✓ Built by a working underwriter</span>
             </div>
           </div>
           <div className="rise" style={{ animationDelay: "600ms" }}><HeroMock /></div>
-          <a href="#features" className="cue absolute bottom-8 left-1/2 -translate-x-1/2 text-center text-xs uppercase tracking-[.25em] text-white/50">Scroll<div className="mx-auto mt-2 h-8 w-px bg-gradient-to-b from-white/60 to-transparent" /></a>
         </section>
 
         <Story />
-
-        {/* stats */}
-        <section className="mx-auto max-w-6xl px-4 py-24 md:px-8">
-          <Reveal className="glass grid grid-cols-2 gap-8 rounded-3xl px-6 py-10 text-center md:grid-cols-4">
-            {([[13, "", "course modules"], [8, "", "hands-on challenges"], [3, "", "scored Deal Checks"], [51, "", "states + DC with tax and rent rules"]] as const).map(([n, s, l]) => (
-              <div key={l}><div className="serif text-5xl font-semibold text-white"><CountUp to={n} suffix={s} /></div><div className="mt-1 text-sm text-white/55">{l}</div></div>))}
-          </Reveal>
-        </section>
 
         {/* why I built this */}
         <section id="why" className="mx-auto max-w-6xl scroll-mt-20 px-4 py-16 md:px-8">
           <Reveal className="glass grid items-center gap-8 overflow-hidden rounded-3xl p-6 md:grid-cols-[280px_1fr] md:p-10">
             <img src="/founder.jpg?v=2" alt="Blake Busboom, founder of Deal School" className="mx-auto aspect-[4/5] w-56 rounded-2xl object-cover md:w-full" loading="lazy" />
             <div>
-              <div className="text-sm font-semibold uppercase tracking-[.2em] text-[#ffd28a]">Why I built this</div>
+              <div className="text-sm font-semibold uppercase tracking-[.2em] text-[#f4b24c]">Why I built this</div>
               <blockquote className="serif mt-4 text-3xl font-semibold leading-snug text-white md:text-4xl">“I was thrown into the work fast, and half the language went over my head.”</blockquote>
               <p className="mt-5 max-w-2xl text-white/75 md:text-lg">When I started underwriting, there was no simple path to learn it. I was thrown into the work fast, and half the language went over my head. I built Deal School so junior underwriters can learn the basics quickly, then use their own mistakes, with help from AI, to get good fast.</p>
               <div className="mt-5 text-sm text-white/60"><span className="font-semibold text-white">Blake Busboom</span>, founder · junior underwriter</div>
@@ -364,7 +356,7 @@ export default function Landing({ go }: { go: Go }) {
         {/* for teams */}
         <section id="teams" className="mx-auto max-w-6xl scroll-mt-20 px-4 py-16 md:px-8">
           <Reveal className="max-w-2xl">
-            <div className="text-sm font-semibold uppercase tracking-[.2em] text-[#9cc4ff]">For teams</div>
+            <div className="text-sm font-semibold uppercase tracking-[.2em] text-[#f4b24c]">For teams</div>
             <h2 className="serif mt-3 text-4xl font-semibold text-white md:text-5xl">New hires underwriting with confidence, sooner.</h2>
             <p className="mt-4 text-white/65">Built inside a family real estate firm to train its own interns. Hand a new analyst Deal School on day one instead of a spreadsheet and a stack of old deals.</p>
           </Reveal>
@@ -380,37 +372,23 @@ export default function Landing({ go }: { go: Go }) {
         {/* why different */}
         <section id="different" className="mx-auto max-w-6xl scroll-mt-20 px-4 py-16 md:px-8">
           <Reveal className="max-w-2xl">
-            <div className="text-sm font-semibold uppercase tracking-[.2em] text-[#ffd28a]">Why it's different</div>
+            <div className="text-sm font-semibold uppercase tracking-[.2em] text-[#f4b24c]">Why it's different</div>
             <h2 className="serif mt-3 text-4xl font-semibold text-white md:text-5xl">A course, a scored practice field and a real workspace in one place.</h2>
             <p className="mt-4 text-white/65">Video courses teach but don't let anyone practice or prove they can do it. Underwriting software runs numbers but doesn't teach. Deal School does both, and shows you who's ready.</p>
           </Reveal>
           <Reveal delay={150} className="glass mt-10 overflow-x-auto rounded-3xl">
             <table className="w-full text-sm">
               <thead><tr className="border-b border-white/10 text-left">
-                <th className="px-5 py-4" /><th className="px-5 py-4 text-center font-semibold text-[#ffd28a]">Deal School</th>
+                <th className="px-5 py-4" /><th className="px-5 py-4 text-center font-semibold text-[#f4b24c]">Deal School</th>
                 <th className="px-5 py-4 text-center font-medium text-white/50">Video courses</th><th className="px-5 py-4 text-center font-medium text-white/50">Underwriting software</th>
               </tr></thead>
               <tbody>{COMPARE.map(([f, a, b, c]) => (
                 <tr key={f} className="border-b border-white/5 last:border-0">
-                  <td className="px-5 py-3.5 text-white/85">{f}</td><td className="px-5 py-3.5 text-center font-semibold text-emerald-300">{a}</td>
+                  <td className="px-5 py-3.5 text-white/85">{f}</td><td className="px-5 py-3.5 text-center font-semibold text-white">{a}</td>
                   <td className="px-5 py-3.5 text-center text-white/45">{b}</td><td className="px-5 py-3.5 text-center text-white/45">{c}</td>
                 </tr>))}</tbody>
             </table>
           </Reveal>
-        </section>
-
-        {/* how */}
-        <section id="how" className="mx-auto max-w-6xl scroll-mt-20 px-4 py-24 md:px-8">
-          <Reveal><div className="text-sm font-semibold uppercase tracking-[.2em] text-[#9cc4ff]">How it works</div>
-            <h2 className="serif mt-3 text-4xl font-semibold text-white md:text-5xl">From first day to first deal.</h2></Reveal>
-          <div className="relative mt-12 grid gap-6 md:grid-cols-3">
-            <div className="absolute left-0 right-0 top-6 hidden h-px bg-gradient-to-r from-transparent via-white/25 to-transparent md:block" />
-            {STEPS.map(([t, b], i) => (
-              <Reveal key={t} delay={i * 150} className="glass relative rounded-3xl p-6">
-                <div className="grid h-12 w-12 place-items-center rounded-full bg-gradient-to-br from-[#9cc4ff] to-[#8b3dff] text-lg font-bold text-white shadow-[0_0_30px_-5px_#8b3dff]">{i + 1}</div>
-                <h3 className="mt-5 text-lg font-semibold text-white">{t}</h3><p className="mt-2 text-sm text-white/60">{b}</p>
-              </Reveal>))}
-          </div>
         </section>
 
         {/* faq */}
@@ -428,9 +406,9 @@ export default function Landing({ go }: { go: Go }) {
         {/* final cta */}
         <section className="relative px-4 pb-40 pt-24 text-center">
           <Reveal>
-            <h2 className="serif mx-auto max-w-3xl text-4xl font-semibold text-white md:text-6xl">Your next analyst <span className="shine">starts here.</span></h2>
-            <p className="mx-auto mt-5 max-w-xl text-white/65">Create a free account, take the five minute Cedar Ridge challenge, then try a Deal Check. You'll never read a T12 the same way again.</p>
-            <button onClick={() => go("signup")} className="mt-9 rounded-full bg-gradient-to-r from-[#ffd28a] to-[#ff8a3d] px-8 py-3.5 font-semibold text-[#1a1030] shadow-[0_10px_50px_-8px_#ff8a3d] transition hover:-translate-y-0.5">Create your free account</button>
+            <h2 className="serif mx-auto max-w-3xl text-4xl font-semibold text-white md:text-6xl">Try it on one deal.</h2>
+            <p className="mx-auto mt-5 max-w-xl text-white/65">Make a free account and start with Cedar Ridge, a five minute challenge with three seller traps hidden in the T12. Then take a Deal Check and see your score.</p>
+            <button onClick={() => go("signup")} className="mt-9 rounded-md bg-[#f4b24c] px-8 py-3.5 font-semibold text-[#1c1305] transition hover:bg-[#ffc266]">Create your free account</button>
             <div className="mt-4 text-sm text-white/55">Already have one? <button onClick={() => go("signin")} className="underline hover:text-white">Sign in</button></div>
           </Reveal>
         </section>

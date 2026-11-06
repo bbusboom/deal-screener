@@ -2,7 +2,7 @@
 // using the landing page's pinned slides and night sky.
 import { useRef, type ReactNode } from "react"
 import type { Path } from "../lib/store"
-import { useScrollVar, useStage, Sky, Panel } from "../Landing"
+import { useScrollVar, useStage, useIsPhone, STAGE_VH, Sky, Panel } from "../Landing"
 import "../landing.css"
 
 type Slide = { key: string; tag: string; title: string; body: string; bullets: string[]; visual: ReactNode }
@@ -97,10 +97,24 @@ const PRO: Slide[] = [
 ]
 
 function Story({ id, label, accent, slides, cta, onCta }: { id: string; label: string; accent: string; slides: Slide[]; cta: string; onCta: () => void }) {
-  const ref = useRef<HTMLElement>(null), stage = useStage(ref, slides.length)
+  const ref = useRef<HTMLElement>(null), stage = useStage(ref, slides.length), phone = useIsPhone()
   const jump = (i: number) => { const el = ref.current; if (!el) return; const total = el.offsetHeight - innerHeight; scrollTo({ top: el.offsetTop + total * (i + 0.5) / slides.length, behavior: "smooth" }) }
+  if (phone) return (
+    <section id={id} className="space-y-16 py-12">
+      <div className="mx-auto flex max-w-6xl items-center gap-3 px-5"><span className="text-sm font-semibold" style={{ color: accent }}>{label}</span>
+        <button className={`ml-auto btn ${id === "pro" ? "btn-gold" : "btn-primary !border-white !bg-white !text-ink"}`} onClick={onCta}>{cta} →</button></div>
+      {slides.map((s, i) => (
+        <div key={s.key} className="lp-stage lp-flat on">
+          <div className="mx-auto w-full max-w-6xl px-5">
+            <div className="text-sm font-medium" style={{ color: accent }}>{String(i + 1).padStart(2, "0")} · {s.tag}</div>
+            <h2 className="serif mt-2 text-3xl font-semibold leading-tight text-white">{s.title}</h2>
+            <p className="mt-3 text-white/70">{s.body}</p>
+            <div className="visual mt-6 flex justify-center">{s.visual}</div>
+          </div>
+        </div>))}
+    </section>)
   return (
-    <section ref={ref} id={id} className="relative" style={{ height: `${slides.length * 100}vh` }}>
+    <section ref={ref} id={id} className="relative" style={{ height: `calc(100svh + ${slides.length * STAGE_VH}vh)` }}>
       <div className="sticky top-16 h-[calc(100svh-64px)] overflow-hidden">
         <div className="absolute inset-x-0 top-0 z-10"><div className="lp-progress" /></div>
         <div className="absolute left-0 right-0 top-6 z-10 mx-auto flex max-w-6xl items-center gap-3 px-5 md:px-8">
@@ -150,12 +164,12 @@ export default function PathPicker({ username, onPick }: { username?: string | n
           </div>
           <button onClick={() => to("learn")} className="cue mt-14 text-xs uppercase tracking-[.25em] text-white/45">Scroll<div className="mx-auto mt-2 h-8 w-px bg-gradient-to-b from-white/60 to-transparent" /></button>
         </section>
-        <Story id="learn" label="Learn" accent="#9cc4ff" slides={LEARN} cta="Start learning" onCta={() => onPick("learner")} />
+        <Story id="learn" label="Learn" accent="#e8eefb" slides={LEARN} cta="Start learning" onCta={() => onPick("learner")} />
         <section className="mx-auto max-w-4xl px-4 py-24 text-center">
           <div className="text-sm text-white/50">Then, when you're working a real deal</div>
           <h2 className="serif mt-3 text-3xl font-semibold text-white md:text-5xl">The underwriting workspace.</h2>
         </section>
-        <Story id="pro" label="Underwrite" accent="#ffd28a" slides={PRO} cta="Open the workspace" onCta={() => onPick("pro")} />
+        <Story id="pro" label="Underwrite" accent="#f4b24c" slides={PRO} cta="Open the workspace" onCta={() => onPick("pro")} />
         <section className="px-4 pb-32 pt-24 text-center">
           <h2 className="serif text-3xl font-semibold text-white md:text-5xl">Where do you want to start?</h2>
           <div className="mt-8 flex flex-wrap justify-center gap-3">

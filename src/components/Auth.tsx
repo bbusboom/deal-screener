@@ -3,7 +3,7 @@ import { signIn, signUp, resetPassword, updatePassword } from "../lib/store"
 
 type Mode = "signin" | "signup" | "forgot" | "newpass"
 
-export default function Auth({ initial = "signin", onDone }: { initial?: Mode; onDone?: () => void }) {
+export default function Auth({ initial = "signin", onDone, onBack, onSignedUp }: { initial?: Mode; onDone?: () => void; onBack?: () => void; onSignedUp?: () => void }) {
   const [mode, setMode] = useState<Mode>(initial)
   const [email, setEmail] = useState("")
   const [username, setUsername] = useState("")
@@ -19,6 +19,7 @@ export default function Auth({ initial = "signin", onDone }: { initial?: Mode; o
       if (mode === "signup") {
         if (password.length < 8) throw new Error("Use a password with at least 8 characters.")
         const { needsConfirm } = await signUp(email.trim(), password, username)
+        onSignedUp?.()
         if (needsConfirm) { setInfo("Check your email and click the link to confirm your account, then sign in."); setMode("signin") }
       }
       if (mode === "forgot") { await resetPassword(email.trim()); setInfo("If that email has an account, a reset link is on its way.") }
@@ -54,7 +55,8 @@ export default function Auth({ initial = "signin", onDone }: { initial?: Mode; o
             {(mode === "signup" || mode === "forgot") && <button type="button" className="text-brand-600 hover:underline" onClick={() => setMode("signin")}>Back to sign in</button>}
           </div>
         </form>
-        <p className="mt-4 text-center text-xs text-white/60">Underwriting tool for learning and screening deals. Not investment advice.</p>
+        {onBack && <p className="mt-4 text-center text-sm"><button type="button" className="text-white/80 underline hover:text-white" onClick={onBack}>← See what Deal Screener can do</button></p>}
+        <p className="mt-3 text-center text-xs text-white/60">Underwriting tool for learning and screening deals. Not investment advice.</p>
       </div>
     </div>
   )

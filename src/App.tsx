@@ -3,6 +3,7 @@ import type { Session } from "@supabase/supabase-js"
 import { supabase, accountsEnabled, getSession, getProfile, setPath, signOut, type Path, type Profile } from "./lib/store"
 import type { Deal } from "./lib/model"
 import Auth from "./components/Auth"
+import Landing from "./Landing"
 import PathPicker from "./components/PathPicker"
 import ProWorkspace from "./ProWorkspace"
 import LearnerApp from "./LearnerApp"
@@ -10,6 +11,8 @@ import Course from "./learn/Course"
 import Challenges from "./learn/Challenges"
 import { StateSelect } from "./components/MarketPane"
 import { useHomeState, setHomeState, syncHomeState } from "./lib/market"
+
+const HAS_ACCOUNT = "dealScreener.hasAccount"
 
 export default function App() {
   const [ready, setReady] = useState(false)
@@ -20,16 +23,19 @@ export default function App() {
   const [toast, setToast] = useState("")
   const [proKey, setProKey] = useState(0)
   const homeState = useHomeState()
+  // Anyone who has had an account on this browser skips the public home page and goes straight to sign in.
+  const [authMode, setAuthMode] = useState<null | "signin" | "signup">(() => { try { return localStorage.getItem(HAS_ACCOUNT) ? "signin" : null } catch { return null } })
   const [learnTab, setLearnTab] = useState<"course" | "challenges" | "practice">(() => { try { return (localStorage.getItem("dealScreener.learnTab") as any) || "course" } catch { return "course" } })
   useEffect(() => { try { localStorage.setItem("dealScreener.learnTab", learnTab) } catch {} }, [learnTab])
 
   useEffect(() => {
     let alive = true
-    getSession().then(async s => { if (!alive) return; setSession(s); syncHomeState(s); setProfile(await getProfile(s)); setReady(true) })
+    getSession().then(async s => { if (!alive) return; setSession(s); if (s) { try { localStorage.setItem(HAS_ACCOUNT, "1") } catch {} } syncHomeState(s); setProfile(await getProfile(s)); setReady(true) })
     if (!supabase) return () => { alive = false }
     const { data } = supabase.auth.onAuthStateChange(async (event, s) => {
       if (event === "PASSWORD_RECOVERY") setRecovery(true)
       setSession(s); syncHomeState(s); setProfile(await getProfile(s))
+      if (s) { try { localStorage.setItem(HAS_ACCOUNT, "1") } catch {} }
     })
     return () => { alive = false; data.subscription.unsubscribe() }
   }, [])
@@ -43,7 +49,10 @@ export default function App() {
 
   if (!ready) return <div className="grid min-h-screen place-items-center text-slate-400">Loading…</div>
   if (recovery) return <Auth initial="newpass" onDone={() => setRecovery(false)} />
-  if (accountsEnabled && !session) return <Auth />
+  if (accountsEnabled && !session) {
+    if (!authMode) return <Landing go={m => { setAuthMode(m); scrollTo({ top: 0 }) }} />
+    return <Auth key={authMode} initial={authMode} onBack={() => setAuthMode(null)} onSignedUp={() => { try { localStorage.setItem(HAS_ACCOUNT, "1") } catch {} }} />
+  }
 
   const path = profile?.path
   const name = profile?.username || session?.user.email || null

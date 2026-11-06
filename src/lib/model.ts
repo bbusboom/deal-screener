@@ -29,6 +29,9 @@ export interface ValueAdd {
   /** true: budget raised as equity at closing. false: paid out of cash flow as it's spent. */
   upfront: boolean
 }
+/** Lease up: occupancy starts low and rises in a straight line to stabilized (100% − vacancy) over some months. */
+export interface LeaseUp { on: boolean; startOcc: number; months: number }
+export const LU_DEFAULT: LeaseUp = { on: false, startOcc: 60, months: 12 }
 export const VA_DEFAULT: ValueAdd = { on: false, units: 0, cost: 10000, premium: 150, pace: 4, startMo: 2, downMo: 1, upfront: true }
 /** Sponsor (GP) and investor (LP) split with IRR hurdles. */
 export interface Waterfall {
@@ -93,6 +96,7 @@ export interface Deal {
   /** User added income, expense and capital lines. */
   custom: CustomLine[]
   va: ValueAdd
+  lu: LeaseUp
   wf: Waterfall
   debt: DebtOpts
   rentComps: RentComp[]; saleComps: SaleComp[]
@@ -114,7 +118,7 @@ export const DEFAULTS: Deal = {
   name: "", price: 0, cc: 2.5, other: 0, vac: 7, conc: 0, bad: 0, nru: 0, ltlBurn: 0, otherItems: [],
   tax: 0, ins: 0, util: 0, rm: 0, pay: 0, adm: 0, contract: 0, turn: 0, mkt: 0, mgmt: 5, res: 300,
   taxNew: 0, taxResetYr: 0, capexUp: 0,
-  custom: [], va: { ...VA_DEFAULT }, wf: { ...WF_DEFAULT }, debt: { ...DEBT_DEFAULT }, rentComps: [], saleComps: [], status: "Screening", bidDue: "", notes: "",
+  custom: [], va: { ...VA_DEFAULT }, lu: { ...LU_DEFAULT }, wf: { ...WF_DEFAULT }, debt: { ...DEBT_DEFAULT }, rentComps: [], saleComps: [], status: "Screening", bidDue: "", notes: "",
   ltv: 70, rate: 6.5, amort: 30, ioYrs: 0, loanFee: 1, term: 10, sizeMode: "ltv", sizeDscr: 1.25, sizeDy: 8, hold: 7, expG: 3, taxG: 3, insG: 5, exitCap: 6.5, sellCost: 2,
   minCap: 6, minDscr: 1.25, minCoc: 6, minIrr: 12, minEm: 1.6,
   rg: [], units: [{ type: "1 bed", count: 0, rent: 0 }], scen: [],
@@ -147,6 +151,8 @@ export function norm(input: Partial<Deal> & { io?: string } = {}): Deal {
   d.rg = d.rg.slice(0, d.hold).map((v: any) => Number(v) || 0)
   if (!Array.isArray(d.units) || !d.units.length) d.units = [{ type: "", count: 0, rent: 0 }]
   d.units = d.units.map((u: any) => ({ type: String(u.type ?? ""), count: Number(u.count) || 0, rent: Number(u.rent) || 0, market: Number(u.market) || 0, sf: Number(u.sf) || 0 }))
+  d.lu = { ...LU_DEFAULT, ...(d.lu || {}) }; d.lu.on = !!d.lu.on
+  d.lu.startOcc = Math.min(100, Math.max(0, Number(d.lu.startOcc) || 0)); d.lu.months = Math.max(1, Math.round(Number(d.lu.months) || 1))
   d.va = { ...VA_DEFAULT, ...(d.va || {}) }; d.wf = { ...WF_DEFAULT, ...(d.wf || {}) }
   for (const k of Object.keys(VA_DEFAULT)) if (k !== "on" && k !== "upfront") d.va[k] = Math.max(0, Number(d.va[k]) || 0)
   for (const k of Object.keys(WF_DEFAULT)) if (k !== "on") d.wf[k] = Math.max(0, Number(d.wf[k]) || 0)
@@ -276,6 +282,7 @@ export interface VaSummary { units: number; budget: number; upfront: number; roc
 export interface LoanSizing { mode: SizeMode; ltvLoan: number; dscrLoan: number; dyLoan: number; binding: "LTV" | "DSCR" | "Debt yield"; maxLoan: number }
 export interface Projection {
   d: Deal; units: number; loan: number; closing: number; fee: number; equity: number; sizing: LoanSizing
+  monthly: { prem: number[]; down: number[]; spend: number[]; lu: number[]; vaPremium: number; avgRentMo: number }
   va: VaSummary; refi: RefiResult | null; prepayPenalty: number; capCost: number
   /** True if the loan matures before the planned sale. */
   balloonBeforeSale: boolean
@@ -304,21 +311,30 @@ export function project(d0: Deal, o: Overrides = {}): Projection {
   const va = d.va, vaOn = !!va?.on && va.units > 0
   const vaUnits = vaOn ? Math.min(va.units, units) : 0
   const Y = N + 1, premMo = Array(Y + 1).fill(0), downMo = Array(Y + 1).fill(0), spend = Array(Y + 1).fill(0), done = Array(Y + 1).fill(0)
+  // Month by month (index 1..Y*12) for the monthly view.
+  const mPrem = Array(Y * 12 + 1).fill(0), mDown = Array(Y * 12 + 1).fill(0), mSpend = Array(Y * 12 + 1).fill(0)
   if (vaOn) {
     let started = 0
     const starts: { m: number; n: number }[] = []
     for (let m = va.startMo; started < vaUnits - 1e-9 && m <= Y * 12; m++) { const n = Math.min(va.pace, vaUnits - started); starts.push({ m, n }); started += n }
     for (const { m, n } of starts) {
-      const yr0 = Math.ceil(m / 12); spend[yr0] += n * va.cost
+      const yr0 = Math.ceil(m / 12); spend[yr0] += n * va.cost; mSpend[m] += n * va.cost
       for (let k = m; k <= Y * 12; k++) {
         const yr = Math.ceil(k / 12)
-        if (k < m + va.downMo) downMo[yr] += n
-        else { premMo[yr] += n; if (k === m + va.downMo) done[yr] += n }
+        if (k < m + va.downMo) { downMo[yr] += n; mDown[k] += n }
+        else { premMo[yr] += n; mPrem[k] += n; if (k === m + va.downMo) done[yr] += n }
       }
     }
     for (let t = 1; t <= Y; t++) done[t] += done[t - 1]
   }
   const vaBudget = vaUnits * (va?.cost || 0)
+  // Lease up: extra vacancy (share of GPR) each month on top of stabilized vacancy.
+  const stab = 100 - d.vac, luOn = !!d.lu?.on && d.lu.startOcc < stab
+  const mLu = Array(Y * 12 + 1).fill(0), luYr = Array(Y + 1).fill(0)
+  if (luOn) for (let k = 1; k <= Y * 12; k++) {
+    const occ = Math.min(stab, d.lu.startOcc + (stab - d.lu.startOcc) * (k - 1) / d.lu.months)
+    mLu[k] = (stab - occ) / 100; luYr[Math.ceil(k / 12)] += mLu[k] / 12
+  }
   const vaUpfront = vaOn && va.upfront ? vaBudget : 0
 
   // Operating years first (no debt), so the loan can be sized off year 1 NOI.
@@ -330,7 +346,7 @@ export function project(d0: Deal, o: Overrides = {}): Projection {
     const gpr = gpr1 * growth, oth = other1 * growth
     const burn = d.ltlBurn > 0 ? Math.max(0, 1 - (t - 1) / d.ltlBurn) : 1
     const ltl = ltl1 * growth * burn
-    const vacLoss = gpr * d.vac / 100, conc = gpr * (d.conc || 0) / 100, bad = gpr * (d.bad || 0) / 100
+    const vacLoss = gpr * (d.vac / 100 + luYr[t]), conc = gpr * (d.conc || 0) / 100, bad = gpr * (d.bad || 0) / 100
     const nru = (d.nru || 0) * avgMkt * growth
     const cust = d.custom.map(() => 0)
     const lineVal = (c: CustomLine, i: number, egiNow: number) => {
@@ -430,6 +446,7 @@ export function project(d0: Deal, o: Overrides = {}): Projection {
   const potential = y1.gpr + y1.oth
   return {
     refi, prepayPenalty, capCost,
+    monthly: { prem: mPrem, down: mDown, spend: mSpend, lu: mLu, vaPremium: vaOn ? va.premium : 0, avgRentMo: avgMkt / 12 },
     va: { units: vaUnits, budget: vaBudget, upfront: vaUpfront, roc: vaOn && va.cost > 0 ? va.premium * 12 * (1 - d.vac / 100) / va.cost : NaN,
       finishYr: vaOn ? (i => i > 0 ? i : NaN)(done.findIndex((x, i) => i > 0 && x >= vaUnits - 1e-9)) : NaN, annualPremium: vaUnits * va.premium * 12 },
     d, units, loan, closing, fee, equity, sizing, balloonBeforeSale: d.term > 0 && d.term < N && !(refiYr && refiYr < d.term),
@@ -445,6 +462,39 @@ export function project(d0: Deal, o: Overrides = {}): Projection {
       ppu: units > 0 ? d.price / units : NaN, grm: y1.gpr > 0 ? d.price / y1.gpr : NaN,
     },
   }
+}
+
+/* ---------- Monthly view ---------- */
+export interface MonthRow { m: number; yr: number; occ: number; gpr: number; vacancy: number; reno: number; other: number; egi: number; opex: number; noi: number; ds: number; capex: number; cf: number; cum: number }
+/** Month by month for the first `months` months. Steady items are the year's total ÷ 12; lease up and renovation items
+ *  follow the actual monthly schedule, so each year's months add back to the annual model. */
+export function monthlyView(p: Projection, months = 24): MonthRow[] {
+  const out: MonthRow[] = [], M = p.monthly, d = p.d, vac = d.vac / 100
+  let cum = -p.equity
+  for (let k = 1; k <= Math.min(months, p.years.length * 12); k++) {
+    const y = p.years[Math.ceil(k / 12) - 1]
+    const g = y.gpr / 12
+    const g1 = y.gpr / p.years[0].gpr || 1
+    // Lease up loss this month; annual vacLoss already includes the year's lease up total.
+    const luYr = p.years[Math.ceil(k / 12) - 1].vacLoss - y.gpr * vac
+    const luShares = M.lu.slice((Math.ceil(k / 12) - 1) * 12 + 1, Math.ceil(k / 12) * 12 + 1).reduce((a, b) => a + b, 0)
+    const lu = luShares > 0 ? luYr * M.lu[k] / luShares : 0
+    const vacancy = g * vac + lu + (y.ltl + y.conc + y.bad + y.nru) / 12
+    const yrPremUnits = M.prem.slice((Math.ceil(k / 12) - 1) * 12 + 1, Math.ceil(k / 12) * 12 + 1).reduce((a, b) => a + b, 0)
+    const yrDownUnits = M.down.slice((Math.ceil(k / 12) - 1) * 12 + 1, Math.ceil(k / 12) * 12 + 1).reduce((a, b) => a + b, 0)
+    const reno = (yrPremUnits ? y.vaPrem * M.prem[k] / yrPremUnits : 0) - (yrDownUnits ? y.vaDown * M.down[k] / yrDownUnits : 0)
+    const other = (y.oth + y.custInc) / 12
+    const egi = g - vacancy + reno + other
+    // Management follows EGI; other expenses spread evenly.
+    const opex = (y.opex - y.mgmt) / 12 + egi * d.mgmt / 100
+    const noi = egi - opex
+    const capexSpend = (y.capex - (d.va.on && !d.va.upfront ? y.vaSpend : 0)) / 12 + (d.va.on && !d.va.upfront ? M.spend[k] : 0)
+    const ds = y.ds / 12, cf = noi - ds - capexSpend + (k % 12 === 0 ? y.refiCash : 0)
+    cum += cf
+    void g1
+    out.push({ m: k, yr: y.t, occ: 1 - vac - (g > 0 ? lu / g : 0) - (p.units > 0 ? M.down[k] / p.units : 0), gpr: g, vacancy, reno, other, egi, opex, noi, ds, capex: capexSpend, cf, cum })
+  }
+  return out
 }
 
 /* ---------- GP / LP waterfall ---------- */

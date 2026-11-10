@@ -25,7 +25,7 @@ export function CompsPane({ d, p, set }: PaneProps) {
   return (
     <div className="space-y-4">
       <Card title="Rent comps" right={<button className="btn" onClick={() => set({ rentComps: [...rc, { name: "", dist: 0, built: 0, type: types[0] || "", rent: 0, sf: 0 }] })}>+ Add rent comp</button>}>
-        {rc.length === 0 ? <p className="note">Add comparable properties' asking or effective rents by unit type. They test the market rents on the Income tab, which drive loss to lease and the renovation premium. Pull them from listing sites, CoStar, or a broker survey, or ask Deal School AI to help organize them.</p> : (
+        {rc.length === 0 ? <p className="note">Add comparable properties' asking or effective rents by unit type. They test the market rents on the Income tab, which drive loss to lease and the renovation premium. Pull them from listing sites, CoStar, or a broker survey, or ask Desk AI to help organize them.</p> : (
           <div className="overflow-x-auto"><table className="tbl">
             <thead><tr><th>Property</th><th>Miles</th><th>Year built</th><th className="!text-left">Unit type</th><th>Rent / mo</th><th>SF</th><th>$/SF</th><th /></tr></thead>
             <tbody>{rc.map((c, i) => (

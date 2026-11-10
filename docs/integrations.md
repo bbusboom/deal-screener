@@ -1,6 +1,6 @@
-# Deal School integrations plan
+# Underwriting Desk integrations plan
 
-Researched November 2026. Goal: make Deal School a tool people actually use, both for learning (Learn path) and for real deals (Underwrite path), without paying for expensive data before people want it.
+Researched November 2026. Goal: make Underwriting Desk a tool people actually use, both for learning (Learn path) and for real deals (Underwrite path), without paying for expensive data before people want it.
 
 How to read this: **Tier 1** is free and worth building next. **Tier 2** costs a little and mostly helps the Underwrite path. **Tier 3** costs real money and waits until users ask for it. Prices are as published at the time of research and should be checked again before signing up.
 
@@ -38,14 +38,14 @@ Suggested first build (v0.8, "Market check"): a card on each deal and a new cour
 
 ## AI and agents
 
-- The Deal School agent already uses tools. Each data source above can become one more tool (get_rates, get_market, get_flood_zone, get_rent_comps), so the AI answers with live numbers instead of guesses.
+- The Underwriting Desk agent already uses tools. Each data source above can become one more tool (get_rates, get_market, get_flood_zone, get_rent_comps), so the AI answers with live numbers instead of guesses.
 - Ready-made MCP servers exist for RentCast, ATTOM, FRED, Census and HUD FMR. Useful for testing in Claude before writing our own API routes.
-- Later: publish Deal School itself as an MCP server, so people can underwrite from inside Claude.
+- Later: publish Underwriting Desk itself as an MCP server, so people can underwrite from inside Claude.
 - Document extraction: keep our own Claude-based extractor. The paid tools (Cactus, Archer, RedIQ, Clik.ai, QuickData, Cash Flow Portal parser) show the bar to meet: show every extracted number, let the user edit it, and audit the rent roll against the T12.
 
 ## Competitors to learn from (not integrate)
 
-- **Courses:** A.CRE Accelerator (~$597, 16 case-based courses), Break Into CRE, REFM's REFAI certification, Wall Street Prep (~$499). All are video plus Excel. Deal School's edge: interactive lessons, an AI tutor under every lesson, and practice on real deals.
+- **Courses:** A.CRE Accelerator (~$597, 16 case-based courses), Break Into CRE, REFM's REFAI certification, Wall Street Prep (~$499). All are video plus Excel. Underwriting Desk's edge: interactive lessons, an AI tutor under every lesson, and practice on real deals.
 - **Software:** Cash Flow Portal, DealCheck, Archer, Cactus, RedIQ. Their common thread is "rent roll and T12 to a model in minutes".
 
 ## Ideas still to research

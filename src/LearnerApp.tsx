@@ -75,7 +75,7 @@ export default function LearnerApp({ session, toast, onOpenInPro }: { session: S
   let body: ReactNode = null
   if (step === 0) body = (
     <Card title="Pick a deal to work through">
-      <Explain>We'll underwrite a property together, one step at a time: what it earns, what it costs to run, what it's worth, how the loan works and whether it's a good deal. You'll see the math with your own numbers at every step. Ask Deal School anything along the way.</Explain>
+      <Explain>We'll underwrite a property together, one step at a time: what it earns, what it costs to run, what it's worth, how the loan works and whether it's a good deal. You'll see the math with your own numbers at every step. Ask the Desk anything along the way.</Explain>
       <div className="grid gap-3 md:grid-cols-3">
         <button className="rounded-lg border border-slate-200 p-4 text-left hover:border-brand-500" onClick={() => start(PRACTICE)}>
           <div className="font-semibold">Practice deal</div><div className="note mt-1">Maple Court, a 24 unit apartment building. Best for a first run.</div></button>
@@ -249,7 +249,7 @@ export default function LearnerApp({ session, toast, onOpenInPro }: { session: S
                   .filter(r => step >= (r[2] as number)).map(([a, b]) => <tr key={a as string}><td>{a}</td><td className="num">{valid ? b : "—"}</td></tr>)}
               </tbody></table>
             </Card>)}
-          <AiPanel storeKey="practice" deal={deal} fixedRoute="learner" title="Ask Deal School" compact onDeal={d => setDeal(norm(d))} />
+          <AiPanel storeKey="practice" deal={deal} fixedRoute="learner" title="Ask the Desk" compact onDeal={d => setDeal(norm(d))} />
         </aside>
       </div>
     </main>

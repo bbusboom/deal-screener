@@ -137,7 +137,7 @@ function TrickPlayer({ t, onDone, onBack, onNext }: { t: TrickPuzzle; onDone: (s
         </Card>
       </div>
       <div className="lg:sticky lg:top-20 lg:self-start">
-        <AiPanel key={t.id + String(checked)} storeKey={"trick." + t.id + "." + String(checked)} deal={trueDeal(DUELS[0])} onDeal={() => {}} fixedRoute="learner" compact title="Ask Deal School" context={context}
+        <AiPanel key={t.id + String(checked)} storeKey={"trick." + t.id + "." + String(checked)} deal={trueDeal(DUELS[0])} onDeal={() => {}} fixedRoute="learner" compact title="Ask the Desk" context={context}
           reviewLabel={checked ? "Explain what I missed" : "Give me a hint"} reviewPrompt={checked ? "Explain the problems I missed or flagged wrong, and how a pro would verify each one with the seller." : "Give me one hint about where to look, without telling me the answer."}
           greeting={checked ? "Want me to explain any of these, or show how a pro would check it with the seller?" : "Stuck? Ask me what to look for in a " + t.doc + " and I'll give you a hint without spoiling it."} />
       </div>
@@ -268,7 +268,7 @@ function DuelPlayer({ x, onDone, onBack, onNext }: { x: Duel; onDone: (pts: numb
         })()}
       </div>
       <div className="lg:sticky lg:top-20 lg:self-start">
-        <AiPanel key={x.id + step} storeKey={"duel." + x.id + "." + step} deal={mine} onDeal={() => {}} fixedRoute="learner" compact title="Ask Deal School" context={context}
+        <AiPanel key={x.id + step} storeKey={"duel." + x.id + "." + step} deal={mine} onDeal={() => {}} fixedRoute="learner" compact title="Ask the Desk" context={context}
           reviewLabel={step === "reveal" ? "Explain my result" : "Give me a hint"} reviewPrompt={step === "reveal" ? "Explain my score: which assumptions I got wrong, why the right call was what it was, and what I should do differently next time." : "Give me one hint about which seller number to question first, without giving me the answer."}
           greeting={step === "reveal" ? "Want me to walk through what you missed, or how you'd pitch that offer to the broker?" : "I'm your deal partner. Ask what a clue means or where to look; I won't hand you the answer."} />
       </div>

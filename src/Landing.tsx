@@ -92,8 +92,8 @@ export function Sky() {
 /* ---------- pieces ---------- */
 const Logo = () => (
   <div className="flex items-center gap-2">
-    <div className="grid h-9 w-9 place-items-center rounded-lg bg-[#f4b24c] text-sm font-bold text-[#1c1305]">DS</div>
-    <div className="whitespace-nowrap font-bold leading-tight text-white">Deal School<div className="hidden text-[11px] font-normal text-white/60 sm:block">Underwriting training</div></div>
+    <div className="grid h-9 w-9 place-items-center rounded-lg bg-[#f4b24c] text-sm font-bold text-[#1c1305]">UD</div>
+    <div className="whitespace-nowrap font-bold leading-tight text-white">Underwriting Desk<div className="hidden text-[11px] font-normal text-white/60 sm:block">Real estate underwriting</div></div>
   </div>
 )
 
@@ -119,7 +119,7 @@ function HeroMock() {
         <div className="mt-1 flex justify-between text-[10px] text-slate-400"><span>Cash flow years 1 to 5</span><span>Sale</span></div>
       </div>
       <div className="card-white absolute -bottom-8 -left-8 hidden w-64 rounded-xl p-3 text-sm shadow-2xl sm:block" style={{ boxShadow: "0 16px 40px -20px #000000aa" }}>
-        <div className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-amber-600">Deal School AI</div>
+        <div className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-amber-600">Desk AI</div>
         <p className="text-slate-700">The seller's taxes are from 2009. On your price, budget about <b>$32,600</b>, not $14,200.</p>
       </div>
     </div>
@@ -284,10 +284,10 @@ const TEAMS: [string, string, boolean][] = [
   ["Your firm's standards", "Load your own buy box and expense assumptions so new hires learn your way, and see the whole team's progress in one view.", true],
 ]
 const FAQ: [string, string][] = [
-  ["Can my whole team use it?", "Yes. Each person makes a free account and works at their own pace, on the website or the Deal School phone app. A team view where you see everyone's progress and Deal Check scores in one place is coming next."],
+  ["Can my whole team use it?", "Yes. Each person makes a free account and works at their own pace, on the website or the Underwriting Desk phone app. A team view where you see everyone's progress and Deal Check scores in one place is coming next."],
   ["Do I need to know anything about real estate?", "No. The Learn path starts with what a rental property earns and costs, and builds one step at a time. If you already underwrite, skip straight to the workspace."],
   ["Is it free?", "Yes, it's free to use while we build it out. We'll always keep a free way to learn."],
-  ["Is this investment advice?", "No. Deal School is a learning and screening tool. Always verify rent rolls, taxes and insurance with the actual documents and local professionals."],
+  ["Is this investment advice?", "No. Underwriting Desk is a learning and screening tool. Always verify rent rolls, taxes and insurance with the actual documents and local professionals."],
   ["Who built it?", "Blake Busboom, a University of Arkansas student who underwrites multifamily deals for a family real estate company, built around how real deals actually get screened."],
 ]
 const HEADLINE = ["Train", "analysts", "on", "real", "deals.", "Know", "who's", "ready."]
@@ -326,7 +326,7 @@ export default function Landing({ go }: { go: Go }) {
             <h1 className="serif text-[2.6rem] font-semibold leading-[1.05] md:text-7xl">
               {HEADLINE.map((w, i) => <span key={i} className="rise inline-block text-white" style={{ animationDelay: `${120 + i * 70}ms` }}><span className={i >= 5 ? "shine" : ""}>{w}</span>&nbsp;</span>)}
             </h1>
-            <p className="rise mt-6 max-w-xl text-lg text-white/70" style={{ animationDelay: "800ms" }}>Deal School teaches underwriting from the first rent roll to IRR, then tests it: new hires work realistic broker packages on a clock and get a score. When they're ready, they run live deals in the same workspace. Learning on your own works the same way.</p>
+            <p className="rise mt-6 max-w-xl text-lg text-white/70" style={{ animationDelay: "800ms" }}>Underwriting Desk teaches underwriting from the first rent roll to IRR, then tests it: new hires work realistic broker packages on a clock and get a score. When they're ready, they run live deals in the same workspace. Learning on your own works the same way.</p>
             <div className="rise mt-9 flex flex-wrap gap-3" style={{ animationDelay: "950ms" }}>
               <button onClick={() => go("signup")} className="rounded-md bg-[#f4b24c] px-6 py-3 font-semibold text-[#1c1305] transition hover:bg-[#ffc266]">Start free →</button>
               <a href="#features" className="rounded-md px-6 py-3 font-semibold text-white ring-1 ring-white/25 transition hover:bg-white/10">See what's inside</a>
@@ -343,11 +343,11 @@ export default function Landing({ go }: { go: Go }) {
         {/* why I built this */}
         <section id="why" className="mx-auto max-w-6xl scroll-mt-20 px-4 py-16 md:px-8">
           <Reveal className="glass grid items-center gap-8 overflow-hidden rounded-3xl p-6 md:grid-cols-[280px_1fr] md:p-10">
-            <img src="/founder.jpg?v=2" alt="Blake Busboom, founder of Deal School" className="mx-auto aspect-[4/5] w-56 rounded-2xl object-cover md:w-full" loading="lazy" />
+            <img src="/founder.jpg?v=2" alt="Blake Busboom, founder of Underwriting Desk" className="mx-auto aspect-[4/5] w-56 rounded-2xl object-cover md:w-full" loading="lazy" />
             <div>
               <div className="text-sm font-semibold uppercase tracking-[.2em] text-[#f4b24c]">Why I built this</div>
               <blockquote className="serif mt-4 text-3xl font-semibold leading-snug text-white md:text-4xl">“I was thrown into the work fast, and half the language went over my head.”</blockquote>
-              <p className="mt-5 max-w-2xl text-white/75 md:text-lg">When I started underwriting, there was no simple path to learn it. I was thrown into the work fast, and half the language went over my head. I built Deal School so junior underwriters can learn the basics quickly, then use their own mistakes, with help from AI, to get good fast.</p>
+              <p className="mt-5 max-w-2xl text-white/75 md:text-lg">When I started underwriting, there was no simple path to learn it. I was thrown into the work fast, and half the language went over my head. I built Underwriting Desk so junior underwriters can learn the basics quickly, then use their own mistakes, with help from AI, to get good fast.</p>
               <div className="mt-5 text-sm text-white/60"><span className="font-semibold text-white">Blake Busboom</span>, founder · junior underwriter</div>
             </div>
           </Reveal>
@@ -358,7 +358,7 @@ export default function Landing({ go }: { go: Go }) {
           <Reveal className="max-w-2xl">
             <div className="text-sm font-semibold uppercase tracking-[.2em] text-[#f4b24c]">For teams</div>
             <h2 className="serif mt-3 text-4xl font-semibold text-white md:text-5xl">Get new hires underwriting sooner.</h2>
-            <p className="mt-4 text-white/65">Built inside a family real estate firm to train its own interns. Hand a new analyst Deal School on day one instead of a spreadsheet and a stack of old deals.</p>
+            <p className="mt-4 text-white/65">Built inside a family real estate firm to train its own interns. Hand a new analyst Underwriting Desk on day one instead of a spreadsheet and a stack of old deals.</p>
           </Reveal>
           <div className="mt-10 grid gap-5 md:grid-cols-3">
             {TEAMS.map(([t, b, soon], i) => (
@@ -374,12 +374,12 @@ export default function Landing({ go }: { go: Go }) {
           <Reveal className="max-w-2xl">
             <div className="text-sm font-semibold uppercase tracking-[.2em] text-[#f4b24c]">Why it's different</div>
             <h2 className="serif mt-3 text-4xl font-semibold text-white md:text-5xl">Courses don't let you practice. Software doesn't teach.</h2>
-            <p className="mt-4 text-white/65">Most people learn underwriting from videos or by being handed a spreadsheet and an old deal. Deal School puts the lesson, the practice deal and the real model in one place, so the mistakes happen on practice deals instead of real ones.</p>
+            <p className="mt-4 text-white/65">Most people learn underwriting from videos or by being handed a spreadsheet and an old deal. Underwriting Desk puts the lesson, the practice deal and the real model in one place, so the mistakes happen on practice deals instead of real ones.</p>
           </Reveal>
           <Reveal delay={150} className="glass mt-10 overflow-x-auto rounded-3xl">
             <table className="w-full text-sm">
               <thead><tr className="border-b border-white/10 text-left">
-                <th className="px-5 py-4" /><th className="px-5 py-4 text-center font-semibold text-[#f4b24c]">Deal School</th>
+                <th className="px-5 py-4" /><th className="px-5 py-4 text-center font-semibold text-[#f4b24c]">Underwriting Desk</th>
                 <th className="px-5 py-4 text-center font-medium text-white/50">Video courses</th><th className="px-5 py-4 text-center font-medium text-white/50">Underwriting software</th>
               </tr></thead>
               <tbody>{COMPARE.map(([f, a, b, c]) => (
@@ -413,7 +413,7 @@ export default function Landing({ go }: { go: Go }) {
           </Reveal>
         </section>
 
-        <footer className="relative border-t border-white/10 bg-[#060a18]/80 py-6 text-center text-xs text-white/40 backdrop-blur">© {new Date().getFullYear()} Deal School · A learning and screening tool, not investment advice.</footer>
+        <footer className="relative border-t border-white/10 bg-[#060a18]/80 py-6 text-center text-xs text-white/40 backdrop-blur">© {new Date().getFullYear()} Underwriting Desk · A learning and screening tool, not investment advice.</footer>
       </div>
     </div>
   )

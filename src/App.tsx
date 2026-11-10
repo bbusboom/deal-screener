@@ -20,7 +20,7 @@ import { useHomeState, setHomeState, syncHomeState } from "./lib/market"
 const HAS_ACCOUNT = "dealScreener.hasAccount"
 const LEARN_TABS = [["course", "Course", Icon.course], ["challenges", "Challenges", Icon.challenge], ["check", "Deal Check", Icon.clock], ["practice", "Practice a deal", Icon.practice]] as const
 
-/** learnOnly: the Deal School phone app at /learn. Same accounts and progress, Learn only, no underwriting. */
+/** learnOnly: the Underwriting Desk phone app at /learn. Same accounts and progress, Learn only, no underwriting. */
 export default function App({ learnOnly = false }: { learnOnly?: boolean }) {
   const [ready, setReady] = useState(false)
   const [session, setSession] = useState<Session | null>(null)
@@ -99,8 +99,8 @@ export default function App({ learnOnly = false }: { learnOnly?: boolean }) {
       <header className="sticky top-0 z-20 border-b border-white/10 bg-night/95 pt-[env(safe-area-inset-top)] text-white backdrop-blur-xl">
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-3 px-4 md:px-8">
           <div className="flex items-center gap-2.5">
-            <div className="grid h-8 w-8 place-items-center rounded-md bg-gold-400 text-[13px] font-bold text-[#1c1305]">DS</div>
-            <div className="leading-tight"><div className="font-bold">Deal School</div><div className="hidden text-[11px] text-white/50 sm:block">{learnOnly ? "Learn to underwrite" : "Underwriting training"}</div></div>
+            <div className="grid h-8 w-8 place-items-center rounded-md bg-gold-400 text-[13px] font-bold text-[#1c1305]">UD</div>
+            <div className="leading-tight"><div className="font-bold">Underwriting Desk</div><div className="hidden text-[11px] text-white/50 sm:block">{learnOnly ? "Learn to underwrite" : "Real estate underwriting"}</div></div>
           </div>
           {path && !choosing && !learnOnly && (
             <div className="flex rounded-full border border-white/10 bg-white/5 p-1 text-sm font-semibold">

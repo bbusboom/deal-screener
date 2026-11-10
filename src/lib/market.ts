@@ -29,7 +29,7 @@ export function useHomeState() {
 async function post(url: string, body: unknown) {
   const r = await fetch(url, { method: "POST", headers: await apiHeaders(), body: JSON.stringify(body) })
   const j = await r.json().catch(() => ({}))
-  if (!r.ok) throw new Error(j.error === "signin" ? "Sign in again to use live data." : j.error === "access_code" ? "Enter the access code on the Deal School AI tab first." : j.error === "rate_limited" ? "Busy right now, try again in a minute." : j.error || `Error ${r.status}`)
+  if (!r.ok) throw new Error(j.error === "signin" ? "Sign in again to use live data." : j.error === "access_code" ? "Enter the access code on the Desk AI tab first." : j.error === "rate_limited" ? "Busy right now, try again in a minute." : j.error || `Error ${r.status}`)
   return j
 }
 

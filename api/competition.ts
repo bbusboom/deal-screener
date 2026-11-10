@@ -46,7 +46,7 @@ const SCAN_TOOL = {
 
 export default async function handler(req: any, res: any) {
   if (req.method !== "POST") return res.status(405).json({ error: "POST only" })
-  if (!process.env.ANTHROPIC_API_KEY) return res.status(503).json({ error: "Deal School AI isn't set up yet: add ANTHROPIC_API_KEY in the hosting settings." })
+  if (!process.env.ANTHROPIC_API_KEY) return res.status(503).json({ error: "Desk AI isn't set up yet: add ANTHROPIC_API_KEY in the hosting settings." })
   const auth = await authorize(req)
   if (!auth.ok) return res.status(auth.status).json({ error: auth.error })
 
@@ -59,7 +59,7 @@ export default async function handler(req: any, res: any) {
   const today = new Date().toISOString().slice(0, 10)
   const where = [address, city, state, zip].filter(Boolean).join(", ")
 
-  const system = `You are Deal School's market analyst. Today is ${today}. Research the apartment competition around ${where} for a buyer underwriting a multifamily property.
+  const system = `You are Underwriting Desk's market analyst. Today is ${today}. Research the apartment competition around ${where} for a buyer underwriting a multifamily property.
 Subject property: ${mix || "unit mix not given"}${built ? `; built about ${built}` : ""}.
 
 Use web search. Good sources: apartment listing sites (Apartments.com, Zillow rentals, Rent.com, the property's own website), local news and business journals, city planning or permit records, and developer announcements. Find:

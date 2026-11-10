@@ -31,7 +31,7 @@ const SECTIONS = [
   { key: "market", label: "Market", icon: Icon.market, pages: [["market", "Location"], ["supply", "Supply & demand"], ["comps", "Comps"]] },
   { key: "financials", label: "Financials", icon: Icon.financials, pages: [["statement", "Operating statement"], ["monthly", "Monthly"], ["projections", "Projections"], ["scenarios", "Scenarios"], ["taxes", "Taxes"]] },
   { key: "capital", label: "Capital", icon: Icon.capital, pages: [["financing", "Debt"], ["quotes", "Loan quotes"], ["investors", "Investors"]] },
-  { key: "advisor", label: "Advisor", icon: Icon.advisor, pages: [["ai", "Deal School AI"]] },
+  { key: "advisor", label: "Advisor", icon: Icon.advisor, pages: [["ai", "Desk AI"]] },
   { key: "pipeline", label: "Pipeline", icon: Icon.pipeline, pages: [["deals", "Deals & buy box"]] },
 ] as const
 type Tab = "summary" | "thesis" | "capex" | "quotes" | "taxes" | "rentroll" | "monthly" | "supply" | "income" | "expenses" | "valueadd" | "documents" | "market" | "comps" | "statement" | "projections" | "scenarios" | "financing" | "investors" | "ai" | "deals"
@@ -184,7 +184,7 @@ export default function ProWorkspace({ session, toast }: { session: Session | nu
         {tab === "financing" && <FinancingPane {...pane} />}
         {tab === "projections" && <ProjectionsPane {...pane} />}
         {tab === "scenarios" && <ScenariosPane {...pane} metric={metric} setMetric={setMetric} />}
-        <div className={tab === "ai" ? "" : "hidden"}><AiPanel storeKey="pro" deal={deal} fixedRoute="pro" title="Deal School AI · Pro route" onDeal={d => setDeal(norm(d))} /></div>
+        <div className={tab === "ai" ? "" : "hidden"}><AiPanel storeKey="pro" deal={deal} fixedRoute="pro" title="Desk AI · Pro route" onDeal={d => setDeal(norm(d))} /></div>
         {tab === "deals" && <DealsPane {...pane} saved={saved} cloud={!!session}
           onSave={save}
           onOpen={i => { const r = saved![i]; setDeal(norm(r.data)); setDealId(r.id); go("summary") }}

@@ -60,7 +60,7 @@ export function ThesisPane({ d, mp, set }: PaneProps) {
           </div>
         </Card>
       </div>
-      <AiPanel storeKey="thesis" deal={d} fixedRoute="pro" compact title="Ask Deal School to push back" context={context}
+      <AiPanel storeKey="thesis" deal={d} fixedRoute="pro" compact title="Ask the Desk to push back" context={context}
         greeting="Write your thesis and risks, then ask me to challenge them. I'll point out what you haven't proven, the risks you missed, and whether your offer squares with the numbers."
         reviewLabel="Challenge my case" reviewPrompt="Challenge my case like an investment committee would. Which parts of my thesis aren't supported by the numbers in the screener? What are the biggest risks I left out? Does my call and offer square with the max price and the buy box? Be direct and specific." onDeal={() => {}} />
     </div>

@@ -20,7 +20,7 @@ const REVIEW = {
   pro: "Underwrite the deal in the screener. Give a quick screen, then propose downside, base and upside scenarios over the hold with explicit assumptions, show breakpoints, and ask me to adjust and weight them.",
 }
 
-export default function AiPanel({ deal, onDeal, fixedRoute, title = "Deal School AI", compact = false, context, greeting, reviewLabel, reviewPrompt, storeKey }: { storeKey?: string; deal: Deal; onDeal: (d: Deal) => void; fixedRoute?: "learner" | "pro"; title?: string; compact?: boolean; context?: string; greeting?: string; reviewLabel?: string; reviewPrompt?: string }) {
+export default function AiPanel({ deal, onDeal, fixedRoute, title = "Desk AI", compact = false, context, greeting, reviewLabel, reviewPrompt, storeKey }: { storeKey?: string; deal: Deal; onDeal: (d: Deal) => void; fixedRoute?: "learner" | "pro"; title?: string; compact?: boolean; context?: string; greeting?: string; reviewLabel?: string; reviewPrompt?: string }) {
   const [route, setRoute] = useState<"learner" | "pro">(fixedRoute || "learner")
   // The conversation survives a reload of this tab, so leaving and coming back doesn't lose it.
   const sk = storeKey ? "dealScreener.chat." + storeKey : ""
@@ -46,7 +46,7 @@ export default function AiPanel({ deal, onDeal, fixedRoute, title = "Deal School
       })
       if (r.status === 404) throw new Error("The AI server isn't running here. It works once the site is deployed on Vercel, or locally with `vercel dev`.")
       const data = await r.json().catch(() => ({}))
-      if (r.status === 401) { setMsgs(msgs); if (data.error === "signin") throw new Error("Your sign in expired. Sign out and back in."); setNeedCode(true); throw new Error("Enter the access code to use Deal School.") }
+      if (r.status === 401) { setMsgs(msgs); if (data.error === "signin") throw new Error("Your sign in expired. Sign out and back in."); setNeedCode(true); throw new Error("Enter the access code to use Underwriting Desk.") }
       if (r.status === 429 || data.error === "rate_limited") throw new Error("Too many requests right now. Wait a minute and try again.")
       if (!r.ok) throw new Error(data.error || `Request failed (${r.status})`)
       setMsgs([...next, { role: "assistant", content: data.text }])
@@ -87,7 +87,7 @@ export default function AiPanel({ deal, onDeal, fixedRoute, title = "Deal School
           onChange={e => setInput(e.target.value)} onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); ask(input) } }} />
         <button className="btn btn-primary" disabled={busy} onClick={() => ask(input)}>Send</button>
       </div>
-      {context ? <p className="note mt-2">Deal School knows what you're working on. It can explain things differently, give more examples, or go deeper.</p> : <p className="note mt-2">Deal School runs its math through the same model as every tab, so its numbers match the screen. It can change inputs when you ask. It can't browse the web yet, so give it local comps and tax figures.</p>}
+      {context ? <p className="note mt-2">Underwriting Desk knows what you're working on. It can explain things differently, give more examples, or go deeper.</p> : <p className="note mt-2">Underwriting Desk runs its math through the same model as every tab, so its numbers match the screen. It can change inputs when you ask. It can't browse the web yet, so give it local comps and tax figures.</p>}
     </Card>
   )
 }

@@ -127,9 +127,9 @@ export default function Course({ session, onPractice }: { session: Session | nul
   if (view.kind === "home") return (
     <main className="mx-auto max-w-5xl px-4 py-6 md:px-8">
       <div className="rounded-lg bg-brand-900 p-6 text-white md:p-8">
-        <div className="text-xs font-semibold uppercase tracking-wider text-brand-100">Deal School</div>
+        <div className="text-xs font-semibold uppercase tracking-wider text-brand-100">Underwriting Desk</div>
         <h1 className="mt-1 text-2xl font-bold md:text-3xl">Learn to underwrite real estate</h1>
-        <p className="mt-2 max-w-2xl text-white/80">Thirteen modules that take you from what investment real estate is to how markets, competition and new supply move a deal, and how an acquisitions team works. Real photos, diagrams, worked examples, a quiz after each module, and Deal School AI for any question.</p>
+        <p className="mt-2 max-w-2xl text-white/80">Thirteen modules that take you from what investment real estate is to how markets, competition and new supply move a deal, and how an acquisitions team works. Real photos, diagrams, worked examples, a quiz after each module, and Desk AI for any question.</p>
         <div className="mt-5 flex flex-wrap items-center gap-4">
           {resume && <button className="btn border-white bg-white text-brand-700 hover:bg-brand-50" onClick={() => setView({ kind: "lesson", id: resume.id })}>{lessonsDone ? "Continue" : "Start"}: {resume.title} →</button>}
           <div className="text-sm text-white/80">{lessonsDone} of {allLessons.length} lessons · {modsDone} of {COURSE.length} modules complete</div>
@@ -138,10 +138,10 @@ export default function Course({ session, onPractice }: { session: Session | nul
       </div>
       {lessonsDone < 3 && (
         <div className="card mt-4 flex items-center gap-4 !py-4">
-          <img src="/founder-face.jpg?v=2" alt="Blake Busboom, founder of Deal School" className="h-14 w-14 shrink-0 rounded-full object-cover" />
+          <img src="/founder-face.jpg?v=2" alt="Blake Busboom, founder of Underwriting Desk" className="h-14 w-14 shrink-0 rounded-full object-cover" />
           <div className="min-w-0">
             <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">From the founder</div>
-            <p className="mt-0.5 text-sm text-ink">“I built Deal School so junior underwriters can learn the basics quickly, then use their own mistakes to get good fast.” <span className="text-slate-500">· Blake Busboom</span></p>
+            <p className="mt-0.5 text-sm text-ink">“I built Underwriting Desk so junior underwriters can learn the basics quickly, then use their own mistakes to get good fast.” <span className="text-slate-500">· Blake Busboom</span></p>
           </div>
         </div>)}
       <div className="mt-6 grid gap-4 md:grid-cols-2">
@@ -227,7 +227,7 @@ export default function Course({ session, onPractice }: { session: Session | nul
             </div>
           </article>
           <div className="mt-5">
-            <AiPanel key={l.id} storeKey={"lesson." + l.id} deal={norm(PRACTICE)} fixedRoute="learner" compact title="Ask Deal School about this lesson" context={ctx}
+            <AiPanel key={l.id} storeKey={"lesson." + l.id} deal={norm(PRACTICE)} fixedRoute="learner" compact title="Ask the Desk about this lesson" context={ctx}
               greeting={`Questions about "${l.title}"? Ask anything, like "why do we subtract vacancy?" or "explain this like I'm new."`}
               reviewLabel="Explain this lesson another way" reviewPrompt={`Explain the main idea of the lesson "${l.title}" in a different way than the lesson did, with a simple everyday example, in under 150 words.`}
               onDeal={() => {}} />

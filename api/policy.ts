@@ -14,7 +14,7 @@ const FORMAT = `Formatting: short sections with a bold label on its own line, th
 
 export default async function handler(req: any, res: any) {
   if (req.method !== "POST") return res.status(405).json({ error: "POST only" })
-  if (!process.env.ANTHROPIC_API_KEY) return res.status(503).json({ error: "Deal School AI isn't set up yet: add ANTHROPIC_API_KEY in the hosting settings." })
+  if (!process.env.ANTHROPIC_API_KEY) return res.status(503).json({ error: "Desk AI isn't set up yet: add ANTHROPIC_API_KEY in the hosting settings." })
   const auth = await authorize(req)
   if (!auth.ok) return res.status(auth.status).json({ error: auth.error })
 
@@ -32,7 +32,7 @@ export default async function handler(req: any, res: any) {
     st.reassess ? `Property tax after a sale: ${st.reassess}` : "",
   ].filter(Boolean).join("\n")
 
-  const system = `You are Deal School's policy researcher. Today is ${today}. Write a briefing on how ${st.name}${city ? ` (focus on ${city})` : ""} state and local policy affects people who own rental apartments, so an owner can adjust their underwriting.
+  const system = `You are Underwriting Desk's policy researcher. Today is ${today}. Write a briefing on how ${st.name}${city ? ` (focus on ${city})` : ""} state and local policy affects people who own rental apartments, so an owner can adjust their underwriting.
 Search the web for current information; prefer official government sites, the state legislature, the state apartment or multifamily association, tenant advocacy groups and established news outlets. Elections were held on November 3, 2026, so check whether results change who holds office or what passed.
 
 Baseline facts already shown to the user (verify, and correct them if you find they changed):

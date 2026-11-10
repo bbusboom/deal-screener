@@ -43,7 +43,7 @@ const LEARN: Slide[] = [
       <div className="mt-2 flex items-center gap-2"><input readOnly value="3" className="!w-20 text-right" /><span className="text-sm text-slate-500">% of gross rent</span></div>
       <div className="pop mt-3 rounded-md bg-amber-50 px-3 py-2 text-sm text-amber-800" style={{ animationDelay: "500ms" }}>That's low. Most underwriters use 5 to 8% even for a full building. It's your call; we'll show the difference at the end.</div>
     </Panel> },
-  { key: "tutor", tag: "Deal School AI", title: "Ask questions without feeling dumb.",
+  { key: "tutor", tag: "Desk AI", title: "Ask questions without feeling dumb.",
     body: "Ask it to explain a term another way, check your math, or walk through a deal. It runs every number through the same model you see, so its answers match the screen.",
     bullets: ["Hints first, the answer when you ask for it", "Under every lesson and challenge"],
     visual: <Panel glow="#8b3dffcc">
@@ -54,7 +54,7 @@ const LEARN: Slide[] = [
 
 const PRO: Slide[] = [
   { key: "docs", tag: "Documents", title: "Upload the OM, T12 and rent roll instead of typing them.",
-    body: "Deal School reads PDFs, Excel and photos, shows every value with where it came from, and changes nothing until you approve it. A unit level rent roll gives occupancy, loss to lease and lease expirations.",
+    body: "Underwriting Desk reads PDFs, Excel and photos, shows every value with where it came from, and changes nothing until you approve it. A unit level rent roll gives occupancy, loss to lease and lease expirations.",
     bullets: ["The seller's T12 lands next to your numbers", "Every value shows where it came from"],
     visual: <Panel glow="#2f6bffcc">
       {[["Offering memo.pdf", "Price, unit mix, pro forma"], ["T12 Sept 2026.xlsx", "Income and 18 expense lines"], ["Rent roll.csv", "48 units, 45 occupied"]].map(([f, d], i) =>
@@ -149,7 +149,7 @@ export default function PathPicker({ username, onPick }: { username?: string | n
       <div className="relative z-10">
         <section className="mx-auto flex min-h-[calc(100svh-64px)] max-w-5xl flex-col items-center justify-center px-4 text-center">
           <div className="rise text-sm text-white/60">{username ? `Welcome, ${username}.` : "Welcome."}</div>
-          <h1 className="rise serif mt-3 text-4xl font-semibold leading-tight text-white md:text-6xl" style={{ animationDelay: "120ms" }}>Two ways to use Deal School.</h1>
+          <h1 className="rise serif mt-3 text-4xl font-semibold leading-tight text-white md:text-6xl" style={{ animationDelay: "120ms" }}>Two ways to use Underwriting Desk.</h1>
           <p className="rise mt-5 max-w-2xl text-lg text-white/65" style={{ animationDelay: "250ms" }}>Learn underwriting from the ground up, or put it to work on a live deal. Scroll to see both, or jump straight in. You can switch any time from the top of the page.</p>
           <div className="rise mt-10 grid w-full max-w-3xl gap-4 sm:grid-cols-2" style={{ animationDelay: "400ms" }}>
             {([["learner", "Learn to underwrite", "New to underwriting, or training interns", "learn"], ["pro", "Underwrite a deal", "Working a live deal", "pro"]] as const).map(([p, t, who, id]) => (

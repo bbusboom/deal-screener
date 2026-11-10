@@ -132,7 +132,7 @@ export function SupplyPane({ d, p, set }: PaneProps) {
       </div>
 
       <Card title="Competition scan" right={scan && <span className="text-xs text-slate-400">as of {scan.asOf}</span>}>
-        {!scan ? <p className="note">Deal School searches listing sites, local news and planning records near the property for competing apartments, their asking rents and current concessions, and new buildings under construction or in lease up. Takes about a minute and costs a few cents of AI usage. Verify anything you rely on.</p> : <>
+        {!scan ? <p className="note">Underwriting Desk searches listing sites, local news and planning records near the property for competing apartments, their asking rents and current concessions, and new buildings under construction or in lease up. Takes about a minute and costs a few cents of AI usage. Verify anything you rely on.</p> : <>
           <p className="text-sm leading-relaxed text-slate-700">{scan.summary}</p>
           <div className="mt-4 overflow-x-auto"><table className="tbl">
             <thead><tr><th>Property</th><th className="!text-left">Status</th><th>Miles</th><th>Built</th><th>Units</th><th className="!text-left">Asking rents</th><th className="!text-left">Concession</th><th /></tr></thead>

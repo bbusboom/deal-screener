@@ -55,7 +55,7 @@ function BriefingBox({ state, city, route }: { state: string; city: string; rout
   return (
     <Card title="Policy briefing" right={st && <button className="btn" disabled={busy} onClick={run}>{busy ? "Researching…" : b ? "Refresh" : `Brief me on ${st.name}`}</button>}>
       {!st ? <div className="note">Pick a state first.</div>
-        : !b && !busy ? <div className="note">Deal School searches the web for who holds office in {st.name}, the rental laws in force, bills and ballot measures that are moving, and what owner groups and tenant advocates are saying, then turns it into changes for your model. It's neutral: it reports each side, it doesn't take one. Takes about 30 seconds.</div>
+        : !b && !busy ? <div className="note">Underwriting Desk searches the web for who holds office in {st.name}, the rental laws in force, bills and ballot measures that are moving, and what owner groups and tenant advocates are saying, then turns it into changes for your model. It's neutral: it reports each side, it doesn't take one. Takes about 30 seconds.</div>
         : busy ? <div className="note">Searching current sources for {st.name}{city ? `, ${city}` : ""}…</div> : null}
       {err && <div className="mt-2 rounded-md bg-fail-50 px-3 py-2 text-sm text-fail-600">{err}</div>}
       {b && !busy && (

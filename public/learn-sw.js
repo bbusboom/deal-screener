@@ -1,6 +1,6 @@
-// Deal School app service worker (scope /learn). Pages: network first, cached copy when offline.
+// Underwriting Desk app service worker (scope /learn). Pages: network first, cached copy when offline.
 // Built assets (hashed file names) and fonts: cache first. API calls and Supabase are never cached.
-const CACHE = "deal-school-v1"
+const CACHE = "uw-desk-v2"
 self.addEventListener("install", e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(["/learn"]))); self.skipWaiting() })
 self.addEventListener("activate", e => {
   e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== CACHE).map(k => caches.delete(k)))).then(() => self.clients.claim()))

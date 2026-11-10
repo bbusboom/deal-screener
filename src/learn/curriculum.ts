@@ -1,4 +1,4 @@
-// Deal School course: modules, lessons and quizzes, from the basics up to every underwriting metric.
+// Underwriting Desk course: modules, lessons and quizzes, from the basics up to every underwriting metric.
 // Running example: Oak Ridge Apartments, 20 units, $2,000,000. All numbers are computed with the site's model.
 
 export type Block =

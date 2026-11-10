@@ -1,4 +1,4 @@
-// Vercel serverless function: runs Deal School with the Anthropic API.
+// Vercel serverless function: runs Underwriting Desk with the Anthropic API.
 // The API key stays on the server. Set ANTHROPIC_API_KEY in Vercel's environment variables.
 import Anthropic from "@anthropic-ai/sdk"
 import { authorize } from "./_auth.js"
@@ -11,7 +11,7 @@ const MAX_CHARS = 4000
 
 export default async function handler(req: any, res: any) {
   if (req.method !== "POST") return res.status(405).json({ error: "POST only" })
-  if (!process.env.ANTHROPIC_API_KEY) return res.status(503).json({ error: "Deal School AI isn't set up yet: add ANTHROPIC_API_KEY in the hosting settings." })
+  if (!process.env.ANTHROPIC_API_KEY) return res.status(503).json({ error: "Desk AI isn't set up yet: add ANTHROPIC_API_KEY in the hosting settings." })
 
   const auth = await authorize(req)
   if (!auth.ok) return res.status(auth.status).json({ error: auth.error })
@@ -23,7 +23,7 @@ export default async function handler(req: any, res: any) {
   if (history.some(m => typeof m.content !== "string" || m.content.length > MAX_CHARS)) return res.status(400).json({ error: "Message too long." })
 
   const lesson = typeof body.context === "string" && body.context.trim()
-    ? `\n\nThe user is working on this part of the Deal School course right now (a lesson or a challenge). Answer in its context and at its level, and use its worked examples when they help. If it's a challenge the user hasn't checked yet, give hints and questions, not the answers. Only use the deal tools if they ask about the deal in the screener.\n---\n${body.context.slice(0, 4000)}\n---`
+    ? `\n\nThe user is working on this part of the Underwriting Desk course right now (a lesson or a challenge). Answer in its context and at its level, and use its worked examples when they help. If it's a challenge the user hasn't checked yet, give hints and questions, not the answers. Only use the deal tools if they ask about the deal in the screener.\n---\n${body.context.slice(0, 4000)}\n---`
     : ""
   let deal = norm(body.deal || {})
   let changed = false
@@ -57,6 +57,6 @@ export default async function handler(req: any, res: any) {
     }
   } catch (e: any) {
     const status = e?.status === 429 ? 429 : 500
-    return res.status(status).json({ error: status === 429 ? "rate_limited" : "Deal School hit an error: " + (e?.message || "unknown") })
+    return res.status(status).json({ error: status === 429 ? "rate_limited" : "Underwriting Desk hit an error: " + (e?.message || "unknown") })
   }
 }

@@ -1,6 +1,6 @@
 # Deal Screener
 
-A multifamily underwriting website with the **Deal School** AI agent built in. Started as a Claude artifact (v0.1 to v0.3), moved to a real web app in v0.4, added document import in v0.5, accounts with two paths (Learn and Underwrite) in v0.6, the Deal School course in v0.7, Market check in v0.8, and Challenges in v0.9.
+A multifamily underwriting website with the **Underwriting Desk** AI agent built in. Started as a Claude artifact (v0.1 to v0.3), moved to a real web app in v0.4, added document import in v0.5, accounts with two paths (Learn and Underwrite) in v0.6, the Underwriting Desk course in v0.7, Market check in v0.8, and Challenges in v0.9.
 
 ## What it does
 
@@ -16,10 +16,10 @@ A multifamily underwriting website with the **Deal School** AI agent built in. S
 - **Investors**: GP/LP IRR hurdle waterfall with pref, promote, acquisition, asset management and disposition fees; LP and GP returns and distributions by year
 - **Projections**: hold period, growth assumptions, exit cap, annual cash flow, sale, IRR and equity multiple
 - **Scenarios**: downside, base and upside with probabilities and weighted IRR, plus sensitivity grids
-- **Deal School AI**: Learner and Pro routes. The AI runs every number through the same model as the tabs and can change any input, including value add, loan options, waterfall, comps and added lines
+- **Desk AI**: Learner and Pro routes. The AI runs every number through the same model as the tabs and can change any input, including value add, loan options, waterfall, comps and added lines
 - **Deals**: buy box minimums, saved deals, pipeline status, bid date and notes, and side by side comparison of up to four deals
 
-## Deal School course
+## Underwriting Desk course
 
 `src/learn/curriculum.ts` holds the 10 modules, lessons and quizzes. Photos load live from Wikimedia Commons with author and license credit (free licenses only), and each photo links to a Google Images search. Diagrams are drawn in code in `src/learn/Diagrams.tsx`. The worked example numbers come from the site's own model.
 
@@ -29,7 +29,7 @@ A Challenges tab on the Learn side (`src/learn/challenges.ts` for content, `Chal
 
 - **Spot the seller's trick**: four documents (two T12s, a rent roll, an offering memo) with planted problems and honest lines that only look odd. Learners flag lines, check, and get up to 3 stars plus the dollar impact.
 - **Deal Duels**: four broker pitches in Arkansas, Texas, Ohio and Florida. Learners fix the seller's numbers, then pursue, renegotiate or pass, and are scored out of 100 on assumptions, the call and the offer. The reveal compares seller, learner and reality, all computed with the model. One duel is an honest deal on purpose.
-- Deal School sits beside each challenge with hint and explain buttons; it gives hints until the learner checks.
+- Underwriting Desk sits beside each challenge with hint and explain buttons; it gives hints until the learner checks.
 - Best scores save to the account with course progress.
 
 ## Market check (v0.8)
@@ -46,9 +46,9 @@ Each user picks a home state (header, saved to their account). Every deal has a 
 
 ```
 src/lib/model.ts       All underwriting math. One source of truth for the tabs and the AI.
-src/lib/agent.ts       Deal School tools and route rules
+src/lib/agent.ts       Underwriting Desk tools and route rules
 src/components/        Tabs, AI panel, chart, UI pieces
-api/deal-school.ts     Serverless function for the Deal School AI (keeps the key off the browser)
+api/deal-school.ts     Serverless function for the Desk AI (keeps the key off the browser)
 api/extract.ts         Serverless function that reads uploaded documents
 src/lib/extract.ts     What gets pulled from each document type and how it maps to inputs
 ```

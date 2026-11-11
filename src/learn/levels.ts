@@ -16,7 +16,7 @@ export const STEPS: { key: Step; label: string; short: string }[] = [
 ]
 
 export interface Level {
-  id: string; num: number; name: string; tag: string
+  id: string; num: number; name: string; short: string; tag: string
   /** What the level covers, one or two sentences. */
   about: string
   /** How the level relates to underwriting. */
@@ -28,28 +28,28 @@ export interface Level {
 
 export const LEVELS: Level[] = [
   {
-    id: "L1", num: 1, name: "Foundations", tag: "Start here",
+    id: "L1", num: 1, name: "Foundations", short: "Basics", tag: "Start here",
     about: "What investment real estate is, how owners make money from it, and the documents every deal comes with.",
     connects: "Underwriting is deciding whether a property's income justifies its price. This level gives you the vocabulary and the roadmap before any math.",
     outcome: "You can explain what an underwriter decides, name the steps in order, and know which document each number comes from.",
     modules: ["m1", "m2"],
   },
   {
-    id: "L2", num: 2, name: "Building the model", tag: "Core",
+    id: "L2", num: 2, name: "Building the model", short: "The model", tag: "Core",
     about: "One module for each step of the roadmap: income, expenses, NOI, value, debt and returns, all on the same example property.",
     connects: "This is the underwriting model itself, built top to bottom. Each module's answer is the next module's starting number.",
     outcome: "You can take a rent roll and T12 and build a full year one model: NOI, cap rate, loan size, DSCR, cash flow and IRR.",
     modules: ["m3", "m4", "m5", "m6", "m7", "m8"],
   },
   {
-    id: "L3", num: 3, name: "Judgment", tag: "Apply it",
+    id: "L3", num: 3, name: "Judgment", short: "Judgment", tag: "Apply it",
     about: "Stress testing, red flags, location risk, and a capstone that runs the whole roadmap on one deal.",
     connects: "A model is a guess about the future. This level tests how wrong the guess can be and turns the numbers into a decision: pursue, renegotiate or pass.",
     outcome: "You can underwrite a full deal on your own and defend your recommendation.",
     modules: ["m9", "m10"],
   },
   {
-    id: "L4", num: 4, name: "Professional", tag: "On the job",
+    id: "L4", num: 4, name: "Professional", short: "Pro", tag: "On the job",
     about: "How lenders and acquisitions teams actually do it: tougher income analysis, loan sizing, renovations, investor structures, market supply and the team workflow.",
     connects: "Each step from Level 2 again, done the way a professional team does it, with less trust in the seller and assumptions backed by the market.",
     outcome: "You can screen deals fast, build an institutional quality model and write the memo that gets a deal approved.",
@@ -174,4 +174,10 @@ export const LESSON_GOALS: Record<string, string> = {
   m13l3: "The order to build a full model in, with a source behind every assumption.",
   m13l4: "The mistakes that most often make a deal look better than it is, and how to check for them.",
   m13l5: "The questions to ask the broker, and how to write a two page memo that gets a decision.",
+}
+
+/** The diagram drawn on each module's cover, taken from that module's own lessons. */
+export const COVER_ART: Record<string, import("./curriculum").DiagramKind> = {
+  m1: "returns4", m2: "docs", m3: "waterfall", m4: "noi", m5: "flow", m6: "capTriangle", m7: "capStack",
+  m8: "cashflow", m9: "sensitivity", m10: "timeline", m11: "dscr", m12: "supplyCycle", m13: "funnel",
 }

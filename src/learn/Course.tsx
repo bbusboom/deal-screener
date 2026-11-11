@@ -6,10 +6,10 @@ import { StateSelect, StateSnapshot } from "../components/MarketPane"
 import { useHomeState, setHomeState } from "../lib/market"
 import { PRACTICE, norm } from "../lib/model"
 import Photo from "./Photo"
-import Diagram from "./Diagrams"
+import Diagram, { DiagramArt } from "./Diagrams"
 import Calc from "./Calc"
 import AiPanel from "../components/AiPanel"
-import { LEVELS, GUIDE, STEPS, LESSON_GOALS, levelOf, type Step } from "./levels"
+import { LEVELS, GUIDE, STEPS, LESSON_GOALS, COVER_ART, levelOf, type Step } from "./levels"
 
 type View = { kind: "home" } | { kind: "lesson"; id: string } | { kind: "quiz"; id: string } | { kind: "module"; id: string } | { kind: "glossary" }
 const PASS = 0.8
@@ -171,12 +171,13 @@ export default function Course({ session, onPractice }: { session: Session | nul
               <div className="mt-2 text-sm text-white/70">{curMod.title}</div>
               <h2 className="mt-0.5 text-2xl font-bold leading-snug md:text-3xl">{finished ? "You've finished every module" : cur.title}</h2>
               {!finished && LESSON_GOALS[cur.id] && <p className="mt-2 max-w-xl text-white/80">{LESSON_GOALS[cur.id]}</p>}
-              <div className="mt-5 flex flex-wrap items-center gap-3">
-                {!finished && <button className="btn border-white bg-white text-brand-700 hover:bg-brand-50" onClick={() => setView({ kind: "lesson", id: cur.id })}>{lessonsDone ? "Continue lesson" : "Start lesson"} · {cur.minutes} min →</button>}
-                <button className="text-sm font-medium text-white/80 underline-offset-4 hover:text-white hover:underline" onClick={() => setView({ kind: "module", id: curMod.id })}>Module {curMod.num} overview</button>
+              {!finished && <div className="mt-3 text-xs text-white/60 md:hidden">Lesson {inMod + 1} of {curMod.lessons.length} in this module, then the quiz</div>}
+              <div className="mt-5 flex flex-col items-stretch gap-3 sm:flex-row sm:items-center">
+                {!finished && <button className="btn justify-center border-white bg-white text-brand-700 hover:bg-brand-50" onClick={() => setView({ kind: "lesson", id: cur.id })}>{lessonsDone ? "Continue lesson" : "Start lesson"} · {cur.minutes} min →</button>}
+                <button className="text-left text-sm font-medium text-white/80 underline-offset-4 hover:text-white hover:underline" onClick={() => setView({ kind: "module", id: curMod.id })}>Module {curMod.num} overview</button>
               </div>
             </div>
-            <div className="rounded-lg bg-white/5 p-4 text-sm">
+            <div className="hidden rounded-lg bg-white/5 p-4 text-sm md:block">
               <div className="text-xs font-semibold uppercase tracking-wider text-brand-100">In this module</div>
               <ol className="mt-2 space-y-1.5">
                 {curMod.lessons.map((x, i) => <li key={x.id} className={`flex gap-2 ${x.id === cur.id ? "font-semibold text-white" : prog.lessons[x.id] ? "text-white/50" : "text-white/70"}`}>
@@ -210,8 +211,8 @@ export default function Course({ session, onPractice }: { session: Session | nul
                       <span className={`grid h-5 w-5 shrink-0 place-items-center rounded-full text-[10px] ${done ? "bg-pass-600 text-white" : on ? "bg-brand-700 text-white" : "bg-white text-slate-500"}`}>{done ? "✓" : x.num}</span>
                       <span className={`hidden sm:inline ${on ? "text-brand-700" : "text-slate-500"}`}>Level {x.num}</span>
                     </div>
-                    <div className={`mt-1 truncate text-xs font-bold sm:text-sm ${on ? "text-ink" : "text-slate-600"}`}>{x.name}</div>
-                    {here && <div className="mt-0.5 truncate text-[10px] font-semibold uppercase tracking-wide text-amber-700">You're here</div>}
+                    <div className={`mt-1 truncate text-xs font-bold sm:text-sm ${on ? "text-ink" : "text-slate-600"}`}><span className="sm:hidden">{x.short}</span><span className="hidden sm:inline">{x.name}</span></div>
+                    {here && <div className="mt-0.5 truncate text-[10px] font-semibold uppercase tracking-wide text-amber-700"><span className="sm:hidden">Here</span><span className="hidden sm:inline">You're here</span></div>}
                   </button>
                 </li>)
             })}
@@ -234,17 +235,19 @@ export default function Course({ session, onPractice }: { session: Session | nul
           <div className="mt-4 grid gap-4 md:grid-cols-2">
             {mods.map(m => {
               const done = m.lessons.filter(l => prog.lessons[l.id]).length, qz = prog.quizzes[m.id], here = m.id === curMod.id && !finished
+              const ahead = !finished && COURSE.indexOf(m) > COURSE.indexOf(curMod) && !done && !qz
               const mins = m.lessons.reduce((t, l) => t + l.minutes, 0), pct = qz?.passed ? 100 : (done / (m.lessons.length + 1)) * 100
               return (
                 <button key={m.id} onClick={() => setView({ kind: "module", id: m.id })}
-                  className={`card group flex flex-col overflow-hidden !p-0 text-left transition hover:border-brand-500 hover:shadow-md ${here ? "ring-2 ring-amber-400" : ""}`}>
-                  <div className="flex items-end justify-between gap-3 bg-brand-900 px-5 py-4 text-white">
+                  className={`card group flex flex-col overflow-hidden !p-0 text-left transition hover:border-brand-500 hover:shadow-md ${here ? "ring-2 ring-amber-400" : ""} ${ahead ? "opacity-70 hover:opacity-100" : ""}`}>
+                  <div className={`flex items-end justify-between gap-3 px-5 py-4 text-white ${ahead ? "bg-slate-500" : "bg-brand-900"}`}>
                     <div className="min-w-0">
-                      <div className="text-xs font-semibold uppercase tracking-wider text-brand-100">Module {m.num}{here ? <span className="ml-2 rounded bg-amber-400 px-1.5 py-0.5 text-[10px] text-[#1c1305]">You're here</span> : null}</div>
+                      <div className="text-xs font-semibold uppercase tracking-wider text-white/70">Module {m.num}{here ? <span className="ml-2 rounded bg-amber-400 px-1.5 py-0.5 text-[10px] text-[#1c1305]">You're here</span> : ahead ? <span className="ml-2 font-medium normal-case tracking-normal">· coming up</span> : null}</div>
                       <h3 className="mt-0.5 text-lg font-bold leading-snug">{m.title}</h3>
                     </div>
                     <span className="font-display text-4xl font-bold leading-none text-white/15">{String(m.num).padStart(2, "0")}</span>
                   </div>
+                  {COVER_ART[m.id] && <div aria-hidden className={`pointer-events-none flex h-32 items-center justify-center overflow-hidden border-b border-slate-100 bg-slate-50 px-4 py-3 transition [&_svg]:max-h-full [&_svg]:w-auto [&_svg]:max-w-full ${ahead ? "grayscale group-hover:grayscale-0" : ""}`}><DiagramArt d={COVER_ART[m.id]} /></div>}
                   <div className="flex flex-1 flex-col px-5 py-4">
                     <p className="flex-1 text-sm text-slate-600">{m.summary}</p>
                     <div className="mt-4 h-1.5 overflow-hidden rounded-full bg-slate-100"><div className="h-full bg-pass-600" style={{ width: `${pct}%` }} /></div>

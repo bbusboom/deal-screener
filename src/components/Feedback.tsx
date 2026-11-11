@@ -13,7 +13,7 @@ export default function Feedback({ session, page, lift }: { session: Session | n
     setTimeout(() => { setOpen(false); setState("") }, 1600)
   }
   return (
-    <div className={`fixed right-4 z-40 print:hidden ${lift ? "bottom-[calc(4.5rem+env(safe-area-inset-bottom))] sm:bottom-4" : "bottom-4"}`}>
+    <div className={`fixed right-2 z-40 sm:right-4 print:hidden ${lift ? "bottom-[calc(4.5rem+env(safe-area-inset-bottom))] sm:bottom-4" : "bottom-4"}`}>
       {open ? (
         <div className="w-[min(20rem,calc(100vw-2rem))] rounded-lg border border-[#e4e4de] bg-white p-4 shadow-lg">
           {state === "sent" ? <div className="py-6 text-center text-sm font-medium text-pass-600">Thanks, sent.</div> : <>
@@ -24,8 +24,8 @@ export default function Feedback({ session, page, lift }: { session: Session | n
           </>}
         </div>
       ) : (
-        <button onClick={() => setOpen(true)} aria-label="Send feedback" className="flex items-center gap-2 rounded-full border border-[#e4e4de] bg-white p-2.5 text-sm font-medium text-ink shadow-md hover:bg-slate-50 sm:px-4 sm:py-2">
-          <svg viewBox="0 0 24 24" className="h-5 w-5 sm:h-4 sm:w-4" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="M21 12a8 8 0 01-11.6 7.1L4 20l1-4.6A8 8 0 1121 12z" /></svg>
+        <button onClick={() => setOpen(true)} aria-label="Send feedback" className="flex items-center gap-2 rounded-full border border-[#e4e4de] bg-white/90 p-2 text-sm font-medium text-ink shadow-md backdrop-blur hover:bg-slate-50 sm:bg-white sm:px-4 sm:py-2">
+          <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="M21 12a8 8 0 01-11.6 7.1L4 20l1-4.6A8 8 0 1121 12z" /></svg>
           <span className="hidden sm:inline">Feedback</span></button>
       )}
     </div>

@@ -179,3 +179,5 @@ export default function Diagram({ d, caption }: { d: DiagramKind; caption?: stri
   const D = MAP[d]
   return <figure className="my-5 rounded-lg border border-slate-200 bg-white p-4"><div className="[&_svg]:h-auto [&_svg]:w-full">{<D />}</div>{caption && <figcaption className="note mt-2 text-center">{caption}</figcaption>}</figure>
 }
+/** The bare drawing, for module covers. */
+export function DiagramArt({ d }: { d: DiagramKind }) { const D = MAP[d]; return <D /> }

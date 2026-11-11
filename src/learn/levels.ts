@@ -24,7 +24,12 @@ export interface Level {
   /** What the learner can do after finishing it. */
   outcome: string
   modules: string[]
+  /** Deal Check that closes the level; Level 1 is closed by its quizzes alone. */
+  checkpoint?: string
 }
+
+/** Score needed on a level's Deal Check to finish the level. */
+export const CHECKPOINT_PASS = 80
 
 export const LEVELS: Level[] = [
   {
@@ -39,21 +44,21 @@ export const LEVELS: Level[] = [
     about: "One module for each step of the roadmap: income, expenses, NOI, value, debt and returns, all on the same example property.",
     connects: "This is the underwriting model itself, built top to bottom. Each module's answer is the next module's starting number.",
     outcome: "You can take a rent roll and T12 and build a full year one model: NOI, cap rate, loan size, DSCR, cash flow and IRR.",
-    modules: ["m3", "m4", "m5", "m6", "m7", "m8"],
+    modules: ["m3", "m4", "m5", "m6", "m7", "m8"], checkpoint: "c1",
   },
   {
     id: "L3", num: 3, name: "Judgment", short: "Judgment", tag: "Apply it",
     about: "Stress testing, red flags, location risk, and a capstone that runs the whole roadmap on one deal.",
     connects: "A model is a guess about the future. This level tests how wrong the guess can be and turns the numbers into a decision: pursue, renegotiate or pass.",
     outcome: "You can underwrite a full deal on your own and defend your recommendation.",
-    modules: ["m9", "m10"],
+    modules: ["m9", "m10"], checkpoint: "c2",
   },
   {
     id: "L4", num: 4, name: "Professional", short: "Pro", tag: "On the job",
     about: "How lenders and acquisitions teams actually do it: tougher income analysis, loan sizing, renovations, investor structures, market supply and the team workflow.",
     connects: "Each step from Level 2 again, done the way a professional team does it, with less trust in the seller and assumptions backed by the market.",
     outcome: "You can screen deals fast, build an institutional quality model and write the memo that gets a deal approved.",
-    modules: ["m11", "m12", "m13"],
+    modules: ["m11", "m12", "m13"], checkpoint: "c3",
   },
 ]
 
@@ -181,3 +186,7 @@ export const COVER_ART: Record<string, import("./curriculum").DiagramKind> = {
   m1: "returns4", m2: "docs", m3: "waterfall", m4: "noi", m5: "flow", m6: "capTriangle", m7: "capStack",
   m8: "cashflow", m9: "sensitivity", m10: "timeline", m11: "dscr", m12: "supplyCycle", m13: "funnel",
 }
+
+export const levelForCheck = (checkId: string) => LEVELS.find(l => l.checkpoint === checkId)
+/** Set by the course when it sends someone to a level checkpoint; Deal Check starts it on arrival. */
+export const PENDING_CHECK = "dealScreener.check.pending"

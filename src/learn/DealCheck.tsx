@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react"
 import type { Session } from "@supabase/supabase-js"
 import { usd, type Deal } from "../lib/model"
+import { PENDING_CHECK, levelForCheck, CHECKPOINT_PASS } from "./levels"
 import { saveCheck, listChecks, type CheckAnswers, type CheckRecord } from "../lib/store"
 import { CHECKS, answerKey, scoreCheck, type Check } from "./checks"
 import { Card } from "../components/ui"
@@ -21,6 +22,13 @@ export default function DealCheck({ session, onOpenInPro }: { session: Session |
 
   const start = (c: Check) => { const a = { id: c.id, start: Date.now(), usedWorkspace: false }; writeAttempt(a); setAttempt(a); setResult(null); scrollTo({ top: 0 }) }
   const quit = () => { writeAttempt(null); setAttempt(null) }
+  // Arriving from a course level checkpoint starts that deal, unless another attempt is already running.
+  useEffect(() => {
+    let id: string | null = null
+    try { id = sessionStorage.getItem(PENDING_CHECK); sessionStorage.removeItem(PENDING_CHECK) } catch {}
+    const c = id && CHECKS.find(x => x.id === id)
+    if (c && !readAttempt()) start(c)
+  }, [])
 
   if (result) return <Result r={result} onBack={() => setResult(null)} onRetry={() => start(CHECKS.find(c => c.id === result.check_id)!)} />
   if (attempt) {
@@ -42,7 +50,7 @@ export default function DealCheck({ session, onOpenInPro }: { session: Session |
           const best = history.filter(h => h.check_id === c.id).sort((a, b) => b.score - a.score || a.seconds - b.seconds)[0]
           return (
             <div key={c.id} className="card flex flex-col">
-              <div className="text-xs font-medium text-slate-500">Level {c.level} · {c.where}</div>
+              <div className="text-xs font-medium text-slate-500">{levelForCheck(c.id) ? `Level ${levelForCheck(c.id)!.num} checkpoint` : `Level ${c.level}`} · {c.where}</div>
               <div className="mt-1 font-display text-lg font-semibold">{c.title}</div>
               <p className="mt-1 flex-1 text-sm text-slate-600">{c.pitch}</p>
               <div className="mt-3 flex items-center justify-between">
@@ -89,7 +97,7 @@ function Run({ c, a, session, onQuit, onOpen, onDone }: { c: Check; a: Attempt; 
       <div className="flex flex-wrap items-center gap-3">
         <button className="btn" onClick={onQuit}>‹ Leave</button>
         <div>
-          <div className="text-xs text-slate-500">Deal Check · Level {c.level}</div>
+          <div className="text-xs text-slate-500">Deal Check{levelForCheck(c.id) ? ` · Level ${levelForCheck(c.id)!.num} checkpoint` : ""}</div>
           <div className="font-display text-xl font-semibold">{c.title}, {c.where}</div>
         </div>
         <div className="num ml-auto rounded-lg bg-brand-900 px-4 py-2 text-lg font-semibold text-white">{mmss((now - a.start) / 1000)}</div>
@@ -173,6 +181,8 @@ function Result({ r, onBack, onRetry }: { r: CheckRecord; onBack: () => void; on
         <div className="text-xs text-slate-500">Deal Check · {c.title}</div>
         <div className="num mt-1 text-4xl font-semibold text-ink">{r.score}<span className="text-lg text-slate-400"> / 100</span></div>
         <div className="mt-1 text-sm text-slate-600">in {mmss(r.seconds)}{r.used_workspace ? ", using the workspace" : ""}</div>
+        {levelForCheck(c.id) && <div className={`mx-auto mt-3 inline-block rounded-full px-3 py-1 text-sm font-semibold ${r.score >= CHECKPOINT_PASS ? "bg-pass-50 text-pass-600" : "bg-amber-50 text-amber-800"}`}>
+          {r.score >= CHECKPOINT_PASS ? `✓ Level ${levelForCheck(c.id)!.num} checkpoint passed` : `Level ${levelForCheck(c.id)!.num} checkpoint needs ${CHECKPOINT_PASS} or more`}</div>}
       </div>
       <Card title="Your answers vs the key">
         <table className="tbl"><thead><tr><th className="text-left" /><th>You</th><th>Key</th><th /></tr></thead><tbody>

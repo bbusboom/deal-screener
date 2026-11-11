@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from "react"
 import type { Session } from "@supabase/supabase-js"
 import { COURSE, allLessons, glossary, type Block, type Module, type Lesson } from "./curriculum"
-import { getProgress, saveProgress, getSession, type Progress } from "../lib/store"
+import { getProgress, saveProgress, getSession, listChecks, type Progress, type CheckRecord } from "../lib/store"
+import { CHECKS } from "./checks"
 import { StateSelect, StateSnapshot } from "../components/MarketPane"
 import { useHomeState, setHomeState } from "../lib/market"
 import { PRACTICE, norm } from "../lib/model"
@@ -9,7 +10,7 @@ import Photo from "./Photo"
 import Diagram, { DiagramArt } from "./Diagrams"
 import Calc from "./Calc"
 import AiPanel from "../components/AiPanel"
-import { LEVELS, GUIDE, STEPS, LESSON_GOALS, COVER_ART, levelOf, type Step } from "./levels"
+import { LEVELS, GUIDE, STEPS, LESSON_GOALS, COVER_ART, CHECKPOINT_PASS, PENDING_CHECK, levelOf, type Step, type Level } from "./levels"
 
 type View = { kind: "home" } | { kind: "lesson"; id: string } | { kind: "quiz"; id: string } | { kind: "module"; id: string } | { kind: "glossary" }
 const PASS = 0.8
@@ -116,7 +117,7 @@ function QuizView({ mod, onDone, onBack }: { mod: Module; onDone: (score: number
   )
 }
 
-export default function Course({ session, onPractice }: { session: Session | null; onPractice: () => void }) {
+export default function Course({ session, onPractice, onCheck }: { session: Session | null; onPractice: () => void; onCheck?: () => void }) {
   const [view, setView] = useState<View>(() => {
     try {
       const v = JSON.parse(sessionStorage.getItem(VIEW_KEY) || "null") as View | null
@@ -127,6 +128,12 @@ export default function Course({ session, onPractice }: { session: Session | nul
   useEffect(() => { try { sessionStorage.setItem(VIEW_KEY, JSON.stringify(view)) } catch {} }, [view])
   const [prog, setProg] = useState<Progress>({ lessons: {}, quizzes: {} })
   useEffect(() => { getProgress(session).then(setProg) }, [session?.user.id])
+  const [checks, setChecks] = useState<CheckRecord[]>([])
+  useEffect(() => { listChecks(session).then(setChecks).catch(() => {}) }, [session?.user.id])
+  const bestCheck = (id?: string) => id ? Math.max(-1, ...checks.filter(c => c.check_id === id).map(c => c.score)) : -1
+  const quizzesDone = (x: Level) => x.modules.every(id => prog.quizzes[id]?.passed)
+  const levelDone = (x: Level) => quizzesDone(x) && (!x.checkpoint || bestCheck(x.checkpoint) >= CHECKPOINT_PASS)
+  const goCheck = (id: string) => { try { sessionStorage.setItem(PENDING_CHECK, id) } catch {}; onCheck?.() }
   useEffect(() => { scrollTo({ top: 0 }) }, [view])
   const [lvSel, setLvSel] = useState<{ id: string; back: boolean } | null>(() => { try { const id = sessionStorage.getItem(LEVEL_KEY); return id ? { id, back: false } : null } catch { return null } })
   const pickLevel = (id: string, back: boolean) => { setLvSel({ id, back }); try { sessionStorage.setItem(LEVEL_KEY, id) } catch {} }
@@ -149,7 +156,6 @@ export default function Course({ session, onPractice }: { session: Session | nul
     const inMod = curMod.lessons.findIndex(x => x.id === cur.id)
     const upNext = allLessons[allLessons.findIndex(x => x.id === cur.id) + 1]
     const finished = !nextLesson && modsDone === COURSE.length
-    const levelDone = (x: typeof lv) => x.modules.every(id => prog.quizzes[id]?.passed)
     return (
       <main className="mx-auto max-w-5xl px-4 py-6 md:px-8">
         <div className="flex flex-wrap items-end justify-between gap-2">
@@ -259,6 +265,28 @@ export default function Course({ session, onPractice }: { session: Session | nul
                 </button>)
             })}
           </div>
+          {(() => {
+            const qd = quizzesDone(lv), ck = lv.checkpoint ? CHECKS.find(c => c.id === lv.checkpoint) : undefined, best = bestCheck(lv.checkpoint), done = levelDone(lv)
+            return (
+              <div className={`mt-4 flex flex-col gap-4 rounded-lg border-2 p-5 sm:flex-row sm:items-center ${done ? "border-pass-600 bg-pass-50" : "border-amber-300 bg-amber-50/60"}`}>
+                <div className={`grid h-12 w-12 shrink-0 place-items-center rounded-full text-lg font-bold ${done ? "bg-pass-600 text-white" : "bg-amber-400 text-[#1c1305]"}`}>{done ? "✓" : "★"}</div>
+                <div className="min-w-0 flex-1">
+                  <div className="text-xs font-semibold uppercase tracking-wider text-amber-800">Level {lv.num} checkpoint</div>
+                  {ck ? <>
+                    <div className="mt-0.5 font-bold">Deal Check: {ck.title}, {ck.where}</div>
+                    <p className="mt-1 text-sm text-slate-700">A timed broker package. Work out year one NOI, the cap rate and DSCR, and decide if it clears the buy box. Score {CHECKPOINT_PASS} or more{lv.modules.length ? " and pass every module quiz" : ""} to finish Level {lv.num}.</p>
+                    <div className="mt-1 text-xs text-slate-500">{best >= 0 ? `Best score: ${best}` : "Not tried yet"} · Quizzes passed: {lv.modules.filter(id => prog.quizzes[id]?.passed).length} of {lv.modules.length}{!qd && best < 0 ? " · recommended after the quizzes" : ""}</div>
+                  </> : <>
+                    <div className="mt-0.5 font-bold">Pass the Module {lv.modules.map(id => COURSE.find(m => m.id === id)!.num).join(" and ")} quizzes</div>
+                    <p className="mt-1 text-sm text-slate-700">Level {lv.num} has no math yet, so its quizzes are the checkpoint. The first Deal Check comes at the end of Level {lv.num + 1}, once you can build NOI.</p>
+                    <div className="mt-1 text-xs text-slate-500">Quizzes passed: {lv.modules.filter(id => prog.quizzes[id]?.passed).length} of {lv.modules.length}</div>
+                  </>}
+                </div>
+                {done ? <span className="shrink-0 text-sm font-semibold text-pass-600">Level {lv.num} complete</span>
+                  : ck ? <button className={`btn shrink-0 justify-center ${qd ? "btn-primary" : ""}`} onClick={() => goCheck(ck.id)}>{best >= 0 ? "Try again" : "Start the checkpoint"} →</button>
+                  : null}
+              </div>)
+          })()}
           <div className="mt-5 flex items-center justify-between gap-2">
             {lvIdx > 0 ? <button className="btn" onClick={() => pickLevel(LEVELS[lvIdx - 1].id, true)}>← Level {lvIdx}: {LEVELS[lvIdx - 1].name}</button> : <span />}
             {lvIdx < LEVELS.length - 1 ? <button className="btn" onClick={() => pickLevel(LEVELS[lvIdx + 1].id, false)}>Level {lvIdx + 2}: {LEVELS[lvIdx + 1].name} →</button> : <span />}

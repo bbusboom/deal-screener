@@ -130,7 +130,7 @@ export default function App({ learnOnly = false }: { learnOnly?: boolean }) {
               </div>
             </div>
             <InstallPrompt learnOnly={learnOnly} />
-            {learnTab === "course" ? <Course session={session} onPractice={() => setLearnTab("practice")} /> : learnTab === "challenges" ? <Challenges session={session} /> : learnTab === "check" ? <DealCheck session={session} onOpenInPro={learnOnly ? undefined : openInPro} /> : <LearnerApp session={session} toast={setToast} onOpenInPro={openInPro} />}
+            {learnTab === "course" ? <Course session={session} onPractice={() => setLearnTab("practice")} onCheck={() => { setLearnTab("check"); scrollTo({ top: 0 }) }} /> : learnTab === "challenges" ? <Challenges session={session} /> : learnTab === "check" ? <DealCheck session={session} onOpenInPro={learnOnly ? undefined : openInPro} /> : <LearnerApp session={session} toast={setToast} onOpenInPro={openInPro} />}
             {learnOnly && (
               <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-[#e4e4de] bg-white/95 pb-[env(safe-area-inset-bottom)] backdrop-blur sm:hidden">
                 <div className="grid grid-cols-4">

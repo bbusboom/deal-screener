@@ -94,7 +94,7 @@ export const GUIDE: Record<string, ModuleGuide> = {
   },
   m5: {
     why: "NOI is the number lenders size loans from and buyers price properties from. The next three modules all start with it.",
-    learn: ["Calculate NOI from income and expenses", "Know what does and doesn't belong in NOI", "Explain why debt service and capex sit below the line"],
+    learn: ["Calculate NOI from income and expenses", "Know what does and doesn't belong in NOI", "Tell the seller's NOI, your NOI and the pro forma apart, and price on yours"],
     steps: ["noi"],
   },
   m6: {
@@ -104,7 +104,7 @@ export const GUIDE: Record<string, ModuleGuide> = {
   },
   m7: {
     why: "Most deals use a loan. The loan decides how much cash you need and whether the property can cover its mortgage, which is often what kills a deal.",
-    learn: ["Work out a loan payment from rate and amortization", "Test a deal with DSCR and debt yield", "Size the largest loan a lender will give"],
+    learn: ["Work out a loan payment from rate and amortization", "Test a deal with DSCR and debt yield, and size the largest loan a lender will give", "Explain when borrowing raises your return and when it lowers it"],
     steps: ["debt"],
   },
   m8: {
@@ -157,11 +157,13 @@ export const LESSON_GOALS: Record<string, string> = {
   m4l3: "How to check expenses with the expense ratio and cost per unit, and what normal looks like.",
   m5l1: "How to calculate NOI, the property's profit before any loan, from rent all the way down.",
   m5l2: "What NOI leaves out on purpose, what CapEx is, and what above and below the line mean.",
+  m5l3: "The three NOIs on every deal, the seller's, yours and the pro forma, and which one to price the deal on.",
   m6l1: "What a cap rate is, how to value a building from its NOI, and why a lower cap rate means a higher price.",
   m6l2: "How to compare a price with other sales using price per unit, gross rent multiplier and comps.",
   m7l1: "How loan to value, interest and amortization set your loan, your down payment and your yearly payments.",
   m7l2: "How lenders use DSCR to check that a building can pay its loan, and what the number means.",
   m7l3: "What debt yield is, and how to size a loan three ways and find the one the lender will give.",
+  m7l4: "What leverage is, why a loan can raise or lower your return, and how to tell which by comparing the cap rate with the loan constant.",
   m8l1: "How to calculate the cash flow the owner keeps after the loan.",
   m8l2: "How to add up the cash you invest and calculate cash on cash return.",
   m8l3: "How to find the occupancy where the building just pays its bills and its loan.",

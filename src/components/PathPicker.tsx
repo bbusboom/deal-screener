@@ -1,8 +1,8 @@
-// Path picker shown after sign in: a scroll story through the Learn side, then the Underwrite side,
-// using the landing page's pinned slides and night sky.
+// Path picker shown after sign in: a preview of the Learn side, then the Underwrite side,
+// using the landing page's feature showcase and night sky.
 import { useRef, type ReactNode } from "react"
 import type { Path } from "../lib/store"
-import { useScrollVar, useStage, useIsPhone, STAGE_VH, Sky, Panel } from "../Landing"
+import { useScrollVar, Sky, Panel, Showcase } from "../Landing"
 import "../landing.css"
 
 type Slide = { key: string; tag: string; title: string; body: string; bullets: string[]; visual: ReactNode }
@@ -97,46 +97,8 @@ const PRO: Slide[] = [
 ]
 
 function Story({ id, label, accent, slides, cta, onCta }: { id: string; label: string; accent: string; slides: Slide[]; cta: string; onCta: () => void }) {
-  const ref = useRef<HTMLElement>(null), stage = useStage(ref, slides.length), phone = useIsPhone()
-  const jump = (i: number) => { const el = ref.current; if (!el) return; const total = el.offsetHeight - innerHeight; scrollTo({ top: el.offsetTop + total * (i + 0.5) / slides.length, behavior: "smooth" }) }
-  if (phone) return (
-    <section id={id} className="space-y-16 py-12">
-      <div className="mx-auto flex max-w-6xl items-center gap-3 px-5"><span className="text-sm font-semibold" style={{ color: accent }}>{label}</span>
-        <button className={`ml-auto btn ${id === "pro" ? "btn-gold" : "btn-primary !border-white !bg-white !text-ink"}`} onClick={onCta}>{cta} →</button></div>
-      {slides.map((s, i) => (
-        <div key={s.key} className="lp-stage lp-flat on">
-          <div className="mx-auto w-full max-w-6xl px-5">
-            <div className="text-sm font-medium" style={{ color: accent }}>{String(i + 1).padStart(2, "0")} · {s.tag}</div>
-            <h2 className="serif mt-2 text-3xl font-semibold leading-tight text-white">{s.title}</h2>
-            <p className="mt-3 text-white/70">{s.body}</p>
-            <div className="visual mt-6 flex justify-center">{s.visual}</div>
-          </div>
-        </div>))}
-    </section>)
-  return (
-    <section ref={ref} id={id} className="relative" style={{ height: `calc(100svh + ${slides.length * STAGE_VH}vh)` }}>
-      <div className="sticky top-16 h-[calc(100svh-64px)] overflow-hidden">
-        <div className="absolute inset-x-0 top-0 z-10"><div className="lp-progress" /></div>
-        <div className="absolute left-0 right-0 top-6 z-10 mx-auto flex max-w-6xl items-center gap-3 px-5 md:px-8">
-          <span className="text-sm font-semibold" style={{ color: accent }}>{label}</span>
-          <div className="flex gap-1.5">{slides.map((s, i) => <button key={s.key} aria-label={s.tag} onClick={() => jump(i)} className="h-1.5 rounded-full transition-all duration-500" style={{ width: i === stage ? 22 : 8, background: i === stage ? accent : "#ffffff40" }} />)}</div>
-          <button className={`ml-auto btn ${id === "pro" ? "btn-gold" : "btn-primary !border-white !bg-white !text-ink"}`} onClick={onCta}>{cta} →</button>
-        </div>
-        {slides.map((s, i) => (
-          <div key={s.key} className={`lp-stage ${i === stage ? "on" : i < stage ? "past" : ""}`} aria-hidden={i !== stage}>
-            <div className="mx-auto grid w-full max-w-6xl items-center gap-6 px-5 pt-10 md:grid-cols-2 md:gap-12 md:px-8">
-              <div>
-                <div className="text-sm font-medium" style={{ color: accent }}>{String(i + 1).padStart(2, "0")} · {s.tag}</div>
-                <h2 className="serif mt-3 text-3xl font-semibold leading-tight text-white md:text-[44px]">{s.title}</h2>
-                <p className="mt-4 hidden max-w-lg text-white/70 sm:block md:text-lg">{s.body}</p>
-                <ul className="mt-5 hidden space-y-2 text-white/80 md:block">{s.bullets.map((b, j) => <li key={b} className="pop flex gap-2" style={{ animationDelay: `${200 + j * 120}ms` }}><span style={{ color: accent }}>—</span>{b}</li>)}</ul>
-              </div>
-              <div className="visual"><div className="flex origin-top scale-[.82] justify-center sm:scale-100 md:justify-end">{s.visual}</div></div>
-            </div>
-          </div>))}
-      </div>
-    </section>
-  )
+  return <Showcase id={id} accent={accent} heading={label} items={slides.map(x => ({ key: x.key, name: x.tag, title: x.title, body: x.body, visual: x.visual }))}
+    action={<button className={`btn ${id === "pro" ? "btn-gold" : "!border-white !bg-white !text-ink"}`} onClick={onCta}>{cta} →</button>} />
 }
 
 export default function PathPicker({ username, onPick }: { username?: string | null; current?: Path | null; onPick: (p: Path) => void }) {
@@ -150,7 +112,7 @@ export default function PathPicker({ username, onPick }: { username?: string | n
         <section className="mx-auto flex min-h-[calc(100svh-64px)] max-w-5xl flex-col items-center justify-center px-4 text-center">
           <div className="rise text-sm text-white/60">{username ? `Welcome, ${username}.` : "Welcome."}</div>
           <h1 className="rise serif mt-3 text-4xl font-semibold leading-tight text-white md:text-6xl" style={{ animationDelay: "120ms" }}>Two ways to use Underwriting Desk.</h1>
-          <p className="rise mt-5 max-w-2xl text-lg text-white/65" style={{ animationDelay: "250ms" }}>Learn underwriting from the ground up, or put it to work on a live deal. Scroll to see both, or jump straight in. You can switch any time from the top of the page.</p>
+          <p className="rise mt-5 max-w-2xl text-lg text-white/65" style={{ animationDelay: "250ms" }}>Learn underwriting from the ground up, or put it to work on a live deal. Preview both below, or jump straight in. You can switch any time from the top of the page.</p>
           <div className="rise mt-10 grid w-full max-w-3xl gap-4 sm:grid-cols-2" style={{ animationDelay: "400ms" }}>
             {([["learner", "Learn to underwrite", "New to underwriting, or training interns", "learn"], ["pro", "Underwrite a deal", "Working a live deal", "pro"]] as const).map(([p, t, who, id]) => (
               <div key={p} className="rounded-lg border border-white/12 bg-white/[.04] p-5 text-left backdrop-blur">
@@ -164,12 +126,8 @@ export default function PathPicker({ username, onPick }: { username?: string | n
           </div>
           <button onClick={() => to("learn")} className="cue mt-14 text-xs uppercase tracking-[.25em] text-white/45">Scroll<div className="mx-auto mt-2 h-8 w-px bg-gradient-to-b from-white/60 to-transparent" /></button>
         </section>
-        <Story id="learn" label="Learn" accent="#e8eefb" slides={LEARN} cta="Start learning" onCta={() => onPick("learner")} />
-        <section className="mx-auto max-w-4xl px-4 py-24 text-center">
-          <div className="text-sm text-white/50">Then, when you're working a real deal</div>
-          <h2 className="serif mt-3 text-3xl font-semibold text-white md:text-5xl">The underwriting workspace.</h2>
-        </section>
-        <Story id="pro" label="Underwrite" accent="#f4b24c" slides={PRO} cta="Open the workspace" onCta={() => onPick("pro")} />
+        <Story id="learn" label="Learn to underwrite" accent="#e8eefb" slides={LEARN} cta="Start learning" onCta={() => onPick("learner")} />
+        <Story id="pro" label="Underwrite a deal" accent="#f4b24c" slides={PRO} cta="Open the workspace" onCta={() => onPick("pro")} />
         <section className="px-4 pb-32 pt-24 text-center">
           <h2 className="serif text-3xl font-semibold text-white md:text-5xl">Where do you want to start?</h2>
           <div className="mt-8 flex flex-wrap justify-center gap-3">

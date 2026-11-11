@@ -217,46 +217,45 @@ const STAGES: StageDef[] = [
     </Panel> },
 ]
 
-/** What's inside: one section, normal scrolling. Pick a feature on the left; its preview shows on the right.
- *  It cycles on its own until someone clicks, and pauses while the pointer is over it. */
-function Story() {
+/** A feature list on the left with a live preview on the right. Normal scrolling: it cycles on its own
+ *  until someone clicks, and pauses while the pointer is over it. Used on the landing and welcome pages. */
+export type ShowItem = { key: string; name: string; title: string; body: string; visual: ReactNode }
+export function Showcase({ id, items, accent = "#f4b24c", heading, intro, action }: { id: string; items: ShowItem[]; accent?: string; heading: ReactNode; intro?: ReactNode; action?: ReactNode }) {
   const [i, setI] = useState(0), [auto, setAuto] = useState(true), [hover, setHover] = useState(false)
   const DUR = 7000
   useEffect(() => {
     if (!auto || hover || matchMedia("(prefers-reduced-motion: reduce)").matches) return
-    const t = setTimeout(() => setI(n => (n + 1) % STAGES.length), DUR)
+    const t = setTimeout(() => setI(n => (n + 1) % items.length), DUR)
     return () => clearTimeout(t)
-  }, [i, auto, hover])
+  }, [i, auto, hover, items.length])
   const pick = (n: number) => { setAuto(false); setI(n) }
-  const s = STAGES[i], name = (x: StageDef) => x.tag.split(" · ")[1] || x.tag
+  const s = items[i]
   return (
-    <section id="features" className="scroll-mt-16 py-20 md:py-28" onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)}>
+    <section id={id} className="scroll-mt-16 py-20 md:py-28" onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)}>
       <div className="mx-auto max-w-6xl px-5 md:px-8">
-        <h2 className="serif text-3xl font-semibold leading-tight text-white md:text-5xl">What's inside</h2>
-        <p className="mt-3 max-w-xl text-lg text-white/60">Five tools, one place. Learn it, practice it on deals built to trick you, then use it on real ones.</p>
-
-        {/* Phone: feature names scroll sideways */}
-        <div className="-mx-5 mt-8 flex gap-2 overflow-x-auto px-5 pb-1 md:hidden">
-          {STAGES.map((x, n) => <button key={x.key} onClick={() => pick(n)} className={`shrink-0 rounded-full px-4 py-2 text-sm font-medium transition ${n === i ? "bg-[#f4b24c] text-[#1c1305]" : "bg-white/10 text-white/70"}`}>{name(x)}</button>)}
+        <div className="flex flex-wrap items-end justify-between gap-4">
+          <div><h2 className="serif text-3xl font-semibold leading-tight text-white md:text-5xl">{heading}</h2>
+            {intro && <p className="mt-3 max-w-xl text-lg text-white/60">{intro}</p>}</div>
+          {action}
         </div>
-
+        <div className="-mx-5 mt-8 flex gap-2 overflow-x-auto px-5 pb-1 md:hidden">
+          {items.map((x, n) => <button key={x.key} onClick={() => pick(n)} className={`shrink-0 rounded-full px-4 py-2 text-sm font-medium transition ${n === i ? "text-[#1c1305]" : "bg-white/10 text-white/70"}`} style={n === i ? { background: accent } : undefined}>{x.name}</button>)}
+        </div>
         <div className="mt-8 grid gap-10 md:mt-12 md:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] md:items-start">
-          {/* Desktop: the list */}
           <ol className="hidden space-y-1 md:block">
-            {STAGES.map((x, n) => {
+            {items.map((x, n) => {
               const on = n === i
               return (
                 <li key={x.key}>
                   <button onClick={() => pick(n)} aria-current={on ? "true" : undefined} className={`relative block w-full overflow-hidden rounded-lg px-5 py-4 text-left transition ${on ? "bg-white/[.06]" : "hover:bg-white/[.03]"}`}>
-                    <div className={`text-sm font-semibold ${on ? "text-[#f4b24c]" : "text-white/45"}`}>{name(x)}</div>
+                    <div className="text-sm font-semibold" style={{ color: on ? accent : "#ffffff73" }}>{x.name}</div>
                     <div className={`serif mt-1 text-xl font-semibold leading-snug ${on ? "text-white" : "text-white/55"}`}>{x.title}</div>
                     {on && <p className="mt-2 text-[15px] leading-relaxed text-white/65">{x.body}</p>}
-                    {on && auto && <span key={i + (hover ? "h" : "")} className="absolute bottom-0 left-0 h-0.5 bg-[#f4b24c]" style={{ animation: hover ? "none" : `lpfill ${DUR}ms linear forwards`, width: hover ? "0%" : undefined }} />}
+                    {on && auto && !hover && <span key={i} className="absolute bottom-0 left-0 h-0.5" style={{ background: accent, animation: `lpfill ${DUR}ms linear forwards` }} />}
                   </button>
                 </li>)
             })}
           </ol>
-          {/* The preview */}
           <div>
             <div className="md:hidden">
               <h3 className="serif text-2xl font-semibold leading-snug text-white">{s.title}</h3>
@@ -268,6 +267,11 @@ function Story() {
       </div>
     </section>
   )
+}
+
+function Story() {
+  return <Showcase id="features" heading="What's inside" intro="Five tools, one place. Learn it, practice it on deals built to trick you, then use it on real ones."
+    items={STAGES.map(x => ({ key: x.key, name: x.tag.split(" · ")[1] || x.tag, title: x.title, body: x.body, visual: x.visual }))} />
 }
 
 /* ---------- page ---------- */

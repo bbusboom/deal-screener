@@ -2,7 +2,7 @@
 // Cinematic night skyline, a pinned scroll story where each use of the site slides in, and reveal animations.
 // Numbers in the mockups come from the course's Oak Ridge example and the Cedar Ridge challenge, so they're real model output.
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react"
-import { CheckIcon, StarIcon } from "./components/Site"
+import { CheckIcon, StarIcon, LogoMark } from "./components/Site"
 import "./landing.css"
 
 type Go = (mode: "signin" | "signup") => void
@@ -92,8 +92,8 @@ export function Sky() {
 
 /* ---------- pieces ---------- */
 const Logo = () => (
-  <div className="flex items-center gap-2">
-    <div className="grid h-9 w-9 place-items-center rounded-lg bg-[#f4b24c] text-sm font-bold text-[#1c1305]">UD</div>
+  <div className="flex items-center gap-2.5">
+    <LogoMark className="h-8 w-[30px] text-white" />
     <div className="whitespace-nowrap font-bold leading-tight text-white">Underwriting Desk<div className="hidden text-[11px] font-normal text-white/60 sm:block">Real estate underwriting</div></div>
   </div>
 )

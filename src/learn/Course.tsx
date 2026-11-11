@@ -7,7 +7,7 @@ import { StateSelect, StateSnapshot } from "../components/MarketPane"
 import { useHomeState, setHomeState } from "../lib/market"
 import { PRACTICE, norm } from "../lib/model"
 import Photo from "./Photo"
-import { SitePhoto, CheckIcon, StarIcon, QuizIcon, XIcon } from "../components/Site"
+import { SitePhoto, LogoMark, CheckIcon, StarIcon, QuizIcon, XIcon } from "../components/Site"
 import Diagram, { DiagramArt } from "./Diagrams"
 import Calc from "./Calc"
 import { withTerms } from "./Terms"
@@ -532,11 +532,11 @@ function certHtml(name: string, lv: Level, date: string, id: string, score: numb
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Geist:wght@400;500;600&display=swap" rel="stylesheet">
 <style>@page{size:11in 8.5in;margin:0}*{box-sizing:border-box}body{margin:0;font-family:Geist,system-ui,sans-serif;color:#0f172a;-webkit-print-color-adjust:exact;print-color-adjust:exact}
 .c{width:11in;height:8.5in;padding:.55in;background:#fbf8f1}.f{height:100%;border:2px solid #0b1226;padding:.55in .7in;display:flex;flex-direction:column;position:relative}
-.f:before{content:"";position:absolute;inset:8px;border:1px solid #f4b24c}.top{display:flex;align-items:center;gap:12px}.m{width:40px;height:40px;border-radius:8px;background:#f4b24c;display:grid;place-items:center;font-weight:700;color:#1c1305}
+.f:before{content:"";position:absolute;inset:8px;border:1px solid #f4b24c}.top{display:flex;align-items:center;gap:12px}.m{display:grid;place-items:center}
 .w{font-family:Fraunces,Georgia,serif;font-size:24px;font-weight:600}.k{margin-top:.55in;font-size:15px;color:#64748b;letter-spacing:.02em}h1{font-family:Fraunces,Georgia,serif;font-weight:600;font-size:54px;line-height:1.05;margin:.12in 0 0}
 .l{margin-top:.25in;font-size:19px;color:#334155;max-width:7.6in;line-height:1.5}.l b{color:#0f172a}.b{margin-top:auto;display:flex;justify-content:space-between;align-items:flex-end;font-size:13px;color:#64748b}
 .s{font-family:Fraunces,Georgia,serif;font-size:22px;color:#0f172a}.ln{border-top:1px solid #94a3b8;padding-top:6px;margin-top:4px;width:2.6in}</style></head>
-<body><div class="c"><div class="f"><div class="top"><div class="m">UD</div><div class="w">Underwriting Desk</div></div>
+<body><div class="c"><div class="f"><div class="top"><div class="m"><svg width="36" height="39" viewBox="0 0 24 26" xmlns="http://www.w3.org/2000/svg"><rect x="1.5" y="1.5" width="21" height="23" rx="3" fill="none" stroke="#0b1226" stroke-width="2"/><path d="M6 8h12M6 12.5h12" stroke="#0b1226" stroke-opacity=".5" stroke-width="2" stroke-linecap="round"/><path d="M6 18.5h12" stroke="#f4b24c" stroke-width="2.6" stroke-linecap="round"/></svg></div><div class="w">Underwriting Desk</div></div>
 <div class="k">This certifies that</div><h1>${e(name || "Your name")}</h1>
 <div class="l">completed <b>Level ${lv.num}: ${e(lv.name)}</b> of the Underwriting Desk real estate underwriting course${lv.checkpoint && score >= 0 ? `, including the timed Deal Check checkpoint with a score of <b>${score}</b>` : ", passing every module quiz"}. ${e(lv.outcome)}</div>
 <div class="b"><div><div class="s">Blake Busboom</div><div class="ln">Founder, Underwriting Desk</div></div><div style="text-align:right"><div>Issued ${e(date)}</div><div>Certificate ID ${e(id)}</div><div>getdealscreener.com</div></div></div>
@@ -565,7 +565,7 @@ function Certificate({ lv, done, score, session, onBack }: { lv: Level; done: bo
           {/* Preview */}
           <div className="mt-8 overflow-hidden rounded-lg border border-slate-200 bg-[#fbf8f1] p-4 shadow-sm sm:p-6">
             <div className="relative border-2 border-night p-6 sm:p-10 before:pointer-events-none before:absolute before:inset-1.5 before:border before:border-[#f4b24c]">
-              <div className="flex items-center gap-2.5"><div className="grid h-8 w-8 place-items-center rounded-md bg-[#f4b24c] text-xs font-bold text-[#1c1305]">UD</div><span className="font-serif text-lg font-semibold">Underwriting Desk</span></div>
+              <div className="flex items-center gap-2.5"><LogoMark className="h-7 w-[26px] text-night" /><span className="font-serif text-lg font-semibold">Underwriting Desk</span></div>
               <div className="mt-8 text-sm text-slate-500">This certifies that</div>
               <div className="mt-1 font-serif text-4xl font-semibold leading-tight sm:text-5xl">{name.trim() || "Your name"}</div>
               <p className="mt-4 max-w-2xl leading-relaxed text-slate-700">completed <b className="text-ink">Level {lv.num}: {lv.name}</b> of the Underwriting Desk real estate underwriting course{lv.checkpoint && score >= 0 ? <>, including the timed Deal Check checkpoint with a score of <b className="text-ink">{score}</b></> : ", passing every module quiz"}. {lv.outcome}</p>

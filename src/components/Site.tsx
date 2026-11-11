@@ -69,3 +69,14 @@ export const StarIcon = ({ className = "h-4 w-4", filled = true }: { className?:
 export function Skeleton({ className = "" }: { className?: string }) {
   return <div className={`animate-pulse rounded-md bg-slate-200/70 ${className}`} />
 }
+
+/** Brand mark: a sheet whose bottom line is gold. Outline uses currentColor. */
+export function LogoMark({ className = "h-7 w-[26px]" }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 26" className={className} aria-hidden="true">
+      <rect x="1.5" y="1.5" width="21" height="23" rx="3" fill="none" stroke="currentColor" strokeWidth="2" opacity=".9" />
+      <path d="M6 8h12M6 12.5h12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" opacity=".55" />
+      <path d="M6 18.5h12" stroke="#f4b24c" strokeWidth="2.6" strokeLinecap="round" />
+    </svg>
+  )
+}

@@ -1,5 +1,5 @@
 import { Icon } from "./components/Icons"
-import { Skeleton } from "./components/Site"
+import { Skeleton, LogoMark } from "./components/Site"
 import { syncTemplates } from "./lib/templates"
 import { useEffect, useState } from "react"
 import type { Session } from "@supabase/supabase-js"
@@ -108,7 +108,7 @@ export default function App({ learnOnly = false }: { learnOnly?: boolean }) {
       <header className="sticky top-0 z-20 border-b border-white/10 bg-night/95 pt-[env(safe-area-inset-top)] text-white backdrop-blur-xl">
         <div className="mx-auto flex h-16 max-w-7xl items-center gap-6 px-4 md:px-8">
           <button className="flex shrink-0 items-center gap-2.5" onClick={() => { if (path === "learner") setLearnTab("course"); scrollTo({ top: 0 }) }}>
-            <div className="grid h-8 w-8 place-items-center rounded-md bg-[#f4b24c] text-[13px] font-bold text-[#1c1305]">UD</div>
+            <LogoMark className="h-7 w-[26px]" />
             <span className="font-serif text-[19px] font-semibold tracking-tight">Underwriting Desk</span>
           </button>
           {path === "learner" && !choosing && (
@@ -160,7 +160,7 @@ export default function App({ learnOnly = false }: { learnOnly?: boolean }) {
       <footer className={`border-t border-slate-200 bg-white ${learnOnly ? "pb-24 sm:pb-0" : ""}`}>
         <div className="mx-auto grid max-w-7xl gap-8 px-4 py-10 text-sm md:grid-cols-[1.4fr_1fr_1fr] md:px-8">
           <div>
-            <div className="flex items-center gap-2.5"><div className="grid h-7 w-7 place-items-center rounded bg-[#f4b24c] text-[11px] font-bold text-[#1c1305]">UD</div><span className="font-serif text-lg font-semibold">Underwriting Desk</span></div>
+            <div className="flex items-center gap-2.5"><LogoMark className="h-6 w-[22px]" /><span className="font-serif text-lg font-semibold">Underwriting Desk</span></div>
             <p className="mt-3 max-w-sm text-slate-500">Real estate underwriting, taught on real deals. Built in Fayetteville, Arkansas by Blake Busboom.</p>
           </div>
           <div>

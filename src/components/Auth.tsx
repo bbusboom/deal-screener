@@ -1,4 +1,5 @@
 import { useState } from "react"
+import { LogoMark } from "./Site"
 import { signIn, signUp, resetPassword, updatePassword } from "../lib/store"
 
 type Mode = "signin" | "signup" | "forgot" | "newpass"
@@ -36,7 +37,7 @@ export default function Auth({ initial = "signin", onDone, onBack, onSignedUp, a
     <div className="grid min-h-screen place-items-center bg-night px-4">
       <div className="w-full max-w-md">
         <div className="mb-6 flex items-center justify-center gap-2 text-white">
-          <div className="grid h-10 w-10 place-items-center rounded-lg bg-white/15 font-bold">UD</div>
+          <LogoMark className="h-9 w-[33px]" />
           <div><div className="text-xl font-bold leading-tight">Underwriting Desk</div><div className="text-xs text-white/70">{app ? "Same account as getdealscreener.com" : "Real estate underwriting"}</div></div>
         </div>
         <form onSubmit={submit} className="rounded-lg bg-white p-6 shadow-xl">

@@ -238,7 +238,7 @@ export const CORE_LESSONS: Record<string, Lesson[]> = {
   /* ------------------------------------------------------------------ 7 */
   m7: [
     {
-      id: "m7l1", title: "How a loan works", minutes: 9, blocks: [
+      id: "m7l1", title: "How a loan works", minutes: 11, blocks: [
         { t: "p", text: "Most buyers don't pay all cash. They borrow most of the price from a lender and put in the rest themselves. The cash the buyer puts in is called equity. The loan plus the equity always add up to the price." },
         { t: "diagram", d: "capStack" },
         { t: "formula", name: "Loan to value (LTV)", f: "Loan amount ÷ price", parts: [["Loan amount", "How much the lender lends."], ["Price", "What the building costs, or what an appraiser says it's worth."]], say: "What share of the price is borrowed." },
@@ -249,8 +249,10 @@ export const CORE_LESSONS: Record<string, Lesson[]> = {
         { t: "p", text: "The monthly payment comes from a standard loan formula that every financial calculator and spreadsheet has built in (in Excel it's =PMT). You don't need to work it out by hand. You do need to know the three things that go into it: the loan amount, the interest rate and the amortization." },
         { t: "formula", name: "Annual debt service", f: "Monthly loan payment × 12", parts: [["Monthly loan payment", "Principal plus interest, paid every month."], ["× 12", "Turns it into a yearly number so it lines up with NOI, which is also yearly."]], say: "Everything you pay the lender in a year." },
         { t: "example", title: "Oak Ridge annual debt service", rows: [["$8,849 × 12", "$106,187", true]] },
+        { t: "p", text: "Don't mix up amortization with the loan's term. The term is how long you have the loan before the whole remaining balance is due. The amortization only sets the size of the payment. Most apartment loans have a term shorter than their amortization: a 10 year term with 30 year amortization is common. You make payments as if you had 30 years, but at year 10 you still owe most of the loan, and you have to pay it off in one lump, called a balloon payment. Owners usually do that by selling the building or taking out a new loan, called refinancing." },
+        { t: "example", title: "Oak Ridge loan with a 10 year term", rows: [["Loan: $1,400,000 at 6.5%, 30 year amortization", ""], ["Monthly payment, same as above", "$8,849"], ["Payments made by the end of the term: 10 years × 12", "120 of 360"], ["Still owed when the term ends, the balloon", "$1,186,866", true]] },
         { t: "p", text: "Some loans start with interest only years: you pay just the interest part, so the payment is lower, but you don't pay down what you owe. When that period ends, the payment jumps up to include principal." },
-        { t: "terms", items: [["Debt service", "The total loan payments in a year, principal plus interest."], ["Amortization", "Paying a loan down over time with regular payments; also the number of years those payments are spread over."], ["Interest only", "Paying only interest for a period, so the balance doesn't fall."]] },
+        { t: "terms", items: [["Debt service", "The total loan payments in a year, principal plus interest."], ["Amortization", "Paying a loan down over time with regular payments; also the number of years those payments are spread over."], ["Interest only", "Paying only interest for a period, so the balance doesn't fall."], ["Loan term", "How long you have the loan before the remaining balance is due. Often shorter than the amortization."], ["Balloon payment", "The remaining loan balance, paid in one lump when the term ends."]] },
       ],
     },
     {

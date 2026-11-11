@@ -47,3 +47,10 @@
   .no-print { display: none !important; }
   @page { margin: 0.5in; }
 }
+
+/* Course pages slide in, so moving between levels and modules feels like turning a page. */
+.page-in { animation: pagein .35s cubic-bezier(.2,.7,.2,1) both; }
+.page-in-back { animation: pageinback .35s cubic-bezier(.2,.7,.2,1) both; }
+@keyframes pagein { from { opacity: 0; transform: translateX(24px); } }
+@keyframes pageinback { from { opacity: 0; transform: translateX(-24px); } }
+@media (prefers-reduced-motion: reduce) { .page-in, .page-in-back { animation: none; } }

@@ -14,6 +14,7 @@ import { LEVELS, GUIDE, STEPS, LESSON_GOALS, levelOf, type Step } from "./levels
 type View = { kind: "home" } | { kind: "lesson"; id: string } | { kind: "quiz"; id: string } | { kind: "module"; id: string } | { kind: "glossary" }
 const PASS = 0.8
 const VIEW_KEY = "dealScreener.course.view"
+const LEVEL_KEY = "dealScreener.course.level"
 
 function blockText(b: Block): string {
   if (b.t === "p" || b.t === "tip") return b.text
@@ -127,6 +128,8 @@ export default function Course({ session, onPractice }: { session: Session | nul
   const [prog, setProg] = useState<Progress>({ lessons: {}, quizzes: {} })
   useEffect(() => { getProgress(session).then(setProg) }, [session?.user.id])
   useEffect(() => { scrollTo({ top: 0 }) }, [view])
+  const [lvSel, setLvSel] = useState<{ id: string; back: boolean } | null>(() => { try { const id = sessionStorage.getItem(LEVEL_KEY); return id ? { id, back: false } : null } catch { return null } })
+  const pickLevel = (id: string, back: boolean) => { setLvSel({ id, back }); try { sessionStorage.setItem(LEVEL_KEY, id) } catch {} }
   const update = (fn: (p: Progress) => Progress) => setProg(p => { const n = fn(p); saveProgress(session, n); return n })
 
   const lessonsDone = allLessons.filter(l => prog.lessons[l.id]).length
@@ -137,94 +140,134 @@ export default function Course({ session, onPractice }: { session: Session | nul
   const lesson = view.kind === "lesson" ? allLessons.find(l => l.id === view.id)! : null
   const ctx = useMemo(() => lesson ? `Module ${lesson.module.num}: ${lesson.module.title}. Lesson: ${lesson.title}.\n` + lesson.blocks.map(blockText).filter(Boolean).join("\n") : "", [lesson?.id])
 
-  /* ---------- home ---------- */
-  if (view.kind === "home") return (
-    <main className="mx-auto max-w-5xl px-4 py-6 md:px-8">
-      <div className="rounded-lg bg-brand-900 p-6 text-white md:p-8">
-        <div className="text-xs font-semibold uppercase tracking-wider text-brand-100">Underwriting Desk</div>
-        <h1 className="mt-1 text-2xl font-bold md:text-3xl">Learn to underwrite real estate</h1>
-        <p className="mt-2 max-w-2xl text-white/80">Four levels and thirteen modules: the basics of real estate first, then building the underwriting model step by step, then judging a deal, then how a professional team does it. Real photos, diagrams, worked examples, a quiz after each module, and Desk AI for any question.</p>
-        <div className="mt-5 flex flex-wrap items-center gap-4">
-          {resume && <button className="btn border-white bg-white text-brand-700 hover:bg-brand-50" onClick={() => setView({ kind: "lesson", id: resume.id })}>{lessonsDone ? "Continue" : "Start"}: {resume.title} →</button>}
-          <div className="text-sm text-white/80">{lessonsDone} of {allLessons.length} lessons · {modsDone} of {COURSE.length} modules complete</div>
-        </div>
-        <div className="mt-3 h-2 max-w-md overflow-hidden rounded-full bg-white/20"><div className="h-full bg-white" style={{ width: `${(lessonsDone / allLessons.length) * 100}%` }} /></div>
-      </div>
-      {lessonsDone < 3 && (
-        <div className="card mt-4 flex items-center gap-4 !py-4">
-          <img src="/founder-face.jpg?v=2" alt="Blake Busboom, founder of Underwriting Desk" className="h-14 w-14 shrink-0 rounded-full object-cover" />
-          <div className="min-w-0">
-            <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">From the founder</div>
-            <p className="mt-0.5 text-sm text-ink">“I built Underwriting Desk so junior underwriters can learn the basics quickly, then use their own mistakes to get good fast.” <span className="text-slate-500">· Blake Busboom</span></p>
+  /* ---------- home: focused on where the learner is, one level at a time ---------- */
+  if (view.kind === "home") {
+    const cur = resume || allLessons[allLessons.length - 1]
+    const curMod = cur.module, curLv = levelOf(curMod.id)
+    const lv = LEVELS.find(x => x.id === lvSel?.id) || curLv, lvIdx = LEVELS.indexOf(lv)
+    const mods = lv.modules.map(id => COURSE.find(m => m.id === id)!).filter(Boolean)
+    const inMod = curMod.lessons.findIndex(x => x.id === cur.id)
+    const upNext = allLessons[allLessons.findIndex(x => x.id === cur.id) + 1]
+    const finished = !nextLesson && modsDone === COURSE.length
+    const levelDone = (x: typeof lv) => x.modules.every(id => prog.quizzes[id]?.passed)
+    return (
+      <main className="mx-auto max-w-5xl px-4 py-6 md:px-8">
+        <div className="flex flex-wrap items-end justify-between gap-2">
+          <div>
+            <h1 className="text-2xl font-bold">Learn to underwrite real estate</h1>
+            <p className="text-sm text-slate-500">Four levels, thirteen modules. Go in order; each one builds on the last.</p>
           </div>
-        </div>)}
-      {/* The path: four levels, each building on the last. */}
-      <div className="mt-6">
-        <div className="text-xs font-semibold uppercase tracking-wider text-slate-500">Your path</div>
-        <div className="mt-2 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
-          {LEVELS.map(lv => {
-            const passed = lv.modules.filter(id => prog.quizzes[id]?.passed).length
-            return (
-              <a key={lv.id} href={"#" + lv.id} onClick={e => { e.preventDefault(); document.getElementById(lv.id)?.scrollIntoView({ behavior: "smooth", block: "start" }) }}
-                className="card !p-4 hover:border-brand-500">
-                <div className="flex items-center justify-between text-xs font-semibold uppercase tracking-wider"><span className="text-brand-500">Level {lv.num}</span><span className="text-slate-400">{lv.tag}</span></div>
-                <div className="mt-0.5 font-bold">{lv.name}</div>
-                <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-slate-100"><div className="h-full bg-pass-600" style={{ width: `${(passed / lv.modules.length) * 100}%` }} /></div>
-                <div className="mt-1 text-xs text-slate-500">{passed} of {lv.modules.length} modules</div>
-              </a>)
-          })}
+          <div className="w-full max-w-xs text-right text-xs text-slate-500 sm:w-auto">
+            {lessonsDone} of {allLessons.length} lessons · {modsDone} of {COURSE.length} modules
+            <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-slate-200 sm:w-56"><div className="h-full bg-pass-600" style={{ width: `${(lessonsDone / allLessons.length) * 100}%` }} /></div>
+          </div>
         </div>
-      </div>
-      {LEVELS.map((lv, li) => {
-        const mods = lv.modules.map(id => COURSE.find(m => m.id === id)!).filter(Boolean)
-        const last = li === LEVELS.length - 1
-        return (
-          <section key={lv.id} id={lv.id} className="mt-8 scroll-mt-24">
-            <div className="rounded-lg border border-slate-200 bg-white p-5">
-              <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-                <span className="text-xs font-semibold uppercase tracking-wider text-brand-500">Level {lv.num} · {lv.tag}</span>
-                <h2 className="text-xl font-bold">{lv.name}</h2>
-                <span className="text-sm text-slate-500">Modules {mods[0].num} to {mods[mods.length - 1].num}</span>
-              </div>
-              <p className="mt-2 text-[15px] text-ink/90">{lv.about}</p>
-              <div className="mt-3 grid gap-3 text-sm md:grid-cols-2">
-                <div className="rounded-md bg-brand-50 px-3 py-2"><b className="text-brand-700">How it relates to underwriting: </b><span className="text-slate-700">{lv.connects}</span></div>
-                <div className="rounded-md bg-slate-50 px-3 py-2"><b>When you finish: </b><span className="text-slate-700">{lv.outcome}</span></div>
+
+        {/* Where you are: the one lesson to do next. */}
+        <div className="mt-5 overflow-hidden rounded-xl bg-brand-900 text-white shadow-sm">
+          <div className="grid gap-6 p-6 md:grid-cols-[1fr_240px] md:p-8">
+            <div className="min-w-0">
+              <div className="text-xs font-semibold uppercase tracking-wider text-brand-100">{finished ? "Course complete" : lessonsDone ? "Pick up where you left off" : "Start here"} · Level {curLv.num} {curLv.name} · Module {curMod.num}</div>
+              <div className="mt-2 text-sm text-white/70">{curMod.title}</div>
+              <h2 className="mt-0.5 text-2xl font-bold leading-snug md:text-3xl">{finished ? "You've finished every module" : cur.title}</h2>
+              {!finished && LESSON_GOALS[cur.id] && <p className="mt-2 max-w-xl text-white/80">{LESSON_GOALS[cur.id]}</p>}
+              <div className="mt-5 flex flex-wrap items-center gap-3">
+                {!finished && <button className="btn border-white bg-white text-brand-700 hover:bg-brand-50" onClick={() => setView({ kind: "lesson", id: cur.id })}>{lessonsDone ? "Continue lesson" : "Start lesson"} · {cur.minutes} min →</button>}
+                <button className="text-sm font-medium text-white/80 underline-offset-4 hover:text-white hover:underline" onClick={() => setView({ kind: "module", id: curMod.id })}>Module {curMod.num} overview</button>
               </div>
             </div>
-            <div className="mt-4 grid gap-4 md:grid-cols-2">
-              {mods.map(m => {
-                const done = m.lessons.filter(l => prog.lessons[l.id]).length, qz = prog.quizzes[m.id]
-                const mins = m.lessons.reduce((t, l) => t + l.minutes, 0), pct = qz?.passed ? 100 : (done / (m.lessons.length + 1)) * 100
-                return (
-                  <button key={m.id} onClick={() => setView({ kind: "module", id: m.id })}
-                    className="card group flex flex-col overflow-hidden !p-0 text-left transition hover:border-brand-500 hover:shadow-md">
-                    <div className="flex items-end justify-between gap-3 bg-brand-900 px-5 py-4 text-white">
-                      <div className="min-w-0">
-                        <div className="text-xs font-semibold uppercase tracking-wider text-brand-100">Module {m.num}</div>
-                        <h3 className="mt-0.5 text-lg font-bold leading-snug">{m.title}</h3>
-                      </div>
-                      <span className="font-display text-4xl font-bold leading-none text-white/15">{String(m.num).padStart(2, "0")}</span>
-                    </div>
-                    <div className="flex flex-1 flex-col px-5 py-4">
-                      <p className="flex-1 text-sm text-slate-600">{m.summary}</p>
-                      <div className="mt-4 h-1.5 overflow-hidden rounded-full bg-slate-100"><div className="h-full bg-pass-600" style={{ width: `${pct}%` }} /></div>
-                      <div className="mt-2 flex items-center justify-between text-xs text-slate-500">
-                        <span>{m.lessons.length} lessons · {mins} min · quiz</span>
-                        <span className={`font-semibold ${qz?.passed ? "text-pass-600" : "text-brand-600 group-hover:underline"}`}>{qz?.passed ? "✓ Complete" : done ? "Continue →" : "Open module →"}</span>
-                      </div>
-                    </div>
-                  </button>)
-              })}
-              {/* Practice and glossary fill the spot beside the last module when the count is odd; otherwise they get their own row. */}
-              {last && <div className={`flex flex-col gap-4 ${mods.length % 2 === 1 ? "" : "md:col-span-2 md:grid md:grid-cols-2"}`}>
-                <button className="card flex-1 text-left hover:border-brand-500" onClick={onPractice}><div className="font-bold">Practice a deal →</div><p className="mt-1 text-sm text-slate-500">Underwrite Maple Court step by step, your own property, or uploaded documents, with the math shown at every step.</p></button>
-                <button className="card flex-1 text-left hover:border-brand-500" onClick={() => setView({ kind: "glossary" })}><div className="font-bold">Glossary →</div><p className="mt-1 text-sm text-slate-500">Every term from the course in one place, {glossary.length} terms.</p></button>
-              </div>}
+            <div className="rounded-lg bg-white/5 p-4 text-sm">
+              <div className="text-xs font-semibold uppercase tracking-wider text-brand-100">In this module</div>
+              <ol className="mt-2 space-y-1.5">
+                {curMod.lessons.map((x, i) => <li key={x.id} className={`flex gap-2 ${x.id === cur.id ? "font-semibold text-white" : prog.lessons[x.id] ? "text-white/50" : "text-white/70"}`}>
+                  <span className="w-4 shrink-0 text-right">{prog.lessons[x.id] ? "✓" : i + 1}</span><span className="min-w-0">{x.title}</span></li>)}
+                <li className={`flex gap-2 ${prog.quizzes[curMod.id]?.passed ? "text-white/50" : "text-white/70"}`}><span className="w-4 shrink-0 text-right">{prog.quizzes[curMod.id]?.passed ? "✓" : "?"}</span><span>Module quiz</span></li>
+              </ol>
+              {!finished && <div className="mt-3 border-t border-white/10 pt-3 text-xs text-white/60">Lesson {inMod + 1} of {curMod.lessons.length}{upNext && upNext.module.id !== curMod.id ? <> · then the quiz, then Module {upNext.module.num}</> : null}</div>}
             </div>
-          </section>)
-      })}
-    </main>)
+          </div>
+        </div>
+
+        {lessonsDone < 3 && (
+          <div className="card mt-4 flex items-center gap-4 !py-4">
+            <img src="/founder-face.jpg?v=2" alt="Blake Busboom, founder of Underwriting Desk" className="h-14 w-14 shrink-0 rounded-full object-cover" />
+            <div className="min-w-0">
+              <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">From the founder</div>
+              <p className="mt-0.5 text-sm text-ink">“I built Underwriting Desk so junior underwriters can learn the basics quickly, then use their own mistakes to get good fast.” <span className="text-slate-500">· Blake Busboom</span></p>
+            </div>
+          </div>)}
+
+        {/* Level stepper: one level on screen at a time. */}
+        <nav className="mt-8" aria-label="Levels">
+          <ol className="grid grid-cols-4 gap-1.5">
+            {LEVELS.map((x, i) => {
+              const on = x.id === lv.id, done = levelDone(x), here = x.id === curLv.id
+              return (
+                <li key={x.id}>
+                  <button onClick={() => pickLevel(x.id, i < lvIdx)} aria-current={on ? "step" : undefined}
+                    className={`w-full rounded-lg border-2 px-2 py-2 text-left transition sm:px-3 ${on ? "border-brand-700 bg-white shadow-sm" : "border-transparent bg-slate-100 hover:bg-slate-200"}`}>
+                    <div className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider">
+                      <span className={`grid h-5 w-5 shrink-0 place-items-center rounded-full text-[10px] ${done ? "bg-pass-600 text-white" : on ? "bg-brand-700 text-white" : "bg-white text-slate-500"}`}>{done ? "✓" : x.num}</span>
+                      <span className={`hidden sm:inline ${on ? "text-brand-700" : "text-slate-500"}`}>Level {x.num}</span>
+                    </div>
+                    <div className={`mt-1 truncate text-xs font-bold sm:text-sm ${on ? "text-ink" : "text-slate-600"}`}>{x.name}</div>
+                    {here && <div className="mt-0.5 truncate text-[10px] font-semibold uppercase tracking-wide text-amber-700">You're here</div>}
+                  </button>
+                </li>)
+            })}
+          </ol>
+        </nav>
+
+        <section key={lv.id} className={`mt-4 ${lvSel?.back ? "page-in-back" : "page-in"}`}>
+          <div className="rounded-lg border border-slate-200 bg-white p-5">
+            <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+              <span className="text-xs font-semibold uppercase tracking-wider text-brand-500">Level {lv.num} · {lv.tag}</span>
+              <h2 className="text-xl font-bold">{lv.name}</h2>
+              <span className="text-sm text-slate-500">Modules {mods[0].num} to {mods[mods.length - 1].num}</span>
+            </div>
+            <p className="mt-2 text-[15px] text-ink/90">{lv.about}</p>
+            <div className="mt-3 grid gap-3 text-sm md:grid-cols-2">
+              <div className="rounded-md bg-brand-50 px-3 py-2"><b className="text-brand-700">How it relates to underwriting: </b><span className="text-slate-700">{lv.connects}</span></div>
+              <div className="rounded-md bg-slate-50 px-3 py-2"><b>When you finish: </b><span className="text-slate-700">{lv.outcome}</span></div>
+            </div>
+          </div>
+          <div className="mt-4 grid gap-4 md:grid-cols-2">
+            {mods.map(m => {
+              const done = m.lessons.filter(l => prog.lessons[l.id]).length, qz = prog.quizzes[m.id], here = m.id === curMod.id && !finished
+              const mins = m.lessons.reduce((t, l) => t + l.minutes, 0), pct = qz?.passed ? 100 : (done / (m.lessons.length + 1)) * 100
+              return (
+                <button key={m.id} onClick={() => setView({ kind: "module", id: m.id })}
+                  className={`card group flex flex-col overflow-hidden !p-0 text-left transition hover:border-brand-500 hover:shadow-md ${here ? "ring-2 ring-amber-400" : ""}`}>
+                  <div className="flex items-end justify-between gap-3 bg-brand-900 px-5 py-4 text-white">
+                    <div className="min-w-0">
+                      <div className="text-xs font-semibold uppercase tracking-wider text-brand-100">Module {m.num}{here ? <span className="ml-2 rounded bg-amber-400 px-1.5 py-0.5 text-[10px] text-[#1c1305]">You're here</span> : null}</div>
+                      <h3 className="mt-0.5 text-lg font-bold leading-snug">{m.title}</h3>
+                    </div>
+                    <span className="font-display text-4xl font-bold leading-none text-white/15">{String(m.num).padStart(2, "0")}</span>
+                  </div>
+                  <div className="flex flex-1 flex-col px-5 py-4">
+                    <p className="flex-1 text-sm text-slate-600">{m.summary}</p>
+                    <div className="mt-4 h-1.5 overflow-hidden rounded-full bg-slate-100"><div className="h-full bg-pass-600" style={{ width: `${pct}%` }} /></div>
+                    <div className="mt-2 flex items-center justify-between text-xs text-slate-500">
+                      <span>{m.lessons.length} lessons · {mins} min · quiz</span>
+                      <span className={`font-semibold ${qz?.passed ? "text-pass-600" : "text-brand-600 group-hover:underline"}`}>{qz?.passed ? "✓ Complete" : done ? "Continue →" : "Open module →"}</span>
+                    </div>
+                  </div>
+                </button>)
+            })}
+          </div>
+          <div className="mt-5 flex items-center justify-between gap-2">
+            {lvIdx > 0 ? <button className="btn" onClick={() => pickLevel(LEVELS[lvIdx - 1].id, true)}>← Level {lvIdx}: {LEVELS[lvIdx - 1].name}</button> : <span />}
+            {lvIdx < LEVELS.length - 1 ? <button className="btn" onClick={() => pickLevel(LEVELS[lvIdx + 1].id, false)}>Level {lvIdx + 2}: {LEVELS[lvIdx + 1].name} →</button> : <span />}
+          </div>
+        </section>
+
+        <div className="mt-8 flex flex-wrap gap-x-6 gap-y-2 border-t border-slate-200 pt-4 text-sm">
+          <button className="font-medium text-brand-600 hover:underline" onClick={onPractice}>Practice a deal →</button>
+          <button className="font-medium text-brand-600 hover:underline" onClick={() => setView({ kind: "glossary" })}>Glossary, {glossary.length} terms →</button>
+        </div>
+      </main>)
+  }
 
   /* ---------- module overview ---------- */
   if (view.kind === "module") {
@@ -233,7 +276,7 @@ export default function Course({ session, onPractice }: { session: Session | nul
     const firstOpen = m.lessons.find(l => !prog.lessons[l.id]) || m.lessons[0]
     const mins = m.lessons.reduce((a, l) => a + l.minutes, 0), qz = prog.quizzes[m.id]
     return (
-      <main className="mx-auto max-w-3xl px-4 py-6 md:px-8">
+      <main key={m.id} className="page-in mx-auto max-w-3xl px-4 py-6 md:px-8">
         <div className="mb-3 flex flex-wrap items-center gap-1 text-sm text-slate-500">
           <button className="text-brand-600 hover:underline" onClick={() => setView({ kind: "home" })}>Course</button><span>›</span>
           <span>Level {lv.num}: {lv.name}</span>
@@ -306,7 +349,7 @@ export default function Course({ session, onPractice }: { session: Session | nul
   const lastInModule = !next || next.module.id !== l.module.id
   const finish = (go: View) => { update(p => ({ ...p, lessons: { ...p.lessons, [l.id]: true }, last: next?.id })); setView(go) }
   return (
-    <main className="mx-auto max-w-6xl px-4 py-6 md:px-8">
+    <main key={l.id} className="page-in mx-auto max-w-6xl px-4 py-6 md:px-8">
       <div className="mb-3 flex flex-wrap items-center gap-1 text-sm text-slate-500">
         <button className="text-brand-600 hover:underline" onClick={() => setView({ kind: "home" })}>Course</button><span>›</span>
         <span>Level {levelOf(l.module.id).num}</span><span>›</span>

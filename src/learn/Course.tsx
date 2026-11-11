@@ -539,7 +539,7 @@ function certHtml(name: string, lv: Level, date: string, id: string, score: numb
 <body><div class="c"><div class="f"><div class="top"><div class="m"><svg width="36" height="39" viewBox="0 0 24 26" xmlns="http://www.w3.org/2000/svg"><rect x="1.5" y="1.5" width="21" height="23" rx="3" fill="none" stroke="#0b1226" stroke-width="2"/><path d="M6 8h12M6 12.5h12" stroke="#0b1226" stroke-opacity=".5" stroke-width="2" stroke-linecap="round"/><path d="M6 18.5h12" stroke="#f4b24c" stroke-width="2.6" stroke-linecap="round"/></svg></div><div class="w">Underwriting Desk</div></div>
 <div class="k">This certifies that</div><h1>${e(name || "Your name")}</h1>
 <div class="l">completed <b>Level ${lv.num}: ${e(lv.name)}</b> of the Underwriting Desk real estate underwriting course${lv.checkpoint && score >= 0 ? `, including the timed Deal Check checkpoint with a score of <b>${score}</b>` : ", passing every module quiz"}. ${e(lv.outcome)}</div>
-<div class="b"><div><div class="s">Blake Busboom</div><div class="ln">Founder, Underwriting Desk</div></div><div style="text-align:right"><div>Issued ${e(date)}</div><div>Certificate ID ${e(id)}</div><div>getdealscreener.com</div></div></div>
+<div class="b"><div><div class="s">Blake Busboom</div><div class="ln">Founder, Underwriting Desk</div></div><div style="text-align:right"><div>Issued ${e(date)}</div><div>Certificate ID ${e(id)}</div><div>underwritingdeskhq.com</div></div></div>
 </div></div><script>document.fonts.ready.then(()=>setTimeout(()=>print(),300))</script></body></html>`
 }
 function Certificate({ lv, done, score, session, onBack }: { lv: Level; done: boolean; score: number; session: Session | null; onBack: () => void }) {
@@ -549,7 +549,7 @@ function Certificate({ lv, done, score, session, onBack }: { lv: Level; done: bo
   const now = new Date(), date = now.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })
   const id = certId(session?.user.id || "local", lv.id)
   const title = `Underwriting Desk, Level ${lv.num}: ${lv.name}`
-  const linkedIn = "https://www.linkedin.com/profile/add?" + new URLSearchParams({ startTask: "CERTIFICATION_NAME", name: title, organizationName: "Underwriting Desk", issueYear: String(now.getFullYear()), issueMonth: String(now.getMonth() + 1), certUrl: "https://www.getdealscreener.com", certId: id }).toString()
+  const linkedIn = "https://www.linkedin.com/profile/add?" + new URLSearchParams({ startTask: "CERTIFICATION_NAME", name: title, organizationName: "Underwriting Desk", issueYear: String(now.getFullYear()), issueMonth: String(now.getMonth() + 1), certUrl: "https://www.underwritingdeskhq.com", certId: id }).toString()
   const download = () => { const w = open("", "_blank"); if (!w) return; w.document.write(certHtml(name.trim(), lv, date, id, score)); w.document.close() }
   return (
     <div className="page-in bg-white">

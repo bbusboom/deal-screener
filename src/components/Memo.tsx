@@ -134,7 +134,7 @@ export function MemoView({ d, p, mp, onClose, extra, closeLabel = "Close" }: { d
         {d.dd && Object.keys(d.dd).length > 0 && (() => { const items = DD_GROUPS.flatMap(([, xs]) => xs); const open = items.filter(([k]) => !["done", "na"].includes(d.dd![k] || "todo"))
           return <><H>Due diligence</H><p className="text-slate-700">{items.length - open.length} of {items.length} items done or not applicable.{open.length ? ` Still open: ${open.map(([, l]) => l.toLowerCase()).join(", ")}.` : ""}</p></> })()}
 
-        <p className="mt-8 border-t border-slate-200 pt-2 text-[10px] text-slate-400">Prepared with Underwriting Desk (getdealscreener.com). A screening and learning tool, not investment advice. Figures depend on the inputs entered.</p>
+        <p className="mt-8 border-t border-slate-200 pt-2 text-[10px] text-slate-400">Prepared with Underwriting Desk (underwritingdeskhq.com). A screening and learning tool, not investment advice. Figures depend on the inputs entered.</p>
       </div>
     </div>, document.body
   )

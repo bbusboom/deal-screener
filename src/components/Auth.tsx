@@ -38,7 +38,7 @@ export default function Auth({ initial = "signin", onDone, onBack, onSignedUp, a
       <div className="w-full max-w-md">
         <div className="mb-6 flex items-center justify-center gap-2 text-white">
           <LogoMark className="h-9 w-[33px]" />
-          <div><div className="text-xl font-bold leading-tight">Underwriting Desk</div><div className="text-xs text-white/70">{app ? "Same account as getdealscreener.com" : "Real estate underwriting"}</div></div>
+          <div><div className="text-xl font-bold leading-tight">Underwriting Desk</div><div className="text-xs text-white/70">{app ? "Same account as underwritingdeskhq.com" : "Real estate underwriting"}</div></div>
         </div>
         <form onSubmit={submit} className="rounded-lg bg-white p-6 shadow-xl">
           <h1 className="mb-4 text-lg font-bold">{title}</h1>

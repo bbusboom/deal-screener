@@ -24,7 +24,7 @@ function parse(data: any): Img[] {
 }
 
 const cache = new Map<string, Promise<Img[]>>()
-function load(titles: string[], query: string): Promise<Img[]> {
+export function load(titles: string[], query: string): Promise<Img[]> {
   const key = titles.join("|") + "#" + query
   if (!cache.has(key)) cache.set(key, (async () => {
     const out: Img[] = []

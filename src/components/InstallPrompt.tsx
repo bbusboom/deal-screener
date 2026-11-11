@@ -31,11 +31,10 @@ export default function InstallPrompt({ learnOnly }: { learnOnly: boolean }) {
   } else return null
 
   return (
-    <div className="mx-auto max-w-7xl px-4 pt-4 md:px-8">
-      <div className="flex items-start gap-3 rounded-lg border border-brand-100 bg-brand-50 px-4 py-3 text-sm text-brand-900">
-        <span className="mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-md bg-gold-400 text-[10px] font-bold text-[#1c1305]">UD</span>
+    <div className="border-b border-white/10 bg-night text-white/75">
+      <div className="mx-auto flex max-w-7xl items-center gap-3 px-4 py-2 text-sm md:px-8 [&_a]:text-[#f4b24c] [&_b]:text-white [&_.btn]:!border-[#f4b24c] [&_.btn]:!bg-[#f4b24c] [&_.btn]:!text-[#1c1305]">
         <div className="flex-1">{body}</div>
-        <button className="text-brand-700/60 hover:text-brand-900" onClick={close} aria-label="Dismiss">✕</button>
+        <button className="text-white/40 hover:text-white" onClick={close} aria-label="Dismiss">✕</button>
       </div>
     </div>
   )

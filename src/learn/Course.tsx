@@ -6,7 +6,7 @@ import { CHECKS } from "./checks"
 import { StateSelect, StateSnapshot } from "../components/MarketPane"
 import { useHomeState, setHomeState } from "../lib/market"
 import { PRACTICE, norm } from "../lib/model"
-import Photo from "./Photo"
+import Photo, { load as loadPhotos } from "./Photo"
 import Diagram, { DiagramArt } from "./Diagrams"
 import Calc from "./Calc"
 import { withTerms } from "./Terms"
@@ -44,19 +44,19 @@ function StateBlock() {
 function Blocks({ blocks }: { blocks: Block[] }) {
   const seen = new Set<string>()
   return <>{blocks.map((b, i) => {
-    if (b.t === "p") return <p key={i} className="my-3 text-[15.5px] leading-relaxed text-ink/90">{withTerms(b.text, seen)}</p>
+    if (b.t === "p") return <p key={i} className="my-5 text-[17px] leading-[1.75] text-slate-700">{withTerms(b.text, seen)}</p>
     if (b.t === "photo") return <Photo key={i} titles={b.titles} query={b.query} caption={b.caption} google={b.google} />
     if (b.t === "diagram") return <Diagram key={i} d={b.d} caption={b.caption} />
-    if (b.t === "tip") return <div key={i} className="my-4 flex gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-[14.5px] text-amber-900"><span className="font-bold">Tip</span><span>{withTerms(b.text, seen)}</span></div>
-    if (b.t === "formula") return <div key={i} className="my-4 rounded-lg bg-brand-900 px-5 py-4 text-white"><div className="text-xs font-semibold uppercase tracking-wider text-brand-100">{b.name}</div><div className="mt-1 font-mono text-lg">{b.f}</div></div>
+    if (b.t === "tip") return <div key={i} className="my-6 border-l-4 border-[#f4b24c] bg-[#fff8eb] px-5 py-4 text-[16px] leading-relaxed text-[#5c3d0a]"><span className="mr-2 font-semibold">Tip:</span><span>{withTerms(b.text, seen)}</span></div>
+    if (b.t === "formula") return <div key={i} className="my-4 rounded-lg bg-brand-900 px-5 py-4 text-white"><div className="text-sm text-white/60">{b.name}</div><div className="mt-1 font-mono text-lg">{b.f}</div></div>
     if (b.t === "example") return (
       <div key={i} className="my-4 rounded-lg border border-slate-200 bg-slate-50 p-4">
-        <div className="card-title !mb-2">Worked example · {b.title}</div>
+        <div className="mb-2 font-serif text-lg font-semibold">Worked example: {b.title}</div>
         <table className="tbl"><tbody>{b.rows.map(([l, v, tot], k) => <tr key={k} className={tot ? "total" : ""}><td className="!whitespace-normal">{l}</td><td className="num">{v}</td></tr>)}</tbody></table>
       </div>)
     if (b.t === "terms") return (
       <div key={i} className="my-4 rounded-lg border border-slate-200 bg-white p-4">
-        <div className="card-title !mb-2">Key terms</div>
+        <div className="mb-2 font-serif text-lg font-semibold">Key terms</div>
         <dl className="space-y-2 text-sm">{b.items.map(([k, v]) => <div key={k}><dt className="inline font-semibold">{k}: </dt><dd className="inline text-slate-600">{v}</dd></div>)}</dl>
       </div>)
     if (b.t === "calc") return <Calc key={i} c={b.c} />
@@ -149,157 +149,141 @@ export default function Course({ session, onPractice, onCheck }: { session: Sess
   const lesson = view.kind === "lesson" ? allLessons.find(l => l.id === view.id)! : null
   const ctx = useMemo(() => lesson ? `Module ${lesson.module.num}: ${lesson.module.title}. Lesson: ${lesson.title}.\n` + lesson.blocks.map(blockText).filter(Boolean).join("\n") : "", [lesson?.id])
 
-  /* ---------- home: focused on where the learner is, one level at a time ---------- */
+  const Crumbs = ({ items }: { items: [string, (() => void) | null][] }) => (
+    <nav className="flex flex-wrap items-center gap-x-1.5 gap-y-1 text-sm text-white/60" aria-label="Breadcrumb">
+      {items.map(([t, go], i) => <span key={i} className="flex items-center gap-1.5">{i > 0 && <span className="text-white/30">/</span>}
+        {go ? <button className="hover:text-white" onClick={go}>{t}</button> : <span className="text-white/80">{t}</span>}</span>)}
+    </nav>)
+
+  /* ---------- home: where you are, then one level at a time ---------- */
   if (view.kind === "home") {
     const cur = resume || allLessons[allLessons.length - 1]
     const curMod = cur.module, curLv = levelOf(curMod.id)
     const lv = LEVELS.find(x => x.id === lvSel?.id) || curLv, lvIdx = LEVELS.indexOf(lv)
     const mods = lv.modules.map(id => COURSE.find(m => m.id === id)!).filter(Boolean)
     const inMod = curMod.lessons.findIndex(x => x.id === cur.id)
-    const upNext = allLessons[allLessons.findIndex(x => x.id === cur.id) + 1]
     const finished = !nextLesson && modsDone === COURSE.length
+    const qd = quizzesDone(lv), ck = lv.checkpoint ? CHECKS.find(c => c.id === lv.checkpoint) : undefined, best = bestCheck(lv.checkpoint), lvDone = levelDone(lv)
     return (
-      <main className="mx-auto max-w-5xl px-4 py-6 md:px-8">
-        <div className="flex flex-wrap items-end justify-between gap-2">
-          <div>
-            <h1 className="text-2xl font-bold">Learn to underwrite real estate</h1>
-            <p className="text-sm text-slate-500">Four levels, thirteen modules. Go in order; each one builds on the last.</p>
-          </div>
-          <div className="w-full max-w-xs text-right text-xs text-slate-500 sm:w-auto">
-            {lessonsDone} of {allLessons.length} lessons · {modsDone} of {COURSE.length} modules
-            <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-slate-200 sm:w-56"><div className="h-full bg-pass-600" style={{ width: `${(lessonsDone / allLessons.length) * 100}%` }} /></div>
-          </div>
-        </div>
-
-        {/* Where you are: the one lesson to do next. */}
-        <div className="mt-5 overflow-hidden rounded-xl bg-brand-900 text-white shadow-sm">
-          <div className="grid gap-6 p-6 md:grid-cols-[1fr_240px] md:p-8">
-            <div className="min-w-0">
-              <div className="text-xs font-semibold uppercase tracking-wider text-brand-100">{finished ? "Course complete" : lessonsDone ? "Pick up where you left off" : "Start here"} · Level {curLv.num} {curLv.name} · Module {curMod.num}</div>
-              <div className="mt-2 text-sm text-white/70">{curMod.title}</div>
-              <h2 className="mt-0.5 text-2xl font-bold leading-snug md:text-3xl">{finished ? "You've finished every module" : cur.title}</h2>
-              {!finished && LESSON_GOALS[cur.id] && <p className="mt-2 max-w-xl text-white/80">{LESSON_GOALS[cur.id]}</p>}
-              {!finished && <div className="mt-3 text-xs text-white/60 md:hidden">Lesson {inMod + 1} of {curMod.lessons.length} in this module, then the quiz</div>}
-              <div className="mt-5 flex flex-col items-stretch gap-3 sm:flex-row sm:items-center">
-                {!finished && <button className="btn justify-center border-white bg-white text-brand-700 hover:bg-brand-50" onClick={() => setView({ kind: "lesson", id: cur.id })}>{lessonsDone ? "Continue lesson" : "Start lesson"} · {cur.minutes} min →</button>}
-                <button className="text-left text-sm font-medium text-white/80 underline-offset-4 hover:text-white hover:underline" onClick={() => setView({ kind: "module", id: curMod.id })}>Module {curMod.num} overview</button>
+      <div>
+        {/* Full width band: the course and the one lesson to do next. */}
+        <section className="bg-night text-white">
+          <div className="mx-auto grid max-w-6xl gap-10 px-4 pb-12 pt-10 md:grid-cols-[1.1fr_1fr] md:px-8 md:pb-16 md:pt-14">
+            <div>
+              <h1 className="font-serif text-4xl font-semibold leading-[1.1] tracking-tight md:text-5xl">Learn to underwrite real estate</h1>
+              <p className="mt-4 max-w-md text-lg text-white/65">Four levels, from what a rent roll is to how an acquisitions team decides. Each one builds on the last.</p>
+              <div className="mt-6 max-w-sm">
+                <div className="flex justify-between text-sm text-white/55"><span>{lessonsDone} of {allLessons.length} lessons</span><span>{modsDone} of {COURSE.length} modules</span></div>
+                <div className="mt-2 h-1 overflow-hidden rounded-full bg-white/15"><div className="h-full bg-[#f4b24c]" style={{ width: `${(lessonsDone / allLessons.length) * 100}%` }} /></div>
               </div>
             </div>
-            <div className="hidden rounded-lg bg-white/5 p-4 text-sm md:block">
-              <div className="text-xs font-semibold uppercase tracking-wider text-brand-100">In this module</div>
-              <ol className="mt-2 space-y-1.5">
-                {curMod.lessons.map((x, i) => <li key={x.id} className={`flex gap-2 ${x.id === cur.id ? "font-semibold text-white" : prog.lessons[x.id] ? "text-white/50" : "text-white/70"}`}>
-                  <span className="w-4 shrink-0 text-right">{prog.lessons[x.id] ? "✓" : i + 1}</span><span className="min-w-0">{x.title}</span></li>)}
-                <li className={`flex gap-2 ${prog.quizzes[curMod.id]?.passed ? "text-white/50" : "text-white/70"}`}><span className="w-4 shrink-0 text-right">{prog.quizzes[curMod.id]?.passed ? "✓" : "?"}</span><span>Module quiz</span></li>
-              </ol>
-              {!finished && <div className="mt-3 border-t border-white/10 pt-3 text-xs text-white/60">Lesson {inMod + 1} of {curMod.lessons.length}{upNext && upNext.module.id !== curMod.id ? <> · then the quiz, then Module {upNext.module.num}</> : null}</div>}
+            <div className="border-white/15 md:border-l md:pl-10">
+              <div className="text-sm font-medium text-[#f4b24c]">{finished ? "Course complete" : lessonsDone ? "Up next for you" : "Start here"}</div>
+              <div className="mt-3 text-sm text-white/55">Level {curLv.num}, {curLv.name} / Module {curMod.num}, {curMod.title}</div>
+              <h2 className="mt-1 font-serif text-2xl font-semibold leading-snug md:text-3xl">{finished ? "You've finished every module" : cur.title}</h2>
+              {!finished && LESSON_GOALS[cur.id] && <p className="mt-2 text-white/70">{LESSON_GOALS[cur.id]}</p>}
+              {!finished && <p className="mt-2 text-sm text-white/45">Lesson {inMod + 1} of {curMod.lessons.length} in this module, then the quiz. About {cur.minutes} minutes.</p>}
+              <div className="mt-6 flex flex-wrap items-center gap-x-6 gap-y-3">
+                {!finished && <button className="rounded-md bg-[#f4b24c] px-5 py-2.5 font-semibold text-[#1c1305] transition hover:bg-[#f7c574]" onClick={() => setView({ kind: "lesson", id: cur.id })}>{lessonsDone ? "Continue" : "Start the first lesson"}</button>}
+                <button className="text-sm font-medium text-white/75 underline decoration-white/30 underline-offset-4 hover:text-white" onClick={() => setView({ kind: "module", id: curMod.id })}>About module {curMod.num}</button>
+              </div>
             </div>
-          </div>
-        </div>
-
-        {lessonsDone < 3 && (
-          <div className="card mt-4 flex items-center gap-4 !py-4">
-            <img src="/founder-face.jpg?v=2" alt="Blake Busboom, founder of Underwriting Desk" className="h-14 w-14 shrink-0 rounded-full object-cover" />
-            <div className="min-w-0">
-              <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">From the founder</div>
-              <p className="mt-0.5 text-sm text-ink">“I built Underwriting Desk so junior underwriters can learn the basics quickly, then use their own mistakes to get good fast.” <span className="text-slate-500">· Blake Busboom</span></p>
-            </div>
-          </div>)}
-
-        {/* Level stepper: one level on screen at a time. */}
-        <nav className="mt-8" aria-label="Levels">
-          <ol className="grid grid-cols-4 gap-1.5">
-            {LEVELS.map((x, i) => {
-              const on = x.id === lv.id, done = levelDone(x), here = x.id === curLv.id
-              return (
-                <li key={x.id}>
-                  <button onClick={() => pickLevel(x.id, i < lvIdx)} aria-current={on ? "step" : undefined}
-                    className={`w-full rounded-lg border-2 px-2 py-2 text-left transition sm:px-3 ${on ? "border-brand-700 bg-white shadow-sm" : "border-transparent bg-slate-100 hover:bg-slate-200"}`}>
-                    <div className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider">
-                      <span className={`grid h-5 w-5 shrink-0 place-items-center rounded-full text-[10px] ${done ? "bg-pass-600 text-white" : on ? "bg-brand-700 text-white" : "bg-white text-slate-500"}`}>{done ? "✓" : x.num}</span>
-                      <span className={`hidden sm:inline ${on ? "text-brand-700" : "text-slate-500"}`}>Level {x.num}</span>
-                    </div>
-                    <div className={`mt-1 truncate text-xs font-bold sm:text-sm ${on ? "text-ink" : "text-slate-600"}`}><span className="sm:hidden">{x.short}</span><span className="hidden sm:inline">{x.name}</span></div>
-                    {here && <div className="mt-0.5 truncate text-[10px] font-semibold uppercase tracking-wide text-amber-700"><span className="sm:hidden">Here</span><span className="hidden sm:inline">You're here</span></div>}
-                  </button>
-                </li>)
-            })}
-          </ol>
-        </nav>
-
-        <section key={lv.id} className={`mt-4 ${lvSel?.back ? "page-in-back" : "page-in"}`}>
-          <div className="rounded-lg border border-slate-200 bg-white p-5">
-            <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-              <span className="text-xs font-semibold uppercase tracking-wider text-brand-500">Level {lv.num} · {lv.tag}</span>
-              <h2 className="text-xl font-bold">{lv.name}</h2>
-              <span className="text-sm text-slate-500">Modules {mods[0].num} to {mods[mods.length - 1].num}</span>
-            </div>
-            <p className="mt-2 text-[15px] text-ink/90">{lv.about}</p>
-            <div className="mt-3 grid gap-3 text-sm md:grid-cols-2">
-              <div className="rounded-md bg-brand-50 px-3 py-2"><b className="text-brand-700">How it relates to underwriting: </b><span className="text-slate-700">{lv.connects}</span></div>
-              <div className="rounded-md bg-slate-50 px-3 py-2"><b>When you finish: </b><span className="text-slate-700">{lv.outcome}</span></div>
-            </div>
-          </div>
-          <div className="mt-4 grid gap-4 md:grid-cols-2">
-            {mods.map(m => {
-              const done = m.lessons.filter(l => prog.lessons[l.id]).length, qz = prog.quizzes[m.id], here = m.id === curMod.id && !finished
-              const ahead = !finished && COURSE.indexOf(m) > COURSE.indexOf(curMod) && !done && !qz
-              const mins = m.lessons.reduce((t, l) => t + l.minutes, 0), pct = qz?.passed ? 100 : (done / (m.lessons.length + 1)) * 100
-              return (
-                <button key={m.id} onClick={() => setView({ kind: "module", id: m.id })}
-                  className={`card group flex flex-col overflow-hidden !p-0 text-left transition hover:border-brand-500 hover:shadow-md ${here ? "ring-2 ring-amber-400" : ""} ${ahead ? "opacity-70 hover:opacity-100" : ""}`}>
-                  <div className={`flex items-end justify-between gap-3 px-5 py-4 text-white ${ahead ? "bg-slate-500" : "bg-brand-900"}`}>
-                    <div className="min-w-0">
-                      <div className="text-xs font-semibold uppercase tracking-wider text-white/70">Module {m.num}{here ? <span className="ml-2 rounded bg-amber-400 px-1.5 py-0.5 text-[10px] text-[#1c1305]">You're here</span> : ahead ? <span className="ml-2 font-medium normal-case tracking-normal">· coming up</span> : null}</div>
-                      <h3 className="mt-0.5 text-lg font-bold leading-snug">{m.title}</h3>
-                    </div>
-                    <span className="font-display text-4xl font-bold leading-none text-white/15">{String(m.num).padStart(2, "0")}</span>
-                  </div>
-                  {COVER_ART[m.id] && <div aria-hidden className={`pointer-events-none flex h-32 items-center justify-center overflow-hidden border-b border-slate-100 bg-slate-50 px-4 py-3 transition [&_svg]:max-h-full [&_svg]:w-auto [&_svg]:max-w-full ${ahead ? "grayscale group-hover:grayscale-0" : ""}`}><DiagramArt d={COVER_ART[m.id]} /></div>}
-                  <div className="flex flex-1 flex-col px-5 py-4">
-                    <p className="flex-1 text-sm text-slate-600">{m.summary}</p>
-                    <div className="mt-4 h-1.5 overflow-hidden rounded-full bg-slate-100"><div className="h-full bg-pass-600" style={{ width: `${pct}%` }} /></div>
-                    <div className="mt-2 flex items-center justify-between text-xs text-slate-500">
-                      <span>{m.lessons.length} lessons · {mins} min · quiz</span>
-                      <span className={`font-semibold ${qz?.passed ? "text-pass-600" : "text-brand-600 group-hover:underline"}`}>{qz?.passed ? "✓ Complete" : done ? "Continue →" : "Open module →"}</span>
-                    </div>
-                  </div>
-                </button>)
-            })}
-          </div>
-          {(() => {
-            const qd = quizzesDone(lv), ck = lv.checkpoint ? CHECKS.find(c => c.id === lv.checkpoint) : undefined, best = bestCheck(lv.checkpoint), done = levelDone(lv)
-            return (
-              <div className={`mt-4 flex flex-col gap-4 rounded-lg border-2 p-5 sm:flex-row sm:items-center ${done ? "border-pass-600 bg-pass-50" : "border-amber-300 bg-amber-50/60"}`}>
-                <div className={`grid h-12 w-12 shrink-0 place-items-center rounded-full text-lg font-bold ${done ? "bg-pass-600 text-white" : "bg-amber-400 text-[#1c1305]"}`}>{done ? "✓" : "★"}</div>
-                <div className="min-w-0 flex-1">
-                  <div className="text-xs font-semibold uppercase tracking-wider text-amber-800">Level {lv.num} checkpoint</div>
-                  {ck ? <>
-                    <div className="mt-0.5 font-bold">Deal Check: {ck.title}, {ck.where}</div>
-                    <p className="mt-1 text-sm text-slate-700">A timed broker package. Work out year one NOI, the cap rate and DSCR, and decide if it clears the buy box. Score {CHECKPOINT_PASS} or more{lv.modules.length ? " and pass every module quiz" : ""} to finish Level {lv.num}.</p>
-                    <div className="mt-1 text-xs text-slate-500">{best >= 0 ? `Best score: ${best}` : "Not tried yet"} · Quizzes passed: {lv.modules.filter(id => prog.quizzes[id]?.passed).length} of {lv.modules.length}{!qd && best < 0 ? " · recommended after the quizzes" : ""}</div>
-                  </> : <>
-                    <div className="mt-0.5 font-bold">Pass the Module {lv.modules.map(id => COURSE.find(m => m.id === id)!.num).join(" and ")} quizzes</div>
-                    <p className="mt-1 text-sm text-slate-700">Level {lv.num} has no math yet, so its quizzes are the checkpoint. The first Deal Check comes at the end of Level {lv.num + 1}, once you can build NOI.</p>
-                    <div className="mt-1 text-xs text-slate-500">Quizzes passed: {lv.modules.filter(id => prog.quizzes[id]?.passed).length} of {lv.modules.length}</div>
-                  </>}
-                </div>
-                {done ? <span className="shrink-0 text-sm font-semibold text-pass-600">Level {lv.num} complete</span>
-                  : ck ? <button className={`btn shrink-0 justify-center ${qd ? "btn-primary" : ""}`} onClick={() => goCheck(ck.id)}>{best >= 0 ? "Try again" : "Start the checkpoint"} →</button>
-                  : null}
-              </div>)
-          })()}
-          <div className="mt-5 flex items-center justify-between gap-2">
-            {lvIdx > 0 ? <button className="btn" onClick={() => pickLevel(LEVELS[lvIdx - 1].id, true)}>← Level {lvIdx}: {LEVELS[lvIdx - 1].name}</button> : <span />}
-            {lvIdx < LEVELS.length - 1 ? <button className="btn" onClick={() => pickLevel(LEVELS[lvIdx + 1].id, false)}>Level {lvIdx + 2}: {LEVELS[lvIdx + 1].name} →</button> : <span />}
           </div>
         </section>
 
-        <div className="mt-8 flex flex-wrap gap-x-6 gap-y-2 border-t border-slate-200 pt-4 text-sm">
-          <button className="font-medium text-brand-600 hover:underline" onClick={onPractice}>Practice a deal →</button>
-          <button className="font-medium text-brand-600 hover:underline" onClick={() => setView({ kind: "glossary" })}>Glossary, {glossary.length} terms →</button>
+        <div className="bg-white">
+          <div className="mx-auto max-w-6xl px-4 md:px-8">
+            {/* Levels as plain tabs. */}
+            <nav className="-mx-4 flex gap-8 overflow-x-auto border-b border-slate-200 px-4 md:mx-0 md:px-0" aria-label="Levels">
+              {LEVELS.map((x, i) => {
+                const on = x.id === lv.id, done = levelDone(x)
+                return (
+                  <button key={x.id} onClick={() => pickLevel(x.id, i < lvIdx)} aria-current={on ? "page" : undefined}
+                    className={`shrink-0 border-b-2 pb-4 pt-6 text-left transition ${on ? "border-ink" : "border-transparent hover:border-slate-300"}`}>
+                    <div className={`text-xs ${on ? "text-slate-500" : "text-slate-400"}`}>Level {x.num}{done ? ", complete" : x.id === curLv.id ? ", you're here" : ""}</div>
+                    <div className={`mt-0.5 font-serif text-lg font-semibold ${on ? "text-ink" : "text-slate-400"}`}>{x.name}</div>
+                  </button>)
+              })}
+            </nav>
+
+            <section key={lv.id} className={`py-10 ${lvSel?.back ? "page-in-back" : "page-in"}`}>
+              <div className="grid gap-10 md:grid-cols-[1fr_340px]">
+                <div>
+                  <h2 className="font-serif text-3xl font-semibold tracking-tight">Level {lv.num}: {lv.name}</h2>
+                  <p className="mt-3 max-w-2xl text-lg leading-relaxed text-slate-600">{lv.about}</p>
+                  <div className="mt-6 grid max-w-2xl gap-6 sm:grid-cols-2">
+                    <div><h3 className="font-semibold text-ink">Why it matters</h3><p className="mt-1 text-[15px] leading-relaxed text-slate-600">{lv.connects}</p></div>
+                    <div><h3 className="font-semibold text-ink">When you finish</h3><p className="mt-1 text-[15px] leading-relaxed text-slate-600">{lv.outcome}</p></div>
+                  </div>
+                </div>
+                <LevelPhoto id={lv.id} />
+              </div>
+
+              {/* Modules as a table of contents. */}
+              <ol className="mt-10 border-t border-slate-200">
+                {mods.map(m => {
+                  const done = m.lessons.filter(l => prog.lessons[l.id]).length, qz = prog.quizzes[m.id], here = m.id === curMod.id && !finished
+                  const ahead = !finished && COURSE.indexOf(m) > COURSE.indexOf(curMod) && !done && !qz
+                  const mins = m.lessons.reduce((t, l) => t + l.minutes, 0)
+                  const status = qz?.passed ? "Complete" : here ? "You're here" : done ? "In progress" : ahead ? "" : "Not started"
+                  return (
+                    <li key={m.id} className="border-b border-slate-200">
+                      <button onClick={() => setView({ kind: "module", id: m.id })}
+                        className={`group grid w-full gap-x-6 gap-y-3 py-7 text-left sm:grid-cols-[72px_1fr_200px] ${here ? "relative before:absolute before:-left-4 before:bottom-6 before:top-6 before:w-1 before:rounded before:bg-[#f4b24c] md:before:-left-6" : ""}`}>
+                        <div className={`font-serif text-5xl font-semibold leading-none ${ahead ? "text-slate-200" : "text-slate-300 group-hover:text-[#e0a23a]"}`}>{String(m.num).padStart(2, "0")}</div>
+                        <div className="min-w-0">
+                          <h3 className={`font-serif text-2xl font-semibold leading-snug group-hover:underline group-hover:decoration-slate-300 group-hover:underline-offset-4 ${ahead ? "text-slate-500" : "text-ink"}`}>{m.title}</h3>
+                          <p className={`mt-1.5 max-w-xl leading-relaxed ${ahead ? "text-slate-400" : "text-slate-600"}`}>{m.summary}</p>
+                          <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-slate-400">
+                            <span>{m.lessons.length} lessons and a quiz</span><span>{mins} minutes</span>
+                            {status && <span className={qz?.passed ? "font-medium text-pass-600" : here ? "font-medium text-[#b7791f]" : ""}>{qz?.passed ? "✓ " : ""}{status}</span>}
+                          </div>
+                        </div>
+                        {COVER_ART[m.id] && <div aria-hidden className={`pointer-events-none hidden h-28 items-center justify-center overflow-hidden rounded-md bg-slate-50 p-3 sm:flex [&_svg]:max-h-full [&_svg]:w-auto [&_svg]:max-w-full ${ahead ? "opacity-50 grayscale" : ""}`}><DiagramArt d={COVER_ART[m.id]} /></div>}
+                      </button>
+                    </li>)
+                })}
+                {/* The level checkpoint closes the list. */}
+                <li className="py-7">
+                  <div className="grid gap-x-6 gap-y-3 sm:grid-cols-[72px_1fr_200px]">
+                    <div className={`grid h-12 w-12 place-items-center rounded-full text-lg font-bold ${lvDone ? "bg-pass-600 text-white" : "bg-[#f4b24c] text-[#1c1305]"}`}>{lvDone ? "✓" : "★"}</div>
+                    <div className="min-w-0">
+                      <div className="text-sm font-medium text-[#b7791f]">Level {lv.num} checkpoint</div>
+                      <h3 className="mt-0.5 font-serif text-2xl font-semibold leading-snug">{ck ? `Deal Check: ${ck.title}` : `Pass the Module ${lv.modules.map(id => COURSE.find(m => m.id === id)!.num).join(" and ")} quizzes`}</h3>
+                      <p className="mt-1.5 max-w-xl leading-relaxed text-slate-600">{ck
+                        ? `A timed broker package from ${ck.where}. Work out year one NOI, the cap rate and DSCR, and decide whether it clears the buy box. Score ${CHECKPOINT_PASS} or more, with every quiz in this level passed, to finish Level ${lv.num}.`
+                        : `Level ${lv.num} has no math yet, so its quizzes are the checkpoint. The first Deal Check comes at the end of Level ${lv.num + 1}, once you can build NOI.`}</p>
+                      <div className="mt-3 text-sm text-slate-400">Quizzes passed: {lv.modules.filter(id => prog.quizzes[id]?.passed).length} of {lv.modules.length}{ck ? <>, best score: {best >= 0 ? best : "not tried yet"}</> : null}</div>
+                    </div>
+                    <div className="flex items-start sm:justify-end">
+                      {lvDone ? <span className="font-medium text-pass-600">Level {lv.num} complete</span>
+                        : ck ? <button className={`rounded-md px-4 py-2 text-sm font-semibold transition ${qd ? "bg-ink text-white hover:bg-slate-800" : "border border-slate-300 text-ink hover:border-ink"}`} onClick={() => goCheck(ck.id)}>{best >= 0 ? "Try again" : "Start the checkpoint"}</button>
+                        : null}
+                    </div>
+                  </div>
+                </li>
+              </ol>
+
+              <div className="mt-4 flex items-center justify-between gap-4 text-sm font-medium">
+                {lvIdx > 0 ? <button className="text-slate-500 hover:text-ink" onClick={() => pickLevel(LEVELS[lvIdx - 1].id, true)}>← Level {lvIdx}: {LEVELS[lvIdx - 1].name}</button> : <span />}
+                {lvIdx < LEVELS.length - 1 ? <button className="text-ink hover:underline" onClick={() => pickLevel(LEVELS[lvIdx + 1].id, false)}>Level {lvIdx + 2}: {LEVELS[lvIdx + 1].name} →</button> : <span />}
+              </div>
+            </section>
+          </div>
         </div>
-      </main>)
+
+        <section className="border-t border-slate-200 bg-[#f6f6f3]">
+          <div className="mx-auto grid max-w-6xl gap-8 px-4 py-12 md:grid-cols-3 md:px-8">
+            {lessonsDone < 3 ? (
+              <div className="flex gap-4 md:col-span-1">
+                <img src="/founder-face.jpg?v=2" alt="Blake Busboom" className="h-14 w-14 shrink-0 rounded-full object-cover" />
+                <div><p className="font-serif text-lg leading-snug">“I built Underwriting Desk so junior underwriters can learn the basics quickly, then use their own mistakes to get good fast.”</p><p className="mt-2 text-sm text-slate-500">Blake Busboom, founder</p></div>
+              </div>) : <div className="hidden md:block" />}
+            <button className="text-left" onClick={onPractice}><h3 className="font-serif text-xl font-semibold hover:underline">Practice a deal →</h3><p className="mt-1 text-slate-600">Underwrite Maple Court step by step, your own property, or uploaded documents, with the math shown at every step.</p></button>
+            <button className="text-left" onClick={() => setView({ kind: "glossary" })}><h3 className="font-serif text-xl font-semibold hover:underline">Glossary →</h3><p className="mt-1 text-slate-600">All {glossary.length} terms from the course in one place. In lessons, blue words show their definition when you hover or tap.</p></button>
+          </div>
+        </section>
+      </div>)
   }
 
   /* ---------- module overview ---------- */
@@ -309,114 +293,162 @@ export default function Course({ session, onPractice, onCheck }: { session: Sess
     const firstOpen = m.lessons.find(l => !prog.lessons[l.id]) || m.lessons[0]
     const mins = m.lessons.reduce((a, l) => a + l.minutes, 0), qz = prog.quizzes[m.id]
     return (
-      <main key={m.id} className="page-in mx-auto max-w-3xl px-4 py-6 md:px-8">
-        <div className="mb-3 flex flex-wrap items-center gap-1 text-sm text-slate-500">
-          <button className="text-brand-600 hover:underline" onClick={() => setView({ kind: "home" })}>Course</button><span>›</span>
-          <span>Level {lv.num}: {lv.name}</span>
-        </div>
-        <div className="card">
-          <div className="text-xs font-semibold uppercase tracking-wider text-brand-500">Module {m.num} overview · Level {lv.num} {lv.name}</div>
-          <h1 className="mt-1 text-2xl font-bold">{m.title}</h1>
-          <p className="mt-2 text-[15.5px] text-ink/90">{m.summary}</p>
-          <div className="mt-1 text-sm text-slate-500">{m.lessons.length} lessons · about {mins} minutes · {m.quiz.length} question quiz{qz?.passed ? " · ✓ complete" : ""}</div>
-
-          <h2 className="mt-6 text-sm font-semibold uppercase tracking-wider text-slate-500">How it relates to underwriting</h2>
-          <p className="mt-1 text-[15px] text-ink/90">{g.why}</p>
-          <div className="mt-3 rounded-lg border border-slate-200 bg-slate-50 p-3">
-            <div className="mb-2 text-xs font-semibold text-slate-500">{g.steps === "all" ? "This module covers the whole roadmap" : g.steps.length ? "Where this module sits on the underwriting roadmap" : "The underwriting roadmap you're working toward"}</div>
-            <Roadmap steps={g.steps} />
+      <div key={m.id} className="page-in">
+        <section className="bg-night text-white">
+          <div className="mx-auto max-w-6xl px-4 pb-12 pt-8 md:px-8">
+            <Crumbs items={[["Course", () => setView({ kind: "home" })], [`Level ${lv.num}: ${lv.name}`, () => { pickLevel(lv.id, false); setView({ kind: "home" }) }], [`Module ${m.num}`, null]]} />
+            <div className="mt-8 grid gap-8 md:grid-cols-[1fr_300px] md:items-end">
+              <div>
+                <div className="font-serif text-6xl font-semibold leading-none text-white/20">{String(m.num).padStart(2, "0")}</div>
+                <h1 className="mt-3 font-serif text-4xl font-semibold leading-tight tracking-tight md:text-5xl">{m.title}</h1>
+                <p className="mt-4 max-w-2xl text-lg text-white/70">{m.summary}</p>
+                <p className="mt-3 text-sm text-white/45">{m.lessons.length} lessons, about {mins} minutes, and a {m.quiz.length} question quiz{qz?.passed ? ". Complete." : "."}</p>
+                <div className="mt-6 flex flex-wrap items-center gap-x-6 gap-y-3">
+                  <button className="rounded-md bg-[#f4b24c] px-5 py-2.5 font-semibold text-[#1c1305] hover:bg-[#f7c574]" onClick={() => setView({ kind: "lesson", id: firstOpen.id })}>{m.lessons.some(l => prog.lessons[l.id]) ? "Continue" : "Start"}: {firstOpen.title}</button>
+                  <button className="text-sm font-medium text-white/75 underline decoration-white/30 underline-offset-4 hover:text-white" onClick={() => setView({ kind: "quiz", id: m.id })}>Go to the quiz</button>
+                </div>
+              </div>
+              {COVER_ART[m.id] && <div aria-hidden className="hidden rounded-lg bg-white p-4 md:block [&_svg]:h-auto [&_svg]:w-full"><DiagramArt d={COVER_ART[m.id]} /></div>}
+            </div>
           </div>
+        </section>
+        <div className="bg-white">
+          <div className="mx-auto grid max-w-6xl gap-12 px-4 py-12 md:grid-cols-[1fr_280px] md:px-8">
+            <div className="min-w-0">
+              <h2 className="font-serif text-2xl font-semibold">How it fits into underwriting</h2>
+              <p className="mt-3 text-lg leading-relaxed text-slate-700">{g.why}</p>
+              <div className="mt-5"><Roadmap steps={g.steps} /></div>
 
-          <h2 className="mt-6 text-sm font-semibold uppercase tracking-wider text-slate-500">Learning objectives</h2>
-          <p className="mt-1 text-sm text-slate-500">By the end of this module you'll be able to:</p>
-          <ul className="mt-2 space-y-1.5">{g.learn.map(t => <li key={t} className="flex gap-2 text-[15px]"><span className="text-pass-600">✓</span><span>{t}</span></li>)}</ul>
+              <h2 className="mt-12 font-serif text-2xl font-semibold">What you'll be able to do</h2>
+              <ul className="mt-4 space-y-3">{g.learn.map(t => <li key={t} className="flex gap-3 text-lg text-slate-700"><span className="mt-2.5 h-1.5 w-1.5 shrink-0 rounded-full bg-[#f4b24c]" /><span>{t}</span></li>)}</ul>
 
-          <h2 className="mt-6 text-sm font-semibold uppercase tracking-wider text-slate-500">What you'll get out of each lesson</h2>
-          <ol className="mt-2 divide-y divide-slate-100 rounded-lg border border-slate-200">
-            {m.lessons.map((l, i) => <li key={l.id}><button className="flex w-full items-start gap-3 px-4 py-3 text-left hover:bg-slate-50" onClick={() => setView({ kind: "lesson", id: l.id })}>
-              <span className={`mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-full text-xs ${prog.lessons[l.id] ? "bg-pass-600 text-white" : "border border-slate-300 text-slate-500"}`}>{prog.lessons[l.id] ? "✓" : i + 1}</span>
-              <span className="min-w-0 flex-1"><span className="block font-semibold">{l.title}</span>{LESSON_GOALS[l.id] && <span className="mt-0.5 block text-sm text-slate-600">{LESSON_GOALS[l.id]}</span>}</span>
-              <span className="shrink-0 text-xs text-slate-400">{l.minutes} min</span></button></li>)}
-            <li><button className="flex w-full items-start gap-3 px-4 py-3 text-left hover:bg-brand-50" onClick={() => setView({ kind: "quiz", id: m.id })}>
-              <span className="mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-full border border-brand-500 text-xs text-brand-600">?</span>
-              <span className="min-w-0 flex-1"><span className="block font-semibold text-brand-700">Module quiz</span><span className="mt-0.5 block text-sm text-slate-600">{m.quiz.length} questions with an explanation for every answer. Score {Math.ceil(m.quiz.length * PASS)} or more to complete the module.</span></span>
-              <span className="shrink-0 text-xs text-slate-400">{qz ? `best ${qz.best}/${qz.total}` : ""}</span></button></li>
-          </ol>
-          {(prevM || nextM) && <p className="mt-5 border-t border-slate-100 pt-4 text-sm text-slate-500">
-            {prevM && <>Builds on <button className="text-brand-600 hover:underline" onClick={() => setView({ kind: "module", id: prevM.id })}>Module {prevM.num}: {prevM.title}</button>. </>}
-            {nextM && <>Leads into <button className="text-brand-600 hover:underline" onClick={() => setView({ kind: "module", id: nextM.id })}>Module {nextM.num}: {nextM.title}</button>.</>}
-          </p>}
-          <div className="mt-5 flex flex-wrap gap-2">
-            <button className="btn btn-primary" onClick={() => setView({ kind: "lesson", id: firstOpen.id })}>{m.lessons.some(l => prog.lessons[l.id]) ? "Continue" : "Start"}: {firstOpen.title} →</button>
-            <button className="btn" onClick={() => setView({ kind: "quiz", id: m.id })}>Take the quiz</button>
+              <h2 className="mt-12 font-serif text-2xl font-semibold">Lessons</h2>
+              <ol className="mt-4 border-t border-slate-200">
+                {m.lessons.map((l, i) => <li key={l.id} className="border-b border-slate-200"><button className="group grid w-full grid-cols-[40px_1fr_auto] gap-4 py-5 text-left" onClick={() => setView({ kind: "lesson", id: l.id })}>
+                  <span className={`font-serif text-2xl font-semibold ${prog.lessons[l.id] ? "text-pass-600" : "text-slate-300"}`}>{prog.lessons[l.id] ? "✓" : i + 1}</span>
+                  <span className="min-w-0"><span className="block text-lg font-semibold group-hover:underline group-hover:underline-offset-4">{l.title}</span>{LESSON_GOALS[l.id] && <span className="mt-1 block leading-relaxed text-slate-600">{LESSON_GOALS[l.id]}</span>}</span>
+                  <span className="pt-1 text-sm text-slate-400">{l.minutes} min</span></button></li>)}
+                <li className="border-b border-slate-200"><button className="group grid w-full grid-cols-[40px_1fr_auto] gap-4 py-5 text-left" onClick={() => setView({ kind: "quiz", id: m.id })}>
+                  <span className={`font-serif text-2xl font-semibold ${qz?.passed ? "text-pass-600" : "text-slate-300"}`}>{qz?.passed ? "✓" : "?"}</span>
+                  <span className="min-w-0"><span className="block text-lg font-semibold group-hover:underline group-hover:underline-offset-4">Module quiz</span><span className="mt-1 block text-slate-600">{m.quiz.length} questions, each with an explanation. Score {Math.ceil(m.quiz.length * PASS)} or more to complete the module.</span></span>
+                  <span className="pt-1 text-sm text-slate-400">{qz ? `best ${qz.best}/${qz.total}` : ""}</span></button></li>
+              </ol>
+            </div>
+            <aside className="space-y-8 text-sm">
+              <div>
+                <h3 className="font-semibold text-ink">Level {lv.num}: {lv.name}</h3>
+                <ol className="mt-3 space-y-2">{lv.modules.map(id => { const x = COURSE.find(c => c.id === id)!; return (
+                  <li key={id}><button className={`text-left ${x.id === m.id ? "font-semibold text-ink" : "text-slate-500 hover:text-ink"}`} onClick={() => setView({ kind: "module", id })}>{x.num}. {x.title}{prog.quizzes[id]?.passed ? " ✓" : ""}</button></li>) })}</ol>
+              </div>
+              <div className="space-y-2 border-t border-slate-200 pt-6">
+                {prevM && <button className="block text-left text-slate-500 hover:text-ink" onClick={() => setView({ kind: "module", id: prevM.id })}>← Builds on Module {prevM.num}: {prevM.title}</button>}
+                {nextM && <button className="block text-left text-slate-500 hover:text-ink" onClick={() => setView({ kind: "module", id: nextM.id })}>Leads into Module {nextM.num}: {nextM.title} →</button>}
+              </div>
+            </aside>
           </div>
         </div>
-      </main>)
+      </div>)
   }
 
   /* ---------- glossary ---------- */
   if (view.kind === "glossary") return (
-    <main className="mx-auto max-w-3xl px-4 py-6 md:px-8">
-      <button className="mb-3 text-sm text-brand-600 hover:underline" onClick={() => setView({ kind: "home" })}>← Course</button>
-      <div className="card"><h1 className="mb-4 text-2xl font-bold">Glossary</h1>
-        <dl className="divide-y divide-slate-100">{glossary.map(([k, v]) => <div key={k} className="py-2.5"><dt className="font-semibold">{k}</dt><dd className="text-sm text-slate-600">{v}</dd></div>)}</dl></div>
-    </main>)
+    <div className="page-in bg-white">
+      <section className="bg-night text-white"><div className="mx-auto max-w-4xl px-4 pb-10 pt-8 md:px-8">
+        <Crumbs items={[["Course", () => setView({ kind: "home" })], ["Glossary", null]]} />
+        <h1 className="mt-6 font-serif text-4xl font-semibold">Glossary</h1>
+        <p className="mt-2 text-white/65">Every term from the course, {glossary.length} in all.</p>
+      </div></section>
+      <dl className="mx-auto max-w-4xl divide-y divide-slate-200 px-4 py-8 md:px-8">{glossary.map(([k, v]) => <div key={k} className="grid gap-1 py-4 sm:grid-cols-[240px_1fr] sm:gap-6"><dt className="font-serif text-lg font-semibold">{k}</dt><dd className="leading-relaxed text-slate-600">{v}</dd></div>)}</dl>
+    </div>)
 
   /* ---------- quiz ---------- */
   if (view.kind === "quiz") {
     const m = COURSE.find(x => x.id === view.id)!
     return (
-      <main className="mx-auto max-w-3xl px-4 py-6 md:px-8">
-        <button className="mb-3 text-sm text-brand-600 hover:underline" onClick={() => setView({ kind: "home" })}>← Course</button>
-        <QuizView key={m.id} mod={m} onBack={() => setView({ kind: "home" })} onDone={score => update(p => {
-          const prev = p.quizzes[m.id], total = m.quiz.length, best = Math.max(score, prev?.best || 0)
-          return { ...p, quizzes: { ...p.quizzes, [m.id]: { best, total, passed: best / total >= PASS } } }
-        })} />
-      </main>)
+      <div className="page-in">
+        <section className="bg-night text-white"><div className="mx-auto max-w-3xl px-4 pb-8 pt-8 md:px-8">
+          <Crumbs items={[["Course", () => setView({ kind: "home" })], [`Module ${m.num}: ${m.title}`, () => setView({ kind: "module", id: m.id })], ["Quiz", null]]} />
+          <h1 className="mt-6 font-serif text-3xl font-semibold">Module {m.num} quiz</h1>
+        </div></section>
+        <main className="mx-auto max-w-3xl px-4 py-8 md:px-8">
+          <QuizView key={m.id} mod={m} onBack={() => setView({ kind: "module", id: m.id })} onDone={score => update(p => {
+            const prev = p.quizzes[m.id], total = m.quiz.length, best = Math.max(score, prev?.best || 0)
+            return { ...p, quizzes: { ...p.quizzes, [m.id]: { best, total, passed: best / total >= PASS } } }
+          })} />
+        </main>
+      </div>)
   }
 
-  /* ---------- lesson ---------- */
+  /* ---------- lesson: a reading page ---------- */
   const l = lesson as Lesson & { module: Module }
-  const idx = allLessons.findIndex(x => x.id === l.id)
+  const idx = allLessons.findIndex(x => x.id === l.id), inM = l.module.lessons.findIndex(x => x.id === l.id)
   const prev = allLessons[idx - 1], next = allLessons[idx + 1]
   const lastInModule = !next || next.module.id !== l.module.id
   const finish = (go: View) => { update(p => ({ ...p, lessons: { ...p.lessons, [l.id]: true }, last: next?.id })); setView(go) }
+  const lv = levelOf(l.module.id)
   return (
-    <main key={l.id} className="page-in mx-auto max-w-6xl px-4 py-6 md:px-8">
-      <div className="mb-3 flex flex-wrap items-center gap-1 text-sm text-slate-500">
-        <button className="text-brand-600 hover:underline" onClick={() => setView({ kind: "home" })}>Course</button><span>›</span>
-        <span>Level {levelOf(l.module.id).num}</span><span>›</span>
-        <button className="text-brand-600 hover:underline" onClick={() => setView({ kind: "module", id: l.module.id })}>Module {l.module.num}: {l.module.title}</button>
-      </div>
-      <div className="grid gap-5 lg:grid-cols-[220px_1fr]">
+    <div key={l.id} className="page-in bg-white">
+      <section className="border-b border-slate-200 bg-[#f6f6f3]">
+        <div className="mx-auto max-w-6xl px-4 pb-10 pt-6 md:px-8">
+          <nav className="flex flex-wrap items-center gap-x-1.5 text-sm text-slate-500" aria-label="Breadcrumb">
+            <button className="hover:text-ink" onClick={() => setView({ kind: "home" })}>Course</button><span className="text-slate-300">/</span>
+            <button className="hover:text-ink" onClick={() => { pickLevel(lv.id, false); setView({ kind: "home" }) }}>Level {lv.num}</button><span className="text-slate-300">/</span>
+            <button className="hover:text-ink" onClick={() => setView({ kind: "module", id: l.module.id })}>Module {l.module.num}: {l.module.title}</button>
+          </nav>
+          <div className="mt-8 max-w-3xl">
+            <div className="text-sm text-slate-500">Lesson {inM + 1} of {l.module.lessons.length}, {l.minutes} minute read</div>
+            <h1 className="mt-2 font-serif text-4xl font-semibold leading-tight tracking-tight md:text-[2.75rem]">{l.title}</h1>
+            {LESSON_GOALS[l.id] && <p className="mt-3 text-lg text-slate-600">{LESSON_GOALS[l.id]}</p>}
+          </div>
+        </div>
+      </section>
+      <div className="mx-auto grid max-w-6xl gap-10 px-4 py-10 md:px-8 lg:grid-cols-[200px_minmax(0,1fr)] xl:grid-cols-[200px_minmax(0,1fr)_300px]">
         <aside className="hidden lg:block">
-          <div className="sticky top-20 space-y-1 text-sm">
-            <button className="mb-2 block text-xs font-semibold uppercase tracking-wider text-slate-500 hover:text-brand-600" onClick={() => setView({ kind: "module", id: l.module.id })}>Module {l.module.num} overview</button>
-            {l.module.lessons.map(x => <button key={x.id} onClick={() => setView({ kind: "lesson", id: x.id })}
-              className={`block w-full rounded-md px-2 py-1.5 text-left ${x.id === l.id ? "bg-brand-50 font-semibold text-brand-700" : "hover:bg-slate-100"}`}>{prog.lessons[x.id] ? "✓ " : ""}{x.title}</button>)}
-            <button className="block w-full rounded-md px-2 py-1.5 text-left text-brand-600 hover:bg-brand-50" onClick={() => setView({ kind: "quiz", id: l.module.id })}>Module quiz</button>
+          <div className="sticky top-24 text-sm">
+            <button className="font-semibold text-ink hover:underline" onClick={() => setView({ kind: "module", id: l.module.id })}>Module {l.module.num}</button>
+            <ol className="mt-3 space-y-1 border-l border-slate-200">
+              {l.module.lessons.map(x => <li key={x.id}><button onClick={() => setView({ kind: "lesson", id: x.id })}
+                className={`-ml-px block w-full border-l-2 py-1.5 pl-3 text-left ${x.id === l.id ? "border-ink font-semibold text-ink" : "border-transparent text-slate-500 hover:text-ink"}`}>{x.title}{prog.lessons[x.id] ? " ✓" : ""}</button></li>)}
+              <li><button className="-ml-px block w-full border-l-2 border-transparent py-1.5 pl-3 text-left text-slate-500 hover:text-ink" onClick={() => setView({ kind: "quiz", id: l.module.id })}>Module quiz</button></li>
+            </ol>
           </div>
         </aside>
-        <div className="min-w-0">
-          <article className="card">
-            <div className="text-xs font-semibold uppercase tracking-wider text-brand-500">Lesson {idx + 1} of {allLessons.length} · {l.minutes} min</div>
-            <h1 className="mb-2 mt-1 text-2xl font-bold">{l.title}</h1>
-            <Blocks blocks={l.blocks} />
-            <div className="mt-6 flex flex-wrap justify-between gap-2 border-t border-slate-100 pt-4">
-              {prev ? <button className="btn" onClick={() => setView({ kind: "lesson", id: prev.id })}>← {prev.title}</button> : <span />}
-              {lastInModule
-                ? <button className="btn btn-primary" onClick={() => finish({ kind: "quiz", id: l.module.id })}>Take the module {l.module.num} quiz →</button>
-                : <button className="btn btn-primary" onClick={() => finish({ kind: "lesson", id: next!.id })}>Next: {next!.title} →</button>}
-            </div>
-          </article>
-          <div className="mt-5">
+        <article className="min-w-0 max-w-[44rem] [&_h2]:font-serif">
+          <Blocks blocks={l.blocks} />
+          <div className="mt-10 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-6">
+            {prev ? <button className="text-sm text-slate-500 hover:text-ink" onClick={() => setView({ kind: "lesson", id: prev.id })}>← {prev.title}</button> : <span />}
+            {lastInModule
+              ? <button className="rounded-md bg-ink px-5 py-2.5 font-semibold text-white hover:bg-slate-800" onClick={() => finish({ kind: "quiz", id: l.module.id })}>Done. Take the module {l.module.num} quiz →</button>
+              : <button className="rounded-md bg-ink px-5 py-2.5 font-semibold text-white hover:bg-slate-800" onClick={() => finish({ kind: "lesson", id: next!.id })}>Next: {next!.title} →</button>}
+          </div>
+        </article>
+        <aside className="min-w-0 lg:col-span-2 xl:col-span-1">
+          <div className="xl:sticky xl:top-24">
             <AiPanel key={l.id} storeKey={"lesson." + l.id} deal={norm(PRACTICE)} fixedRoute="learner" compact title="Ask the Desk about this lesson" context={ctx}
               greeting={`Questions about "${l.title}"? Ask anything, like "why do we subtract vacancy?" or "explain this like I'm new."`}
               reviewLabel="Explain this lesson another way" reviewPrompt={`Explain the main idea of the lesson "${l.title}" in a different way than the lesson did, with a simple everyday example, in under 150 words.`}
               onDeal={() => {}} />
           </div>
-        </div>
+        </aside>
       </div>
-    </main>
+    </div>
   )
+}
+
+/** One real photo per level, from Wikimedia Commons with credit. */
+const LEVEL_PHOTOS: Record<string, [string[], string]> = {
+  L1: [["File:Colvin Gardens Apartments, Buffalo, New York - 20220902.jpg"], "garden apartment complex"],
+  L2: [["File:Sepulveda Rose Apartments Pool.jpg"], "apartment complex United States"],
+  L3: [["File:Suburbia by David Shankbone.jpg"], "suburban neighborhood aerial"],
+  L4: [["File:Reston, Virginia (14311563988).jpg"], "suburban office building"],
+}
+function LevelPhoto({ id }: { id: string }) {
+  const [img, setImg] = useState<Awaited<ReturnType<typeof loadPhotos>>[number] | null | undefined>(undefined)
+  useEffect(() => { const p = LEVEL_PHOTOS[id]; if (!p) return setImg(null); let on = true; setImg(undefined); loadPhotos(p[0], p[1]).then(r => on && setImg(r[0] || null)).catch(() => on && setImg(null)); return () => { on = false } }, [id])
+  if (img === null) return <div className="hidden md:block" />
+  return (
+    <figure className="hidden md:block">
+      <div className="aspect-[4/3] overflow-hidden rounded-lg bg-slate-100">{img && <img src={img.url} alt="" className="h-full w-full object-cover" loading="lazy" />}</div>
+      {img && <figcaption className="mt-2 text-xs text-slate-400">Photo: <a className="hover:underline" href={img.page} target="_blank" rel="noreferrer">{img.author}</a>, {img.license}</figcaption>}
+    </figure>)
 }

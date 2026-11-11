@@ -97,38 +97,39 @@ export default function App({ learnOnly = false }: { learnOnly?: boolean }) {
   return (
     <div className="min-h-screen">
       <header className="sticky top-0 z-20 border-b border-white/10 bg-night/95 pt-[env(safe-area-inset-top)] text-white backdrop-blur-xl">
-        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-3 px-4 md:px-8">
-          <div className="flex items-center gap-2.5">
-            <div className="grid h-8 w-8 place-items-center rounded-md bg-gold-400 text-[13px] font-bold text-[#1c1305]">UD</div>
-            <div className="leading-tight"><div className="font-bold">Underwriting Desk</div><div className="hidden text-[11px] text-white/50 sm:block">{learnOnly ? "Learn to underwrite" : "Real estate underwriting"}</div></div>
-          </div>
-          {path && !choosing && !learnOnly && (
-            <div className="flex rounded-full border border-white/10 bg-white/5 p-1 text-sm font-semibold">
-              {(["learner", "pro"] as Path[]).map(p => (
-                <button key={p} onClick={() => pick(p)} className={`rounded-full px-4 py-1.5 transition ${path === p ? "bg-white text-brand-900 shadow" : "text-white/60 hover:text-white"}`}>
-                  {p === "learner" ? "Learn" : "Underwrite"}
-                </button>))}
-            </div>)}
-          <div className="flex items-center gap-3 text-sm">
-            <label className="hidden items-center gap-1.5 text-xs text-white/50 lg:flex" title="Your home state sets the default for taxes, rent rules and policy">
+        <div className="mx-auto flex h-16 max-w-7xl items-center gap-6 px-4 md:px-8">
+          <button className="flex shrink-0 items-center gap-2.5" onClick={() => { if (path === "learner") setLearnTab("course"); scrollTo({ top: 0 }) }}>
+            <div className="grid h-8 w-8 place-items-center rounded-md bg-[#f4b24c] text-[13px] font-bold text-[#1c1305]">UD</div>
+            <span className="font-serif text-[19px] font-semibold tracking-tight">Underwriting Desk</span>
+          </button>
+          {path === "learner" && !choosing && (
+            <nav className="hidden h-16 items-stretch gap-6 text-sm md:flex" aria-label="Learn">
+              {LEARN_TABS.map(([k, label]) => (
+                <button key={k} onClick={() => { setLearnTab(k); scrollTo({ top: 0 }) }} aria-current={learnTab === k ? "page" : undefined}
+                  className={`border-b-2 pt-0.5 transition ${learnTab === k ? "border-[#f4b24c] font-semibold text-white" : "border-transparent text-white/60 hover:text-white"}`}>{label}</button>))}
+            </nav>)}
+          <div className="ml-auto flex items-center gap-4 text-sm">
+            {path && !choosing && !learnOnly && (
+              <button className="hidden font-medium text-[#f4b24c] hover:text-white sm:inline" onClick={() => pick(path === "learner" ? "pro" : "learner")}>
+                {path === "learner" ? "Underwrite a deal →" : "← Back to Learn"}</button>)}
+            <label className="hidden items-center gap-1.5 text-xs text-white/50 xl:flex" title="Your home state sets the default for taxes, rent rules and policy">
               Home state <StateSelect className="select-dark !py-1 !text-xs" value={homeState} onChange={v => setHomeState(session, v)} />
             </label>
-            {name && <span className="hidden text-white/60 md:inline">{name}</span>}
-            {accountsEnabled ? <button className="btn btn-ghost" onClick={() => signOut()}>Sign out</button> : <span className="hidden text-xs text-white/40 md:inline">Accounts not set up</span>}
+            {name && <span className="hidden text-white/50 lg:inline">{name}</span>}
+            {accountsEnabled ? <button className="text-white/70 hover:text-white" onClick={() => signOut()}>Sign out</button> : <span className="hidden text-xs text-white/40 md:inline">Accounts not set up</span>}
           </div>
         </div>
+        {path === "learner" && !choosing && (
+          <nav className={`flex gap-5 overflow-x-auto border-t border-white/10 px-4 text-sm md:hidden ${learnOnly ? "hidden" : ""}`} aria-label="Learn">
+            {LEARN_TABS.map(([k, label]) => (
+              <button key={k} onClick={() => { setLearnTab(k); scrollTo({ top: 0 }) }} className={`shrink-0 border-b-2 py-2.5 ${learnTab === k ? "border-[#f4b24c] font-semibold text-white" : "border-transparent text-white/60"}`}>{label}</button>))}
+            <button className="ml-auto shrink-0 py-2.5 font-medium text-[#f4b24c]" onClick={() => pick("pro")}>Underwrite →</button>
+          </nav>)}
       </header>
 
       {!path || choosing ? <PathPicker username={profile?.username} current={path} onPick={pick} />
         : path === "learner" ? (
           <>
-            <div className={`relative overflow-hidden bg-night text-white ${learnOnly ? "hidden sm:block" : ""}`}>
-              <div className="relative mx-auto flex max-w-7xl gap-1 overflow-x-auto px-4 pt-3 md:px-8">
-                {LEARN_TABS.map(([k, label, ic]) => (
-                  <button key={k} onClick={() => setLearnTab(k)} className={`group flex items-center gap-2 whitespace-nowrap rounded-t-xl px-4 py-2.5 text-sm font-semibold transition ${learnTab === k ? "bg-[#f6f6f3] text-ink" : "text-white/60 hover:text-white"}`}>
-                    <span className={learnTab === k ? "text-ink" : "text-white/40 group-hover:text-white/70"}>{ic("h-4 w-4")}</span>{label}</button>))}
-              </div>
-            </div>
             <InstallPrompt learnOnly={learnOnly} />
             {learnTab === "course" ? <Course session={session} onPractice={() => setLearnTab("practice")} onCheck={() => { setLearnTab("check"); scrollTo({ top: 0 }) }} /> : learnTab === "challenges" ? <Challenges session={session} /> : learnTab === "check" ? <DealCheck session={session} onOpenInPro={learnOnly ? undefined : openInPro} /> : <LearnerApp session={session} toast={setToast} onOpenInPro={openInPro} />}
             {learnOnly && (
@@ -142,7 +143,33 @@ export default function App({ learnOnly = false }: { learnOnly?: boolean }) {
           </>)
         : <ProWorkspace key={proKey} session={session} toast={setToast} />}
 
-      <footer className={`mx-auto max-w-7xl px-4 pt-4 md:px-8 ${learnOnly ? "pb-28 sm:pb-8" : "pb-8"}`}><span className="text-xs text-slate-400">Screening and learning tool, not investment advice. Verify rent roll, T12, taxes after sale and insurance quotes.</span></footer>
+      <footer className={`border-t border-slate-200 bg-white ${learnOnly ? "pb-24 sm:pb-0" : ""}`}>
+        <div className="mx-auto grid max-w-7xl gap-8 px-4 py-10 text-sm md:grid-cols-[1.4fr_1fr_1fr] md:px-8">
+          <div>
+            <div className="flex items-center gap-2.5"><div className="grid h-7 w-7 place-items-center rounded bg-[#f4b24c] text-[11px] font-bold text-[#1c1305]">UD</div><span className="font-serif text-lg font-semibold">Underwriting Desk</span></div>
+            <p className="mt-3 max-w-sm text-slate-500">Real estate underwriting, taught on real deals. Built in Fayetteville, Arkansas by Blake Busboom.</p>
+          </div>
+          <div>
+            <div className="font-semibold text-ink">Learn</div>
+            <ul className="mt-3 space-y-2 text-slate-500">
+              {LEARN_TABS.map(([k, label]) => <li key={k}><button className="hover:text-ink" onClick={() => { if (path !== "learner") pick("learner"); setLearnTab(k); scrollTo({ top: 0 }) }}>{label}</button></li>)}
+            </ul>
+          </div>
+          <div>
+            <div className="font-semibold text-ink">Work</div>
+            <ul className="mt-3 space-y-2 text-slate-500">
+              {!learnOnly && <li><button className="hover:text-ink" onClick={() => { pick("pro"); scrollTo({ top: 0 }) }}>Underwrite a deal</button></li>}
+              <li><a className="hover:text-ink" href={learnOnly ? "/" : "/learn"}>{learnOnly ? "Full website" : "Phone app"}</a></li>
+            </ul>
+          </div>
+        </div>
+        <div className="border-t border-slate-100">
+          <div className="mx-auto flex max-w-7xl flex-wrap justify-between gap-2 px-4 py-4 text-xs text-slate-400 md:px-8">
+            <span>© {new Date().getFullYear()} Underwriting Desk</span>
+            <span>A learning and screening tool, not investment advice. Verify rent rolls, T12s, taxes after sale and insurance quotes.</span>
+          </div>
+        </div>
+      </footer>
       {path && !choosing && <Feedback session={session} lift={learnOnly} page={(learnOnly ? "App › " : path === "learner" ? "Learn › " : "Underwrite") + (path === "learner" ? learnTab : "")} />}
       {toast && <div className="fixed bottom-5 left-1/2 z-30 -translate-x-1/2 rounded-md bg-ink px-4 py-2 text-sm text-white">{toast}</div>}
     </div>

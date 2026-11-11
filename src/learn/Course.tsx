@@ -21,7 +21,7 @@ const LEVEL_KEY = "dealScreener.course.level"
 
 function blockText(b: Block): string {
   if (b.t === "p" || b.t === "tip") return b.text
-  if (b.t === "formula") return `${b.name}: ${b.f}`
+  if (b.t === "formula") return `${b.name}: ${b.f}` + (b.parts ? ". Parts: " + b.parts.map(([k, v]) => `${k} = ${v}`).join("; ") : "") + (b.say ? ". " + b.say : "")
   if (b.t === "example") return `${b.title}: ` + b.rows.map(r => `${r[0]} ${r[1]}`).join("; ")
   if (b.t === "terms") return b.items.map(([k, v]) => `${k}: ${v}`).join(" ")
   if (b.t === "photo") return `Photo: ${b.caption}`
@@ -49,11 +49,20 @@ function Blocks({ blocks }: { blocks: Block[] }) {
     if (b.t === "photo") return <Photo key={i} titles={b.titles} query={b.query} caption={b.caption} google={b.google} />
     if (b.t === "diagram") return <Diagram key={i} d={b.d} caption={b.caption} />
     if (b.t === "tip") return <div key={i} className="my-6 border-l-4 border-[#f4b24c] bg-[#fff8eb] px-5 py-4 text-[16px] leading-relaxed text-[#5c3d0a]"><span className="mr-2 font-semibold">Tip:</span><span>{withTerms(b.text, seen)}</span></div>
-    if (b.t === "formula") return <div key={i} className="my-4 rounded-lg bg-brand-900 px-5 py-4 text-white"><div className="text-sm text-white/60">{b.name}</div><div className="mt-1 font-mono text-lg">{b.f}</div></div>
+    if (b.t === "formula") return (
+      <div key={i} className="my-7 overflow-hidden rounded-lg border border-slate-200">
+        <div className="bg-night px-5 py-4 text-white"><div className="text-sm text-white/60">Formula: {b.name}</div><div className="mt-1 font-mono text-lg leading-snug md:text-xl">{b.f}</div></div>
+        {(b.parts || b.say) && <div className="bg-white px-5 py-4">
+          {b.parts && <><div className="text-sm font-semibold text-ink">What each part means</div>
+            <dl className="mt-2 space-y-2">{b.parts.map(([k, v]) => <div key={k} className="grid gap-x-4 sm:grid-cols-[minmax(0,14rem)_1fr]"><dt className="font-mono text-[15px] font-semibold text-ink">{k}</dt><dd className="text-[16px] leading-relaxed text-slate-600">{v}</dd></div>)}</dl></>}
+          {b.say && <p className={`text-[16px] leading-relaxed text-slate-700 ${b.parts ? "mt-4 border-t border-slate-100 pt-3" : ""}`}><span className="font-semibold text-ink">In plain words: </span>{b.say}</p>}
+        </div>}
+      </div>)
     if (b.t === "example") return (
       <div key={i} className="my-4 rounded-lg border border-slate-200 bg-slate-50 p-4">
         <div className="mb-2 font-serif text-lg font-semibold">Worked example: {b.title}</div>
-        <table className="tbl"><tbody>{b.rows.map(([l, v, tot], k) => <tr key={k} className={tot ? "total" : ""}><td className="!whitespace-normal">{l}</td><td className="num">{v}</td></tr>)}</tbody></table>
+        <table className="tbl"><tbody>{b.rows.map(([l, v, tot], k) => { const prose = /[a-z]{3,}/i.test(v) && !/^about \$/i.test(v)
+          return <tr key={k} className={tot ? "total" : ""}><td className="w-[62%] !whitespace-normal">{l}</td><td className={prose ? "!whitespace-normal text-right text-slate-600" : "num"}>{v}</td></tr> })}</tbody></table>
       </div>)
     if (b.t === "terms") return (
       <div key={i} className="my-4 rounded-lg border border-slate-200 bg-white p-4">

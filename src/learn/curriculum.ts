@@ -1,5 +1,7 @@
 // Underwriting Desk course: modules, lessons and quizzes, from the basics up to every underwriting metric.
 // Running example: Oak Ridge Apartments, 20 units, $2,000,000. All numbers are computed with the site's model.
+// Modules 1 to 10 live in lessons-core.ts.
+import { CORE_LESSONS } from "./lessons-core"
 
 export type Block =
   | { t: "p"; text: string }
@@ -8,7 +10,7 @@ export type Block =
   | { t: "example"; title: string; rows: [string, string, boolean?][] }
   | { t: "terms"; items: [string, string][] }
   | { t: "tip"; text: string }
-  | { t: "formula"; name: string; f: string }
+  | { t: "formula"; name: string; f: string; parts?: [string, string][]; say?: string }
   | { t: "calc"; c: "cap" | "dscr" | "coc" | "noi" }
   | { t: "state" }
 
@@ -18,43 +20,13 @@ export interface Lesson { id: string; title: string; minutes: number; blocks: Bl
 export interface Question { q: string; options: string[]; answer: number; why: string }
 export interface Module { id: string; num: number; title: string; summary: string; lessons: Lesson[]; quiz: Question[] }
 
-const P = (titles: string[], query: string, caption: string, google: string): Block => ({ t: "photo", titles, query, caption, google })
 
 export const COURSE: Module[] = [
   /* ------------------------------------------------------------------ 1 */
   {
     id: "m1", num: 1, title: "Real estate investing basics",
     summary: "What commercial real estate is, the main property types, and the four ways investors make money.",
-    lessons: [
-      {
-        id: "m1l1", title: "What is investment real estate?", minutes: 5, blocks: [
-          { t: "p", text: "Investment real estate is property you buy to earn money, not to live in. The building produces income from tenants, and the owner pays the costs of running it. What's left over is the owner's profit." },
-          { t: "p", text: "Underwriting is the process of figuring out what a property will really earn, what it's worth, and whether buying it at a given price is a good decision. Banks underwrite before they lend; investors underwrite before they buy." },
-          P(["File:Colvin Gardens Apartments, Buffalo, New York - 20220902.jpg", "File:Sepulveda Rose Apartments Pool.jpg"], "garden apartment complex", "A garden style apartment complex: several low buildings on one property, all owned by one investor.", "garden style apartment complex"),
-          { t: "tip", text: "Think of a property like a small business. Rent is revenue, operating costs are expenses, and the building's value comes from the profit it produces." },
-          { t: "terms", items: [["Underwriting", "Analyzing a property's income, costs, value and risks to decide whether, and at what price, to buy or lend."], ["Investor", "The person or company putting money into the deal, also called the sponsor or buyer."], ["Lender", "The bank or other source that loans part of the purchase price."]] },
-        ],
-      },
-      {
-        id: "m1l2", title: "The main property types", minutes: 6, blocks: [
-          { t: "p", text: "Each property type earns money differently, which changes how it's underwritten. This course focuses on apartments (multifamily), the most common starting point, but the same ideas apply everywhere." },
-          P(["File:Detached house, 850 N. Franklintown Road, Baltimore, MD 21216.jpg"], "detached single family house United States", "Single family rental: one house, one tenant. Valued mostly by comparing recent sales of similar homes.", "single family rental house"),
-          P(["File:Sepulveda Rose Apartments Pool.jpg", "File:Colvin Gardens Apartments, Buffalo, New York - 20220902.jpg"], "apartment complex United States", "Multifamily: five or more units. Valued by the income it produces.", "multifamily apartment complex"),
-          P(["File:Shopping at the Rose, Oxnard (2010-11-28).jpeg"], "strip mall shopping center", "Retail: tenants are businesses on multi year leases. Value depends on who the tenants are and how long they've signed for.", "strip mall shopping center"),
-          P(["File:Reston, Virginia (14311563988).jpg"], "suburban office building", "Office: long leases, big costs to refill empty space.", "suburban office building"),
-          P(["File:Distribution Centre, Whitwood Common Lane, 1979 - geograph.org.uk - 134787.jpg"], "distribution warehouse loading docks", "Industrial: warehouses and distribution centers, often leased to one tenant who pays most expenses.", "industrial warehouse distribution center"),
-          { t: "terms", items: [["Multifamily", "A residential building or complex with five or more units, financed and valued as a commercial property."], ["NNN lease", "Triple net: the tenant pays property taxes, insurance and maintenance on top of rent. Common in retail and industrial."], ["Asset class", "Grades like Class A (newest, nicest), B and C (older, cheaper, more fixes needed)."]] },
-        ],
-      },
-      {
-        id: "m1l3", title: "How investors make money", minutes: 5, blocks: [
-          { t: "p", text: "Real estate returns come from four places. A good underwriting looks at all four, but only the first one shows up in your bank account every month." },
-          { t: "diagram", d: "returns4" },
-          { t: "p", text: "Cash flow is what's left after expenses and the mortgage. Loan paydown is the part of each mortgage payment that reduces what you owe, which builds your equity. Appreciation is the property becoming worth more. Tax benefits come mostly from depreciation, which lets owners deduct part of the building's cost each year." },
-          { t: "tip", text: "Beginners often count on appreciation to make a deal work. Professional underwriters want a deal that works on cash flow and treat appreciation as a bonus." },
-        ],
-      },
-    ],
+    lessons: CORE_LESSONS.m1,
     quiz: [
       { q: "What is underwriting?", options: ["Writing the purchase contract", "Analyzing a property's income, costs, value and risk to decide whether and at what price to buy", "Getting the property inspected", "Signing the loan documents"], answer: 1, why: "Underwriting is the analysis that comes before a decision: what it earns, what it's worth, and what could go wrong." },
       { q: "A multifamily property is usually defined as:", options: ["Any home with a family in it", "Two to four units", "Five or more residential units", "Only high rise apartments"], answer: 2, why: "Five or more units are financed and valued as commercial real estate. Two to four units still count as residential." },
@@ -67,26 +39,7 @@ export const COURSE: Module[] = [
   {
     id: "m2", num: 2, title: "The underwriting process and documents",
     summary: "The steps every underwriting follows, and the three documents you'll use most.",
-    lessons: [
-      {
-        id: "m2l1", title: "The underwriting roadmap", minutes: 5, blocks: [
-          { t: "p", text: "Every underwriting follows the same path. Each step feeds the next, which is why this course is built in the same order." },
-          { t: "diagram", d: "flow" },
-          { t: "p", text: "You start with income, subtract operating expenses to get NOI, use NOI to judge value, layer on the loan, and end with the cash flow and returns you'd actually earn. Then you stress test it and decide." },
-          { t: "tip", text: "If NOI is wrong, everything after it is wrong too. That's why most of an underwriter's time goes into income and expenses." },
-        ],
-      },
-      {
-        id: "m2l2", title: "Offering memo, rent roll and T12", minutes: 7, blocks: [
-          { t: "diagram", d: "docs" },
-          { t: "p", text: "The offering memorandum (OM) is the seller's sales brochure, usually prepared by a broker. It has photos, the property description, the asking price or price guidance, and the broker's projections. Treat its projections as the seller's best case." },
-          { t: "p", text: "The rent roll lists every unit: unit number, floor plan, tenant, current rent, market rent, lease start and end dates, and whether it's occupied. It tells you what the property earns today." },
-          { t: "p", text: "The T12, or trailing twelve months, is the property's actual income and expense statement for the last year, month by month. It tells you what the property really cost to run." },
-          { t: "terms", items: [["OM", "Offering memorandum: the marketing package for a property for sale."], ["Rent roll", "A list of every unit with its rent, tenant and lease dates."], ["T12", "Trailing twelve months of actual income and expenses."], ["Pro forma", "A projection of future income and expenses, as opposed to actual history."]] },
-          { t: "tip", text: "Compare the OM's projected rents to the rent roll and the OM's expenses to the T12. The gaps are where sellers make deals look better than they are." },
-        ],
-      },
-    ],
+    lessons: CORE_LESSONS.m2,
     quiz: [
       { q: "Which document shows what every unit is renting for today?", options: ["Offering memo", "Rent roll", "T12", "Loan quote"], answer: 1, why: "The rent roll lists every unit with its current rent and lease dates." },
       { q: "What does T12 stand for?", options: ["Total of 12 units", "Trailing twelve months of actual income and expenses", "A 12 year loan", "Tax year 2012"], answer: 1, why: "The T12 is the property's real operating history over the last twelve months." },
@@ -99,27 +52,7 @@ export const COURSE: Module[] = [
   {
     id: "m3", num: 3, title: "Income",
     summary: "Gross potential rent, vacancy and credit loss, other income, and effective gross income.",
-    lessons: [
-      {
-        id: "m3l1", title: "Gross potential rent", minutes: 5, blocks: [
-          { t: "p", text: "Gross potential rent (GPR) is what the property would collect if every unit were rented at market rent for the whole year. It's the ceiling, not what you'll actually collect." },
-          { t: "formula", name: "Gross potential rent", f: "Units × monthly rent × 12" },
-          { t: "example", title: "Oak Ridge Apartments", rows: [["Units", "20"], ["Rent per unit per month", "$1,000"], ["GPR = 20 × $1,000 × 12", "$240,000", true]] },
-          { t: "p", text: "Real properties have several floor plans, so you calculate each unit type and add them up. Use market rent from the rent roll and nearby comparable properties, not the seller's hoped for rent." },
-          { t: "terms", items: [["Market rent", "What a unit would rent for today if it were empty and leased to a new tenant."], ["In place rent", "What current tenants are actually paying under their leases."], ["Loss to lease", "The gap between market rent and in place rent."]] },
-        ],
-      },
-      {
-        id: "m3l2", title: "Vacancy, credit loss and other income", minutes: 6, blocks: [
-          { t: "p", text: "Nobody collects 100% of GPR. Units sit empty between tenants, and some tenants don't pay. Underwriters subtract vacancy and credit loss even when a building is full today, because people always move out eventually." },
-          { t: "p", text: "Other income is everything besides rent: parking, pet fees, laundry, application fees, storage, and utility reimbursements (often called RUBS). Add it back to get effective gross income (EGI), what you expect to actually collect." },
-          { t: "diagram", d: "waterfall" },
-          { t: "example", title: "Oak Ridge Apartments", rows: [["Gross potential rent", "$240,000"], ["Vacancy and credit loss (6%)", "−$14,400"], ["Other income ($40 per unit per month)", "+$9,600"], ["Effective gross income", "$235,200", true]] },
-          { t: "tip", text: "Most underwriters use 5% to 8% vacancy for a stable apartment property. Using 0% because the building is full today is one of the most common beginner mistakes." },
-          { t: "terms", items: [["Vacancy loss", "Rent lost to empty units."], ["Credit loss", "Rent owed but never collected, also called bad debt."], ["Concessions", "Discounts like a free month to attract tenants; they reduce collected rent."], ["EGI", "Effective gross income: GPR minus vacancy and credit loss plus other income."]] },
-        ],
-      },
-    ],
+    lessons: CORE_LESSONS.m3,
     quiz: [
       { q: "A 30 unit property rents for $900 per unit per month. What is gross potential rent?", options: ["$27,000", "$270,000", "$324,000", "$32,400"], answer: 2, why: "30 × $900 × 12 = $324,000." },
       { q: "Why subtract vacancy if the building is 100% occupied today?", options: ["Lenders require a fee", "Tenants will move out over time and units sit empty between them", "Vacancy is a tax", "It's only for new buildings"], answer: 1, why: "Turnover always happens. Underwriting the average year means expecting some empty time." },
@@ -132,24 +65,7 @@ export const COURSE: Module[] = [
   {
     id: "m4", num: 4, title: "Operating expenses",
     summary: "The costs of running a property, the traps sellers hide, and how to check if expenses look right.",
-    lessons: [
-      {
-        id: "m4l1", title: "Expense categories", minutes: 6, blocks: [
-          { t: "p", text: "Operating expenses are the costs of running the property day to day. They do not include the mortgage, big renovation projects, or depreciation." },
-          { t: "example", title: "Oak Ridge Apartments, year 1", rows: [["Property taxes", "$26,000"], ["Insurance", "$12,000"], ["Utilities", "$14,000"], ["Repairs and maintenance", "$12,000"], ["Payroll", "$10,000"], ["Admin and marketing", "$6,000"], ["Management (5% of EGI)", "$11,760"], ["Replacement reserves ($300 per unit)", "$6,000"], ["Total operating expenses", "$97,760", true]] },
-          { t: "terms", items: [["Fixed expenses", "Costs that don't change much with occupancy, like taxes and insurance."], ["Controllable expenses", "Costs management can influence, like repairs, payroll and marketing."], ["Management fee", "What a property manager charges, usually 3% to 8% of EGI."], ["Replacement reserves", "Money set aside each year for big future replacements like roofs and HVAC."]] },
-        ],
-      },
-      {
-        id: "m4l2", title: "Seller traps and sanity checks", minutes: 6, blocks: [
-          { t: "p", text: "Expenses are where seller numbers are most often too optimistic. Three traps catch beginners again and again." },
-          { t: "p", text: "First, property taxes usually rise after a sale because the county reassesses the property at the new purchase price. Never just copy the seller's tax bill. Second, an owner who manages the property themselves shows no management fee, but you'll pay one. Third, old insurance quotes are often far below today's premiums." },
-          { t: "formula", name: "Expense ratio", f: "Operating expenses ÷ EGI" },
-          { t: "example", title: "Oak Ridge sanity checks", rows: [["Expense ratio = $97,760 ÷ $235,200", "41.6%"], ["Expenses per unit = $97,760 ÷ 20", "$4,888"]] },
-          { t: "tip", text: "Apartments typically run a 35% to 50% expense ratio; older buildings sit at the high end. If a seller shows 28%, something is probably missing." },
-        ],
-      },
-    ],
+    lessons: CORE_LESSONS.m4,
     quiz: [
       { q: "Which of these is NOT an operating expense?", options: ["Insurance", "Mortgage payment", "Payroll", "Repairs"], answer: 1, why: "The mortgage is a financing cost. It comes after NOI, not in operating expenses." },
       { q: "Why might property taxes go up after you buy?", options: ["The county reassesses the property at the new sale price", "Lenders add a tax", "Tenants request it", "They never change"], answer: 0, why: "Many counties reset the assessed value after a sale, so the new owner's bill is based on the higher price." },
@@ -162,24 +78,7 @@ export const COURSE: Module[] = [
   {
     id: "m5", num: 5, title: "Net operating income",
     summary: "The single most important number in underwriting, and what does and doesn't belong in it.",
-    lessons: [
-      {
-        id: "m5l1", title: "Calculating NOI", minutes: 5, blocks: [
-          { t: "formula", name: "Net operating income", f: "EGI − operating expenses" },
-          { t: "diagram", d: "noi" },
-          { t: "example", title: "Oak Ridge Apartments", rows: [["Effective gross income", "$235,200"], ["Operating expenses", "−$97,760"], ["Net operating income", "$137,440", true]] },
-          { t: "p", text: "NOI is the property's profit before any loan payments. It's the same no matter how the buyer pays for the deal, which is why everyone uses it to compare properties." },
-          { t: "calc", c: "noi" },
-        ],
-      },
-      {
-        id: "m5l2", title: "What NOI leaves out", minutes: 4, blocks: [
-          { t: "p", text: "NOI does not include the mortgage payment, capital improvements like a new roof or unit renovations, depreciation, or income taxes. Those all matter, but they come later in the analysis." },
-          { t: "tip", text: "Every dollar of NOI is worth many dollars of value. At a 6.5% cap rate, cutting $10,000 of expenses adds about $154,000 of value. That's why investors obsess over NOI." },
-          { t: "terms", items: [["CapEx", "Capital expenditures: big one time improvements or replacements, kept below the NOI line."], ["Above the line", "Items included in NOI."], ["Below the line", "Items after NOI, such as debt service and CapEx."]] },
-        ],
-      },
-    ],
+    lessons: CORE_LESSONS.m5,
     quiz: [
       { q: "EGI is $600,000 and operating expenses are $250,000. What is NOI?", options: ["$850,000", "$350,000", "$250,000", "$600,000"], answer: 1, why: "$600,000 − $250,000 = $350,000." },
       { q: "Is the mortgage payment included in NOI?", options: ["Yes, it's the biggest expense", "No, NOI is before any loan payments", "Only the interest", "Only for apartments"], answer: 1, why: "NOI is before financing, so two buyers with different loans see the same NOI." },
@@ -191,28 +90,7 @@ export const COURSE: Module[] = [
   {
     id: "m6", num: 6, title: "Valuation and cap rates",
     summary: "Cap rates, how to value a property from its income, price per unit and GRM.",
-    lessons: [
-      {
-        id: "m6l1", title: "The cap rate", minutes: 7, blocks: [
-          { t: "formula", name: "Cap rate", f: "NOI ÷ price" },
-          { t: "p", text: "The capitalization rate is the yield you'd earn in year one if you paid all cash. It's how the market prices income: buyers in a given area and property type accept a certain cap rate, and that sets values." },
-          { t: "diagram", d: "capTriangle" },
-          { t: "example", title: "Oak Ridge Apartments", rows: [["NOI", "$137,440"], ["Price", "$2,000,000"], ["Cap rate = $137,440 ÷ $2,000,000", "6.87%", true], ["Value at a 6.5% market cap = $137,440 ÷ 6.5%", "$2,114,462", true]] },
-          { t: "tip", text: "Lower cap rate means higher price for the same income. When market cap rates rise, values fall, even if the building's NOI didn't change." },
-          { t: "calc", c: "cap" },
-        ],
-      },
-      {
-        id: "m6l2", title: "Other ways to size up price", minutes: 5, blocks: [
-          { t: "formula", name: "Price per unit", f: "Price ÷ number of units" },
-          { t: "formula", name: "Gross rent multiplier (GRM)", f: "Price ÷ gross potential rent" },
-          { t: "example", title: "Oak Ridge Apartments", rows: [["Price per unit = $2,000,000 ÷ 20", "$100,000"], ["GRM = $2,000,000 ÷ $240,000", "8.33"]] },
-          { t: "p", text: "Comparable sales, called comps, are recent sales of similar properties nearby. Underwriters compare the subject property's cap rate, price per unit and GRM to comps to see if the asking price is in line with the market." },
-          P(["File:Suburbia by David Shankbone.jpg"], "suburban neighborhood aerial", "Comps come from the same market: similar age, size and location.", "comparable property sales neighborhood"),
-          { t: "terms", items: [["Comps", "Recent sales of similar properties used to judge value."], ["Going in cap rate", "The cap rate at purchase, using year one NOI."], ["Exit cap rate", "The cap rate assumed when you sell."]] },
-        ],
-      },
-    ],
+    lessons: CORE_LESSONS.m6,
     quiz: [
       { q: "NOI is $300,000 and the price is $5,000,000. What is the cap rate?", options: ["6%", "16.7%", "5%", "60%"], answer: 0, why: "$300,000 ÷ $5,000,000 = 6%." },
       { q: "NOI is $150,000 and the market cap rate is 6%. What is the value?", options: ["$900,000", "$2,500,000", "$1,500,000", "$9,000,000"], answer: 1, why: "$150,000 ÷ 0.06 = $2,500,000." },
@@ -225,29 +103,7 @@ export const COURSE: Module[] = [
   {
     id: "m7", num: 7, title: "Financing and debt",
     summary: "Loan to value, interest and amortization, DSCR, debt yield, and how lenders size a loan.",
-    lessons: [
-      {
-        id: "m7l1", title: "How a loan works", minutes: 6, blocks: [
-          { t: "diagram", d: "capStack" },
-          { t: "p", text: "Most purchases use a loan for most of the price. The loan to value (LTV) is the loan as a share of the price. The rest is equity, the cash the investor puts in." },
-          { t: "p", text: "The interest rate is the cost of borrowing. Amortization is how many years the payments are spread over; a 30 year amortization pays down a little principal every month. Some loans start with interest only years, where you pay just the interest." },
-          { t: "formula", name: "Loan to value", f: "Loan ÷ price" },
-          { t: "example", title: "Oak Ridge financing", rows: [["Price", "$2,000,000"], ["Loan at 70% LTV", "$1,400,000"], ["Down payment", "$600,000"], ["Rate and amortization", "6.5%, 30 years"], ["Annual debt service", "$106,187", true]] },
-          { t: "terms", items: [["Debt service", "The total loan payments in a year, principal plus interest."], ["Amortization", "Paying a loan down over time with regular payments."], ["Interest only", "Paying only interest for a period, so the balance doesn't fall."], ["Equity", "The investor's own cash in the deal."]] },
-        ],
-      },
-      {
-        id: "m7l2", title: "DSCR, debt yield and loan sizing", minutes: 7, blocks: [
-          { t: "formula", name: "Debt service coverage ratio (DSCR)", f: "NOI ÷ annual debt service" },
-          { t: "diagram", d: "dscr" },
-          { t: "p", text: "DSCR shows how many times the property's income covers the loan payment. Most lenders want at least 1.20 to 1.35. Below 1.0 the property can't pay its own mortgage." },
-          { t: "formula", name: "Debt yield", f: "NOI ÷ loan amount" },
-          { t: "example", title: "Oak Ridge loan tests", rows: [["DSCR = $137,440 ÷ $106,187", "1.29x"], ["Debt yield = $137,440 ÷ $1,400,000", "9.82%"], ["Largest loan at a 1.25 DSCR", "about $1,449,600"], ["Largest loan at 70% LTV", "$1,400,000", true]] },
-          { t: "tip", text: "Lenders size the loan by whichever test is tighter. Here 70% LTV is the binding limit. On many deals it's DSCR, and beginners who only check LTV get surprised when the lender offers less." },
-          { t: "calc", c: "dscr" },
-        ],
-      },
-    ],
+    lessons: CORE_LESSONS.m7,
     quiz: [
       { q: "A $3,000,000 property with a $2,100,000 loan has what LTV?", options: ["70%", "30%", "143%", "21%"], answer: 0, why: "$2,100,000 ÷ $3,000,000 = 70%." },
       { q: "NOI is $250,000 and annual debt service is $200,000. DSCR?", options: ["0.8x", "1.25x", "1.5x", "$50,000"], answer: 1, why: "$250,000 ÷ $200,000 = 1.25x." },
@@ -260,30 +116,7 @@ export const COURSE: Module[] = [
   {
     id: "m8", num: 8, title: "Cash flow and returns",
     summary: "Cash flow, cash on cash, break even occupancy, IRR, equity multiple and the exit.",
-    lessons: [
-      {
-        id: "m8l1", title: "Cash flow and cash on cash", minutes: 6, blocks: [
-          { t: "diagram", d: "cashflow" },
-          { t: "formula", name: "Cash flow", f: "NOI − debt service" },
-          { t: "formula", name: "Cash on cash return", f: "Annual cash flow ÷ total cash invested" },
-          { t: "example", title: "Oak Ridge, year 1", rows: [["NOI", "$137,440"], ["Debt service", "−$106,187"], ["Cash flow", "$31,253", true], ["Cash invested = $600,000 down + $40,000 closing", "$640,000"], ["Cash on cash = $31,253 ÷ $640,000", "4.88%", true]] },
-          { t: "formula", name: "Break even occupancy", f: "(Operating expenses + debt service) ÷ (GPR + other income)" },
-          { t: "p", text: "Oak Ridge breaks even at about 81.7% occupancy. Below that, the owner has to put in cash each month." },
-          { t: "calc", c: "coc" },
-        ],
-      },
-      {
-        id: "m8l2", title: "IRR, equity multiple and the exit", minutes: 8, blocks: [
-          { t: "p", text: "Cash on cash only looks at one year. To see the whole investment, underwriters project every year of the hold, then a sale at the end." },
-          { t: "diagram", d: "timeline" },
-          { t: "p", text: "The sale price comes from the exit cap rate: next year's NOI divided by the cap rate you expect when you sell. Subtract selling costs and the remaining loan balance to get your net sale proceeds." },
-          { t: "example", title: "Oak Ridge, 5 year hold", rows: [["Assumptions", "3% rent and expense growth, 7% exit cap"], ["Sale price", "$2,276,152"], ["Loan payoff", "−$1,310,554"], ["Net sale proceeds", "$920,075"], ["IRR", "12.83%", true], ["Equity multiple", "1.75x", true]] },
-          { t: "p", text: "IRR, the internal rate of return, is the yearly return that accounts for when each dollar comes back; money sooner is worth more than money later. The equity multiple is simpler: total cash you get back divided by cash you put in. 1.75x means every $1 invested returns $1.75." },
-          { t: "tip", text: "Exit cap rates are usually set equal to or higher than the going in cap rate, because the building will be older when you sell. Assuming a lower exit cap is an easy way to make a weak deal look great." },
-          { t: "terms", items: [["Hold period", "How many years you plan to own the property."], ["Net sale proceeds", "Sale price minus selling costs and loan payoff."], ["IRR", "Annual return over the whole hold, accounting for timing."], ["Equity multiple", "Total cash returned ÷ cash invested."]] },
-        ],
-      },
-    ],
+    lessons: CORE_LESSONS.m8,
     quiz: [
       { q: "NOI is $200,000 and debt service is $150,000. Cash flow?", options: ["$350,000", "$50,000", "$150,000", "$1.33"], answer: 1, why: "$200,000 − $150,000 = $50,000." },
       { q: "Cash flow is $40,000 on $500,000 invested. Cash on cash?", options: ["8%", "12.5%", "4%", "80%"], answer: 0, why: "$40,000 ÷ $500,000 = 8%." },
@@ -297,28 +130,13 @@ export const COURSE: Module[] = [
     id: "m9", num: 9, title: "Risk, sensitivity and the decision",
     summary: "Stress testing, sensitivity tables, red flags, and how to reach pursue, renegotiate or pass.",
     lessons: [
-      {
-        id: "m9l1", title: "Stress testing and sensitivity", minutes: 6, blocks: [
-          { t: "p", text: "A base case is your best guess. Professionals also ask what happens if things go wrong: rents drop, vacancy rises, rates go up, or the exit cap is higher than planned." },
-          { t: "diagram", d: "sensitivity" },
-          { t: "p", text: "A sensitivity table changes two inputs at once, like exit cap and rent growth, and shows the return in every combination. Green cells meet your target; red cells don't. If only the most optimistic corner works, the deal is fragile." },
-          { t: "tip", text: "On the Underwrite side of this site, the Scenarios tab builds these tables for you." },
-        ],
-      },
-      {
-        id: "m9l2", title: "Red flags and making the call", minutes: 6, blocks: [
-          { t: "p", text: "Common red flags: 0% vacancy, no management fee, the seller's tax bill, an expense ratio under 35%, rents far above comps, a DSCR under 1.25, or an exit cap lower than the going in cap." },
-          { t: "p", text: "The decision is one of three. Pursue if it meets your targets with realistic numbers. Renegotiate if it works at a lower price; your underwriting tells you that price. Pass if no reasonable price makes it work." },
-          { t: "p", text: "Before closing, a professional also checks the physical building with an inspection, verifies leases against the rent roll, gets a real insurance quote and a tax estimate, and studies new apartments being built nearby." },
-          { t: "terms", items: [["Base case", "Your most likely set of assumptions."], ["Stress test", "Running the deal under bad but realistic scenarios."], ["Due diligence", "The checks done after an offer is accepted and before closing."]] },
-        ],
-      },
+      ...CORE_LESSONS.m9,
       {
         id: "m9l3", title: "Location: taxes, rent rules and politics", minutes: 8, blocks: [
           { t: "p", text: "Put the same building in two different states and it can be worth very different amounts. Three things about location change the numbers: how the property is taxed, whether rents can be limited by law, and who is writing the rules." },
-          { t: "p", text: "Property tax first. The effective rate, tax paid as a share of value, runs from under 0.3% in Hawaii to over 2% in New Jersey. Rentals usually pay more than the owner occupied average because they don't get homestead breaks. And in most places the county moves the value toward your purchase price after you buy, so the seller's tax bill is not your tax bill." },
+          { t: "p", text: "Property tax first. The effective rate, tax paid as a share of value, runs from under 0.3% in Hawaii to over 2% in New Jersey. Rentals usually pay more than the average home, because they don't get homestead exemptions, the tax discounts for people who live in their own home. And in most places the county moves the value toward your purchase price after you buy, so the seller's tax bill is not your tax bill." },
           { t: "example", title: "Oak Ridge in a high tax state", rows: [["Taxes in our base example (1.3% of price)", "$26,000"], ["Same building at 2.11% of $2,000,000", "$42,200"], ["Extra tax per year", "$16,200"], ["NOI = $137,440 − $16,200", "$121,240", true], ["Cap rate at $2,000,000", "6.06%"], ["Value at a 6.5% market cap = $121,240 ÷ 6.5%", "$1,865,231", true], ["Value lost to the higher tax", "−$249,231"]] },
-          { t: "formula", name: "Rule of thumb", f: "Value lost ≈ extra yearly expense ÷ cap rate" },
+          { t: "formula", name: "Rule of thumb", f: "Value lost ≈ extra yearly expense ÷ cap rate", parts: [["Extra yearly expense", "How much more the building costs to run each year, like a higher tax bill. It lowers NOI by the same amount."], ["Cap rate", "The market cap rate, as a decimal (Module 6)."], ["≈", "Approximately equal to."]], say: "A cost that lowers NOI every year lowers the value the same way NOI raises it: divide it by the cap rate. Here, $16,200 ÷ 0.065 ≈ $249,231." },
           { t: "p", text: "Rent rules second. California, Oregon and Washington cap yearly rent increases statewide, at roughly 5% to 10% depending on inflation. A few states such as New York and New Jersey let cities run their own rent control. About 32 states ban local rent control, so rents move with the market. If a cap applies, your rent growth assumption can't go above it, and regulated units may be worth less to the next buyer." },
           { t: "p", text: "Politics third. Governors, legislatures, city councils and voters keep changing these rules: tax caps, eviction timelines, rent limits, insurance rules. Owner groups such as the Texas Apartment Association and the California Apartment Association lobby for owners; tenant advocacy groups push the other way. A good underwriter doesn't pick a side. They track what's in force, what's proposed and how likely it is to pass, then test the deal with and without it." },
           { t: "state" },
@@ -341,16 +159,7 @@ export const COURSE: Module[] = [
   {
     id: "m10", num: 10, title: "Capstone: underwrite a full deal",
     summary: "Put every metric together on a full deal from start to verdict.",
-    lessons: [
-      {
-        id: "m10l1", title: "Putting it all together", minutes: 5, blocks: [
-          { t: "p", text: "You now know every metric in a standard underwriting. Here's the whole chain on one page, using Oak Ridge." },
-          { t: "example", title: "Oak Ridge Apartments, complete", rows: [["Gross potential rent", "$240,000"], ["EGI", "$235,200"], ["Operating expenses (41.6%)", "$97,760"], ["NOI", "$137,440", true], ["Cap rate at $2,000,000", "6.87%"], ["Loan, 70% LTV", "$1,400,000"], ["DSCR", "1.29x"], ["Cash flow", "$31,253"], ["Cash on cash", "4.88%"], ["5 year IRR", "12.83%"], ["Equity multiple", "1.75x", true]] },
-          { t: "p", text: "Verdict: solid NOI and a healthy DSCR, but year one cash on cash of 4.88% is below the 6% many investors want. A buyer might renegotiate the price or look for ways to raise NOI." },
-          { t: "tip", text: "Next, open Practice a deal to underwrite Maple Court yourself, step by step, with the math shown at every step. Then try your own property or upload real documents." },
-        ],
-      },
-    ],
+    lessons: CORE_LESSONS.m10,
     quiz: [
       { q: "Put the chain in order:", options: ["NOI, EGI, cap rate, DSCR", "GPR, EGI, NOI, value and debt, cash flow and returns", "Returns, NOI, GPR, EGI", "DSCR, GPR, EGI, NOI"], answer: 1, why: "Income becomes EGI, minus expenses gives NOI, which drives value, debt and finally returns." },
       { q: "Which metric would a lender look at first?", options: ["Equity multiple", "DSCR", "GRM", "Appreciation"], answer: 1, why: "Lenders care whether income covers the loan, which is DSCR, along with LTV." },
@@ -364,8 +173,8 @@ export const COURSE: Module[] = [
     lessons: [
       {
         id: "m11l1", title: "Reading the operating statement like a lender", minutes: 8, blocks: [
-          { t: "p", text: "Professionals lay three columns side by side: the seller's trailing 12 months (T12), the last 3 months annualized (T3, multiplied by 4), and their own underwritten year 1. The T12 shows the year; the T3 shows the trend. If the T3 is weaker, underwrite to the T3 unless you know why it dipped." },
-          { t: "p", text: "Rent is booked at market rent, then reduced. Loss to lease is the gap between market rent and what current leases actually pay. Below it come physical vacancy, concessions (free rent), bad debt (rent never collected) and non revenue units (model, office, employee or down units)." },
+          { t: "p", text: "Professionals lay three columns side by side: the seller's trailing 12 months (the T12 from Module 2), the last 3 months annualized, and their own underwritten year 1. Annualized means turned into a yearly number: three months of results multiplied by 4. That middle column is called the T3. The T12 shows the year; the T3 shows the trend. If the T3 is weaker, underwrite to the T3 unless you know why it dipped." },
+          { t: "p", text: "Rent is booked at market rent, then reduced. Loss to lease is the gap between market rent and what current leases actually pay. Below it come physical vacancy (empty units), concessions (free rent), bad debt (rent never collected) and non revenue units: units that earn nothing because they're used as a model, an office, staff housing, or are too damaged to rent." },
           { t: "diagram", d: "waterfall", caption: "Revenue steps down from gross potential rent to effective gross income." },
           { t: "example", title: "Oak Ridge with market rents of $1,050", rows: [["Gross potential rent at market (20 × $1,050 × 12)", "$252,000"], ["Loss to lease (in place $1,000)", "−$12,000"], ["Physical vacancy 6%", "−$15,120"], ["Concessions 1%", "−$2,520"], ["Bad debt 1%", "−$2,520"], ["Net rental income", "$219,840", true], ["Economic occupancy", "87.2%"]] },
           { t: "p", text: "Economic occupancy (rent collected ÷ potential) is the number that matters. A building can be 96% leased and still collect only 88% of its potential." },
@@ -379,7 +188,7 @@ export const COURSE: Module[] = [
           { t: "p", text: "A lender doesn't just lend a percentage of the price. It calculates three maximum loans and gives you the smallest: one by loan to value, one by DSCR, and one by debt yield." },
           { t: "example", title: "Oak Ridge: NOI $137,440, 6.5% rate, 30 year amortization", rows: [["LTV loan, 75% of $2,000,000", "$1,500,000"], ["DSCR loan: $137,440 ÷ 1.25 ÷ 0.0758 loan constant", "$1,449,633"], ["Debt yield loan: $137,440 ÷ 9%", "$1,527,111"], ["Loan you get (DSCR binds)", "$1,449,633", true]] },
           { t: "p", text: "When rates are high, DSCR usually binds, so the loan is smaller than the LTV you were quoted and the equity check is bigger. Always size the loan this way before you promise a seller a price." },
-          { t: "p", text: "Fixed rate loans (agency, bank, life company) have steady payments but often carry yield maintenance: a prepayment penalty equal to the lender's lost interest. Paying off $1,000,000 at 6.5% with four years left, when Treasuries yield 4.25%, costs about $81,000. Floating rate bridge loans pay SOFR plus a spread, are usually interest only, and require a rate cap that limits how high SOFR can go." },
+          { t: "p", text: "Fixed rate loans keep the same rate for the whole term. They come from banks, life insurance companies, and the government backed agencies Fannie Mae and Freddie Mac. Their payments are steady, but they often carry yield maintenance: a penalty for paying the loan off early that equals the interest the lender loses. Treasuries are bonds issued by the US government, and their yield is the benchmark for safe interest rates. Paying off $1,000,000 at 6.5% with four years left, when Treasuries yield 4.25%, costs about $81,000. Floating rate loans have a rate that moves. Bridge loans, short term loans used to buy and fix up a property, usually float: you pay SOFR, a benchmark rate banks charge each other overnight, plus a fixed spread. They're usually interest only and require a rate cap, a contract that pays you if SOFR rises above a set level." },
           { t: "p", text: "The refinance trap: a buyer pays $10,000,000 for a building with $500,000 of NOI (a 5% cap) using an $8,000,000 bridge loan. Two years later NOI is $540,000, but cap rates have risen to 6%, so the building is worth $9,000,000. A 65% LTV permanent loan is only $5,850,000. The owners must bring about $2,150,000 of new cash to refinance. Many 2021 and 2022 bridge deals ran into exactly this." },
           { t: "terms", items: [["Loan constant", "Annual debt service per dollar of loan; 7.58% for a 6.5%, 30 year loan."], ["Yield maintenance", "A prepayment penalty that pays the lender the interest it loses when a fixed loan is paid off early."], ["Rate cap", "A contract bought at closing that pays the borrower if SOFR rises above a strike rate."], ["Bridge loan", "Short term, usually floating rate, interest only debt used to buy and reposition a property."]] },
           { t: "tip", text: "Capital › Debt sizes the loan three ways, models floating rates with a cap, prepayment penalties and a refinance in any year, and warns you when a refinance needs cash in." },
@@ -388,7 +197,7 @@ export const COURSE: Module[] = [
       {
         id: "m11l3", title: "Value add: pricing a renovation", minutes: 7, blocks: [
           { t: "p", text: "A value add plan spends money on units to raise rent. The test is return on cost: the extra yearly rent divided by what you spend." },
-          { t: "formula", name: "Return on cost", f: "Annual rent premium ÷ renovation cost per unit" },
+          { t: "formula", name: "Return on cost", f: "Annual rent premium ÷ renovation cost per unit", parts: [["Annual rent premium", "How much more rent a renovated unit earns in a year than before: the monthly increase × 12."], ["Renovation cost per unit", "What it costs to renovate one unit."]], say: "For every dollar spent renovating, how many cents of extra rent come back each year?" },
           { t: "example", title: "One unit", rows: [["Renovation cost", "$8,000"], ["Rent premium", "$100 a month = $1,200 a year"], ["Return on cost", "15%", true], ["Value created at a 6% cap: $1,200 ÷ 0.06", "$20,000"], ["Value per $1 spent", "2.5x", true]] },
           { t: "p", text: "Most sponsors want a return on cost of at least 15%. Below about 12%, the work isn't worth the risk. Prove the premium with renovated comps nearby, not the seller's projections." },
           { t: "p", text: "Don't forget the cost of doing the work: each unit sits empty for a few weeks, so year 1 income usually drops before it rises, and DSCR can dip below what a permanent lender allows. That's why renovations are often financed with bridge loans or a lender holdback." },
@@ -399,7 +208,7 @@ export const COURSE: Module[] = [
         id: "m11l4", title: "Syndications: who earns what", minutes: 8, blocks: [
           { t: "p", text: "Many deals are bought by a sponsor (the general partner, GP) using money from investors (limited partners, LPs). The GP finds and runs the deal and usually invests 5 to 10% of the equity. The LPs provide the rest." },
           { t: "diagram", d: "capStack", caption: "Debt sits at the bottom of the capital stack; investor and sponsor equity sit above it." },
-          { t: "p", text: "Cash is split by a waterfall. First, everyone is paid pro rata until investors earn the preferred return (the pref), often 6 to 8% a year. After that the split shifts toward the sponsor, for example 70% to LPs and 30% to the GP until LPs reach a 15% IRR, then 50/50." },
+          { t: "p", text: "Cash is split by a waterfall. First, everyone is paid pro rata, meaning in proportion to how much money each put in, until investors earn the preferred return (the pref), often 6 to 8% a year. After that the split shifts toward the sponsor, for example 70% to LPs and 30% to the GP until LPs reach a 15% IRR, then 50/50." },
           { t: "example", title: "$1,000,000 of equity: LPs $900,000, GP $100,000, 8% pref", rows: [["First $80,000 a year (the pref) to LPs", "$72,000"], ["First $80,000 a year to the GP", "$8,000"], ["Next $100,000 of profit, split 70/30: LPs", "$70,000"], ["Same $100,000: GP", "$30,000"], ["GP's pro rata share would have been", "$10,000"], ["Promote earned by the GP", "$20,000", true]] },
           { t: "p", text: "Sponsors also charge fees: an acquisition fee (1 to 3% of the price), an asset management fee (1 to 2% of income) and sometimes a disposition fee at sale. As an investor, compare the deal level IRR with the LP IRR after fees and promote. The gap is the price of the sponsor's work." },
           { t: "terms", items: [["GP / LP", "General partner (the sponsor who runs the deal) and limited partners (passive investors)."], ["Preferred return", "The return investors receive before the sponsor shares in profits."], ["Promote", "The sponsor's share of profits above its share of the equity; its reward for performance."], ["Hurdle", "An IRR level that changes the split once investors reach it."]] },
@@ -410,7 +219,7 @@ export const COURSE: Module[] = [
         id: "m11l5", title: "Comps and the exit cap", minutes: 6, blocks: [
           { t: "p", text: "Rent comps are nearby properties of similar age and quality. They tell you what market rent really is, which sets loss to lease and the renovation premium. Compare like with like: asking vs effective rent, unit size, amenities and who pays utilities." },
           { t: "p", text: "Sale comps tell you what buyers pay per unit and at what cap rate. Broker cap rates are usually on the seller's trailing NOI before reserves, so compare your price against them on the same basis." },
-          { t: "p", text: "The exit cap is the cap rate a future buyer will pay. Professionals set it above the going in cap, about 5 to 10 basis points per year of hold (25 to 75 bps), because the building will be older and rates may be higher. Every 50 bps of exit cap moves the sale price 7 to 9%." },
+          { t: "p", text: "The exit cap is the cap rate a future buyer will pay. Cap rate changes are measured in basis points, written bps: one basis point is one hundredth of a percent, so 50 bps is 0.50%. Professionals set the exit cap above the going in cap, about 5 to 10 bps per year of hold (25 to 75 bps on a 5 year hold), because the building will be older and rates may be higher. Every 50 bps of exit cap moves the sale price 7 to 9%." },
           { t: "example", title: "Exit cap sensitivity on $400,000 of exit NOI", rows: [["At a 6.0% cap", "$6,666,667"], ["At a 6.5% cap", "$6,153,846"], ["Difference", "−$512,821 (−7.7%)", true]] },
           { t: "tip", text: "Market › Comps compares your rents and price with comps and can set the exit cap to the comp average plus the hold cushion in one click." },
         ],
@@ -457,7 +266,7 @@ export const COURSE: Module[] = [
         id: "m12l3", title: "Concessions: asking rent vs effective rent", minutes: 8, blocks: [
           { t: "p", text: "A concession is a discount given to sign a lease: weeks free, a month off, waived fees. Owners use them instead of cutting the advertised rent because the asking rent stays high on paper, and renewals and appraisals often key off it." },
           { t: "p", text: "Always convert a special into effective rent, the rent the tenant really pays over the lease. That's the number your property competes against." },
-          { t: "formula", name: "Effective rent", f: "(Asking rent × lease months − value of free time) ÷ lease months" },
+          { t: "formula", name: "Effective rent", f: "(Asking rent × lease months − value of free time) ÷ lease months", parts: [["Asking rent", "The advertised monthly rent before any special."], ["Lease months", "How many months the lease lasts."], ["Value of free time", "The rent the tenant doesn't pay because of the special, in dollars."]], say: "Spread the discount across the whole lease to see what the tenant really pays per month." },
           { t: "example", title: "New lease up: $1,400 asking, 8 weeks free on a 13 month lease", rows: [["Rent over 13 months: $1,400 × 13", "$18,200"], ["One week of rent: $1,400 × 12 ÷ 52", "$323"], ["8 weeks free", "−$2,585"], ["Paid over the lease", "$15,615"], ["Effective rent: $15,615 ÷ 13", "$1,201", true], ["Discount from asking", "14.2%", true]] },
           { t: "diagram", d: "concession", caption: "With the special, the new building is cheaper than your older one." },
           { t: "p", text: "Now your tenants paying $1,250 can move into a brand new unit for $1,201 effective. You either match with your own concessions, accept more move outs, or both. That's why an increase in competition shows up first in concessions, then in vacancy, and only later in asking rents." },
@@ -478,7 +287,7 @@ export const COURSE: Module[] = [
       },
       {
         id: "m12l5", title: "Interest rates, cap rates and timing", minutes: 8, blocks: [
-          { t: "p", text: "Cap rates move with interest rates, because buyers compare a property's yield with what they could earn on safer investments and what they'll pay to borrow. When the 10 year Treasury rose from about 1.5% in 2021 to over 4%, apartment cap rates rose too, and values fell even where NOI held up." },
+          { t: "p", text: "Cap rates move with interest rates, because buyers compare a property's yield with what they could earn on safer investments and what they'll pay to borrow. The 10 year Treasury is the interest rate the US government pays to borrow for 10 years, the standard benchmark for a safe return. When it rose from about 1.5% in 2021 to over 4%, apartment cap rates rose too, and values fell even where NOI held up." },
           { t: "example", title: "Same $500,000 NOI, different market", rows: [["Value at a 4.50% cap (2021)", "$11,111,111"], ["Value at a 5.75% cap", "$8,695,652"], ["Change", "−21.7%", true]] },
           { t: "p", text: "Negative leverage: when the loan costs more than the property yields, borrowing makes your cash return worse, not better. That's common today, and it changes how deals get bought." },
           { t: "example", title: "$10M purchase at a 5.5% cap, 65% loan at 6.5%, 30 year amortization", rows: [["NOI", "$550,000"], ["Debt service on $6.5M (7.58% loan constant)", "−$493,013"], ["Cash flow", "$56,987"], ["Equity", "$3,500,000"], ["Cash on cash", "1.63%", true], ["Cap rate, as if you paid all cash", "5.50%"]] },

@@ -135,3 +135,43 @@ export const GUIDE: Record<string, ModuleGuide> = {
 }
 
 export const levelOf = (moduleId: string) => LEVELS.find(l => l.modules.includes(moduleId))!
+
+/** What the learner gets out of each lesson, shown on the module overview. */
+export const LESSON_GOALS: Record<string, string> = {
+  m1l1: "What makes real estate an investment, and what an underwriter is actually deciding.",
+  m1l2: "How apartments, retail, office, industrial and others each earn money, and why that changes the underwriting.",
+  m1l3: "The four sources of return: cash flow, loan paydown, appreciation and tax benefits, and which ones you can count on.",
+  m2l1: "The order every underwriting follows, from income to the final call, and why each step feeds the next.",
+  m2l2: "What the offering memo, rent roll and T12 each tell you, and where the seller's version needs checking.",
+  m3l1: "How to calculate gross potential rent from a unit mix, using market rent instead of the seller's hoped for rent.",
+  m3l2: "How to take vacancy, credit loss and other income into account to reach effective gross income.",
+  m4l1: "Every operating expense line, what drives it, and what does not count as an operating expense.",
+  m4l2: "The three expense traps that catch beginners, like taxes rising after a sale, and how to sanity check with expense ratio and cost per unit.",
+  m5l1: "How to calculate NOI, the property's profit before any loan.",
+  m5l2: "What NOI leaves out on purpose, and why every dollar of NOI is worth many dollars of value.",
+  m6l1: "What a cap rate means, how to value a property from its NOI, and why rising cap rates lower values.",
+  m6l2: "How to cross check a price with comps, price per unit and gross rent multiplier.",
+  m7l1: "How loan to value, interest rate and amortization set your loan payment and the cash you need.",
+  m7l2: "How lenders test a deal with DSCR and debt yield, and how to find the largest loan you can get.",
+  m8l1: "How to calculate cash flow, cash on cash and break even occupancy.",
+  m8l2: "How to model the sale with an exit cap, and read IRR and equity multiple over the whole hold.",
+  m9l1: "How to stress test a deal and build a sensitivity table to see where it breaks.",
+  m9l2: "The red flags that end deals, and how to decide between pursue, renegotiate and pass.",
+  m9l3: "How property taxes, rent rules and local politics change what the same building is worth.",
+  m10l1: "The whole chain on one property, from rent to verdict, so every metric connects.",
+  m11l1: "How to read a T12 the way a lender does: three columns side by side, loss to lease and economic occupancy.",
+  m11l2: "How a lender calculates three maximum loans and gives you the smallest, and how to choose the debt.",
+  m11l3: "How to price a renovation with return on cost and decide if the work is worth the risk.",
+  m11l4: "How sponsors and investors split the cash through a waterfall and preferred return.",
+  m11l5: "How to use rent and sale comps to check market rent and pick a realistic exit cap.",
+  m12l1: "Why rent is set by competition, not by what a building costs or what the seller wants.",
+  m12l2: "How new construction nearby leads to concessions, and how to read the pipeline before you buy.",
+  m12l3: "How to convert a concession into effective rent, the number that belongs in your model.",
+  m12l4: "Where renter demand comes from, and how to read the ZIP, city and metro.",
+  m12l5: "How interest rates move cap rates, and what negative leverage does to your returns.",
+  m13l1: "How an acquisitions team works through hundreds of deals, and what your job is on it.",
+  m13l2: "How to decide in 30 minutes whether a deal deserves a full model.",
+  m13l3: "The order to build a full model in, with a source behind every assumption.",
+  m13l4: "The mistakes that most often make a deal look better than it is, and how to check for them.",
+  m13l5: "The questions to ask the broker, and how to write a two page memo that gets a decision.",
+}

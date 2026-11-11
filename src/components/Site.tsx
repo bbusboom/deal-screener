@@ -39,3 +39,18 @@ export function SectionHead({ title, intro, children }: { title: ReactNode; intr
       {children}
     </div>)
 }
+
+/** Slimmer navy bar for screens where you're working: back link, title, and a slot on the right (like a timer). */
+export function WorkBar({ back, onBack, eyebrow, title, right }: { back: string; onBack: () => void; eyebrow?: ReactNode; title: ReactNode; right?: ReactNode }) {
+  return (
+    <section className="bg-night text-white">
+      <div className="mx-auto flex max-w-7xl flex-wrap items-end justify-between gap-4 px-4 pb-8 pt-6 md:px-8">
+        <div className="min-w-0">
+          <button className="text-sm text-white/55 hover:text-white" onClick={onBack}>← {back}</button>
+          {eyebrow && <div className="mt-5 text-sm text-white/55">{eyebrow}</div>}
+          <h1 className={`${eyebrow ? "mt-1" : "mt-5"} font-serif text-3xl font-semibold leading-tight tracking-tight md:text-4xl`}>{title}</h1>
+        </div>
+        {right}
+      </div>
+    </section>)
+}

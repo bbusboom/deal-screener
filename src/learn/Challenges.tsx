@@ -5,7 +5,7 @@ import { type Deal, project, usd, pct, xx } from "../lib/model"
 import { stateBy, taxEstimate } from "../lib/states"
 import { Card, Field, NumInput } from "../components/ui"
 import AiPanel from "../components/AiPanel"
-import { PageHero, SitePhoto, SectionHead } from "../components/Site"
+import { PageHero, SitePhoto, SectionHead, WorkBar } from "../components/Site"
 import { StateSnapshot } from "../components/MarketPane"
 import { TRICKS, DUELS, DUEL_FIELDS, DUEL_LEVEL, fairPrice, trueDeal, rightCall, scoreDuel, type TrickPuzzle, type Duel, type Call, type DuelScore } from "./challenges"
 
@@ -90,13 +90,13 @@ function TrickPlayer({ t, onDone, onBack, onNext }: { t: TrickPuzzle; onDone: (s
     (checked ? `\nThe user has checked. Traps: ${t.rows.filter(r => r.trap).map(r => r.cells[0] + ": " + r.trap).join(" ")} Lesson: ${t.lesson}` : "\nThe user hasn't checked yet: give hints, not answers.")
 
   return (
+    <div>
+    <WorkBar back="All challenges" onBack={onBack} eyebrow={`Spot the seller's trick: ${t.doc}, ${DUEL_LEVEL[t.level].toLowerCase()}`} title={t.title} />
+    <main className="mx-auto max-w-7xl px-4 py-8 md:px-8">
     <div className="grid gap-5 lg:grid-cols-[1fr_340px]">
       <div className="space-y-4">
-        <button className="text-sm text-brand-600" onClick={onBack}>← All challenges</button>
         <Card>
-          <div className="flex flex-wrap items-center gap-2 text-xs"><span className="rounded bg-slate-100 px-2 py-0.5 font-semibold text-slate-600">{t.doc}</span><span className="text-slate-400">{DUEL_LEVEL[t.level]}</span></div>
-          <h1 className="mt-1 text-xl font-bold">{t.title}</h1>
-          <p className="mt-2 text-[15px] text-ink/90">{t.setup}</p>
+          <p className="text-[16px] leading-relaxed text-slate-700">{t.setup}</p>
           <div className="mt-4 overflow-x-auto">
             <table className="tbl">
               <thead><tr>{t.columns.map((c, i) => <th key={i} className={i ? "" : "!text-left"}>{c}</th>)}<th className="w-24"></th></tr></thead>
@@ -153,6 +153,8 @@ function TrickPlayer({ t, onDone, onBack, onNext }: { t: TrickPuzzle; onDone: (s
           greeting={checked ? "Want me to explain any of these, or show how a pro would check it with the seller?" : "Stuck? Ask me what to look for in a " + t.doc + " and I'll give you a hint without spoiling it."} />
       </div>
     </div>
+    </main>
+    </div>
   )
 }
 
@@ -199,17 +201,14 @@ function DuelPlayer({ x, onDone, onBack, onNext }: { x: Duel; onDone: (pts: numb
     (step === "reveal" ? ` The user finished. Reality: vacancy ${truth.vac}%, taxes ${usd(truth.tax)}, insurance ${usd(truth.ins)}, R&M ${usd(truth.rm)}, management ${truth.mgmt}%, reserves $${truth.res}. Right call: ${right.call}${right.call === "renegotiate" ? " around " + usd(right.fair) : ""}. They chose ${call}${call === "renegotiate" ? " at " + usd(offer) : ""} and scored ${score?.total}/100. Outcome: ${x.outcome}` : " The user is still deciding: give hints and questions, not the answer.")
 
   return (
+    <div>
+    <WorkBar back="All challenges" onBack={onBack} eyebrow={`Deal Duel: ${st?.name}, ${units} units, asking ${usd(x.seller.price)}`} title={x.title}
+      right={step !== "reveal" ? <div className="text-right"><div className="text-xs text-white/50">Time</div><div className={`num font-serif text-3xl font-semibold ${over ? "text-red-300" : "text-white"}`}>{Math.floor(secs / 60)}:{String(secs % 60).padStart(2, "0")}<span className="text-base text-white/40"> / {x.minutes}:00</span></div></div> : undefined} />
+    <main className="mx-auto max-w-7xl px-4 py-8 md:px-8">
     <div className="grid gap-5 lg:grid-cols-[1fr_340px]">
       <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <button className="text-sm text-brand-600" onClick={onBack}>← All challenges</button>
-          {step !== "reveal" && <span className={`num rounded-full px-3 py-1 text-sm font-semibold ${over ? "bg-fail-50 text-fail-600" : "bg-slate-100 text-slate-600"}`}>⏱ {Math.floor(secs / 60)}:{String(secs % 60).padStart(2, "0")} / {x.minutes}:00</span>}
-        </div>
-
         <Card>
-          <div className="text-xs text-slate-400">{DUEL_LEVEL[x.level]} · {st?.name} · {units} units · asking {usd(x.seller.price)}</div>
-          <h1 className="mt-1 text-xl font-bold">{x.title}</h1>
-          <blockquote className="mt-3 border-l-4 border-brand-500 bg-brand-50 px-4 py-3 text-[15px] italic text-ink/90">{x.pitch}</blockquote>
+          <blockquote className="border-l-4 border-[#f4b24c] bg-[#fff8eb] px-4 py-3 font-serif text-lg leading-relaxed text-ink">{x.pitch}</blockquote>
           <div className="mt-4"><div className="card-title !mb-2">What you found in due diligence</div>
             <ul className="list-disc space-y-1 pl-5 text-sm">{x.clues.map(c => <li key={c}>{c}</li>)}</ul></div>
           {step === "brief" && <button className="btn btn-primary mt-4" onClick={() => setStep("work")}>Underwrite it →</button>}
@@ -284,6 +283,8 @@ function DuelPlayer({ x, onDone, onBack, onNext }: { x: Duel; onDone: (pts: numb
           greeting={step === "reveal" ? "Want me to walk through what you missed, or how you'd pitch that offer to the broker?" : "I'm your deal partner. Ask what a clue means or where to look; I won't hand you the answer."} />
       </div>
     </div>
+    </main>
+    </div>
   )
 }
 
@@ -310,5 +311,5 @@ export default function Challenges({ session }: { session: Session | null }) {
     const i = DUELS.findIndex(d => d.id === view.id)
     body = <DuelPlayer x={DUELS[i]} onDone={s => done(DUELS[i].id, s)} onBack={() => open({ k: "home" })} onNext={i < DUELS.length - 1 ? () => open({ k: "duel", id: DUELS[i + 1].id }) : undefined} />
   } else return <Home prog={prog} open={open} />
-  return <main className="mx-auto max-w-7xl px-4 py-5 md:px-8">{body}</main>
+  return body
 }

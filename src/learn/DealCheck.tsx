@@ -5,7 +5,7 @@ import { PENDING_CHECK, levelForCheck, CHECKPOINT_PASS } from "./levels"
 import { saveCheck, listChecks, type CheckAnswers, type CheckRecord } from "../lib/store"
 import { CHECKS, answerKey, scoreCheck, type Check } from "./checks"
 import { Card } from "../components/ui"
-import { PageHero, SitePhoto, SectionHead } from "../components/Site"
+import { PageHero, SitePhoto, SectionHead, WorkBar } from "../components/Site"
 
 /* An attempt lives in sessionStorage so the clock keeps running if you leave the tab or open the deal in Underwrite. */
 type Attempt = { id: string; start: number; usedWorkspace: boolean }
@@ -100,15 +100,10 @@ function Run({ c, a, session, onQuit, onOpen, onDone }: { c: Check; a: Attempt; 
 
   const exp: [string, number][] = ([["Real estate taxes", d.tax], ["Insurance", d.ins], ["Utilities", d.util], ["Repairs & maintenance", d.rm], ["Turnover", d.turn], ["Contract services", d.contract], ["Payroll", d.pay], ["General & admin", d.adm], ["Marketing", d.mkt]] as [string, number][]).filter(([, v]) => v > 0)
   return (
-    <main className="mx-auto max-w-5xl space-y-4 px-4 py-6 md:px-8">
-      <div className="flex flex-wrap items-center gap-3">
-        <button className="btn" onClick={onQuit}>‹ Leave</button>
-        <div>
-          <div className="text-xs text-slate-500">Deal Check{levelForCheck(c.id) ? ` · Level ${levelForCheck(c.id)!.num} checkpoint` : ""}</div>
-          <div className="font-display text-xl font-semibold">{c.title}, {c.where}</div>
-        </div>
-        <div className="num ml-auto rounded-lg bg-brand-900 px-4 py-2 text-lg font-semibold text-white">{mmss((now - a.start) / 1000)}</div>
-      </div>
+    <div>
+    <WorkBar back="Leave Deal Check" onBack={onQuit} eyebrow={`Deal Check${levelForCheck(c.id) ? `, Level ${levelForCheck(c.id)!.num} checkpoint` : ""}, ${c.where}`} title={c.title}
+      right={<div className="text-right"><div className="text-xs text-white/50">Time</div><div className="num font-serif text-3xl font-semibold">{mmss((now - a.start) / 1000)}</div></div>} />
+    <main className="mx-auto max-w-5xl space-y-4 px-4 py-8 md:px-8">
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
         <Card title="Broker package">
           <p className="text-sm text-slate-600">{c.pitch}</p>
@@ -159,6 +154,7 @@ function Run({ c, a, session, onQuit, onOpen, onDone }: { c: Check; a: Attempt; 
         </div>
       </div>
     </main>
+    </div>
   )
 }
 
@@ -183,9 +179,11 @@ function Result({ r, onBack, onRetry }: { r: CheckRecord; onBack: () => void; on
   if (!parts.dscr) tips.push(c.deal.ioYrs ? "This loan is interest only in year one, so debt service is the loan amount times the rate." : "DSCR is NOI divided by a full year of loan payments. The loan is the price times the loan to value.")
   if (!parts.verdict) tips.push("A deal clears only if both tests pass. One failing test means it misses, even if the other looks strong.")
   return (
-    <main className="mx-auto max-w-3xl space-y-4 px-4 py-6 md:px-8">
+    <div>
+    <WorkBar back="Deal Check" onBack={onBack} eyebrow="Deal Check result" title={c.title} />
+    <main className="mx-auto max-w-3xl space-y-4 px-4 py-8 md:px-8">
       <div className="card text-center">
-        <div className="text-xs text-slate-500">Deal Check · {c.title}</div>
+        <div className="text-xs text-slate-500">Deal Check: {c.title}</div>
         <div className="num mt-1 text-4xl font-semibold text-ink">{r.score}<span className="text-lg text-slate-400"> / 100</span></div>
         <div className="mt-1 text-sm text-slate-600">in {mmss(r.seconds)}{r.used_workspace ? ", using the workspace" : ""}</div>
         {levelForCheck(c.id) && <div className={`mx-auto mt-3 inline-block rounded-full px-3 py-1 text-sm font-semibold ${r.score >= CHECKPOINT_PASS ? "bg-pass-50 text-pass-600" : "bg-amber-50 text-amber-800"}`}>
@@ -200,5 +198,6 @@ function Result({ r, onBack, onRetry }: { r: CheckRecord; onBack: () => void; on
       {tips.length > 0 && <Card title="Where to look"><ul className="list-disc space-y-1 pl-5 text-sm text-slate-700">{tips.map(t => <li key={t}>{t}</li>)}</ul></Card>}
       <div className="flex gap-2"><button className="btn" onClick={onBack}>All deals</button><button className="btn btn-primary" onClick={onRetry}>Try again</button></div>
     </main>
+    </div>
   )
 }

@@ -14,7 +14,7 @@ import { withTerms } from "./Terms"
 import AiPanel from "../components/AiPanel"
 import { LEVELS, GUIDE, STEPS, LESSON_GOALS, COVER_ART, CHECKPOINT_PASS, PENDING_CHECK, levelOf, type Step, type Level } from "./levels"
 
-type View = { kind: "home" } | { kind: "lesson"; id: string } | { kind: "quiz"; id: string } | { kind: "module"; id: string } | { kind: "glossary" }
+type View = { kind: "home" } | { kind: "lesson"; id: string } | { kind: "quiz"; id: string } | { kind: "module"; id: string } | { kind: "glossary" } | { kind: "cert"; id: string }
 const PASS = 0.8
 const VIEW_KEY = "dealScreener.course.view"
 const LEVEL_KEY = "dealScreener.course.level"
@@ -80,41 +80,54 @@ function Roadmap({ steps, compact = false }: { steps: Step[] | "all"; compact?: 
 }
 
 function QuizView({ mod, onDone, onBack }: { mod: Module; onDone: (score: number) => void; onBack: () => void }) {
+  const all = mod.quiz.map((_, i) => i), total = mod.quiz.length
+  const [pool, setPool] = useState<number[]>(all)        // questions in this round
   const [qi, setQi] = useState(0)
   const [picked, setPicked] = useState<number | null>(null)
-  const [score, setScore] = useState(0)
+  const [right, setRight] = useState<Set<number>>(new Set()) // answered correctly in any round
   const [finished, setFinished] = useState(false)
-  const q = mod.quiz[qi], total = mod.quiz.length
+  const retry = pool.length < total
+  const n = pool[qi], q = mod.quiz[n]
+  const restart = (p: number[], keep: boolean) => { setPool(p); setQi(0); setPicked(null); setFinished(false); if (!keep) setRight(new Set()) }
   if (finished) {
-    const pass = score / total >= PASS
+    const score = right.size, pass = score / total >= PASS, missed = all.filter(i => !right.has(i))
     return (
-      <div className="card text-center">
-        <div className={`text-4xl font-bold ${pass ? "text-pass-600" : "text-amber-700"}`}>{score} / {total}</div>
-        <p className="mt-2 text-slate-600">{pass ? `Module ${mod.num} complete. Nice work.` : `You need ${Math.ceil(total * PASS)} to complete the module. Review the lessons and try again; the explanations are the best part.`}</p>
-        <div className="mt-5 flex justify-center gap-2">
-          <button className="btn" onClick={() => { setQi(0); setPicked(null); setScore(0); setFinished(false) }}>Retake quiz</button>
-          <button className="btn btn-primary" onClick={onBack}>Back to course</button>
+      <div>
+        <div className="border-b border-slate-200 pb-8 text-center">
+          <div className={`font-serif text-6xl font-semibold ${pass ? "text-pass-600" : "text-[#b7791f]"}`}>{score} / {total}</div>
+          <p className="mx-auto mt-3 max-w-md text-lg text-slate-600">{pass ? `Module ${mod.num} complete. Nice work.` : `You need ${Math.ceil(total * PASS)} to complete the module. Read the explanations for the ones you missed, then try those again.`}</p>
+          <div className="mt-6 flex flex-wrap justify-center gap-3">
+            {missed.length > 0 && <button className="rounded-md bg-ink px-5 py-2.5 font-semibold text-white hover:bg-slate-800" onClick={() => restart(missed, true)}>Retry the {missed.length} you missed</button>}
+            <button className="rounded-md border border-slate-300 px-5 py-2.5 font-semibold hover:border-ink" onClick={() => restart(all, false)}>Start over</button>
+            <button className="rounded-md px-5 py-2.5 font-semibold text-slate-600 hover:text-ink" onClick={onBack}>Back to the module</button>
+          </div>
         </div>
+        {missed.length > 0 && (
+          <div className="pt-8">
+            <h2 className="font-serif text-2xl font-semibold">What you missed</h2>
+            <ol className="mt-4 space-y-6">{missed.map(i => { const m = mod.quiz[i]; return (
+              <li key={i}><div className="font-semibold">{m.q}</div><div className="mt-1 text-pass-600">Answer: {m.options[m.answer]}</div><p className="mt-1 leading-relaxed text-slate-600">{m.why}</p></li>) })}</ol>
+          </div>)}
       </div>)
   }
   return (
-    <div className="card">
-      <div className="mb-1 flex items-center justify-between text-xs text-slate-500"><span>Module {mod.num} quiz</span><span>Question {qi + 1} of {total}</span></div>
-      <div className="mb-4 h-1.5 overflow-hidden rounded-full bg-slate-100"><div className="h-full bg-brand-500 transition-all" style={{ width: `${(qi / total) * 100}%` }} /></div>
-      <h2 className="mb-4 text-lg font-semibold">{q.q}</h2>
+    <div>
+      <div className="mb-1 flex items-center justify-between text-sm text-slate-500"><span>{retry ? "Retrying the ones you missed" : `Module ${mod.num} quiz`}</span><span>Question {qi + 1} of {pool.length}</span></div>
+      <div className="mb-6 h-1 overflow-hidden rounded-full bg-slate-100"><div className="h-full bg-ink transition-all" style={{ width: `${(qi / pool.length) * 100}%` }} /></div>
+      <h2 className="mb-5 font-serif text-2xl font-semibold leading-snug">{q.q}</h2>
       <div className="space-y-2">
         {q.options.map((o, k) => {
           const state = picked === null ? "" : k === q.answer ? "border-pass-600 bg-pass-50" : k === picked ? "border-fail-600 bg-fail-50" : "opacity-60"
-          return <button key={k} disabled={picked !== null} onClick={() => { setPicked(k); if (k === q.answer) setScore(s => s + 1) }}
-            className={`w-full rounded-lg border-2 border-slate-200 px-4 py-3 text-left text-[15px] transition hover:border-brand-500 disabled:hover:border-inherit ${state}`}>{o}</button>
+          return <button key={k} disabled={picked !== null} onClick={() => { setPicked(k); if (k === q.answer) setRight(r => new Set(r).add(n)) }}
+            className={`w-full rounded-lg border-2 border-slate-200 bg-white px-4 py-3 text-left text-[16px] transition hover:border-ink disabled:hover:border-inherit ${state}`}>{o}</button>
         })}
       </div>
       {picked !== null && (
-        <div className={`mt-4 rounded-lg px-4 py-3 text-[14.5px] ${picked === q.answer ? "bg-pass-50 text-pass-600" : "bg-amber-50 text-amber-900"}`}>
+        <div className={`mt-4 border-l-4 px-4 py-3 text-[15px] leading-relaxed ${picked === q.answer ? "border-pass-600 bg-pass-50 text-pass-600" : "border-[#f4b24c] bg-[#fff8eb] text-[#5c3d0a]"}`}>
           <b>{picked === q.answer ? "Correct. " : "Not quite. "}</b>{q.why}
         </div>)}
-      <div className="mt-5 flex justify-end">
-        {picked !== null && <button className="btn btn-primary" onClick={() => { if (qi + 1 < total) { setQi(qi + 1); setPicked(null) } else { setFinished(true); onDone(score) } }}>{qi + 1 < total ? "Next question →" : "See results"}</button>}
+      <div className="mt-6 flex justify-end">
+        {picked !== null && <button className="rounded-md bg-ink px-5 py-2.5 font-semibold text-white hover:bg-slate-800" onClick={() => { if (qi + 1 < pool.length) { setQi(qi + 1); setPicked(null) } else { setFinished(true); onDone(right.size) } }}>{qi + 1 < pool.length ? "Next question →" : "See results"}</button>}
       </div>
     </div>
   )
@@ -124,7 +137,7 @@ export default function Course({ session, onPractice, onCheck }: { session: Sess
   const [view, setView] = useState<View>(() => {
     try {
       const v = JSON.parse(sessionStorage.getItem(VIEW_KEY) || "null") as View | null
-      if (v && (v.kind === "home" || v.kind === "glossary" || allLessons.some(l => l.id === (v as any).id) || COURSE.some(m => m.id === (v as any).id))) return v
+      if (v && (v.kind === "home" || v.kind === "glossary" || (v.kind === "cert" && LEVELS.some(x => x.id === v.id)) || allLessons.some(l => l.id === (v as any).id) || COURSE.some(m => m.id === (v as any).id))) return v
     } catch {}
     return { kind: "home" }
   })
@@ -257,7 +270,7 @@ export default function Course({ session, onPractice, onCheck }: { session: Sess
                       <div className="mt-3 text-sm text-slate-400">Quizzes passed: {lv.modules.filter(id => prog.quizzes[id]?.passed).length} of {lv.modules.length}{ck ? <>, best score: {best >= 0 ? best : "not tried yet"}</> : null}</div>
                     </div>
                     <div className="flex items-start sm:justify-end">
-                      {lvDone ? <span className="font-medium text-pass-600">Level {lv.num} complete</span>
+                      {lvDone ? <div className="text-left sm:text-right"><div className="font-medium text-pass-600">Level {lv.num} complete</div><button className="mt-2 rounded-md bg-ink px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800" onClick={() => setView({ kind: "cert", id: lv.id })}>Get your certificate</button></div>
                         : ck ? <button className={`rounded-md px-4 py-2 text-sm font-semibold transition ${qd ? "bg-ink text-white hover:bg-slate-800" : "border border-slate-300 text-ink hover:border-ink"}`} onClick={() => goCheck(ck.id)}>{best >= 0 ? "Try again" : "Start the checkpoint"}</button>
                         : null}
                     </div>
@@ -351,6 +364,13 @@ export default function Course({ session, onPractice, onCheck }: { session: Sess
       </div>)
   }
 
+  /* ---------- certificate ---------- */
+  if (view.kind === "cert") {
+    const lv = LEVELS.find(x => x.id === view.id)!
+    return <Certificate key={lv.id} lv={lv} done={levelDone(lv)} score={bestCheck(lv.checkpoint)} session={session}
+      onBack={() => { pickLevel(lv.id, false); setView({ kind: "home" }) }} />
+  }
+
   /* ---------- glossary ---------- */
   if (view.kind === "glossary") return (
     <div className="page-in bg-white">
@@ -366,7 +386,7 @@ export default function Course({ session, onPractice, onCheck }: { session: Sess
   if (view.kind === "quiz") {
     const m = COURSE.find(x => x.id === view.id)!
     return (
-      <div className="page-in">
+      <div className="page-in bg-white">
         <section className="bg-night text-white"><div className="mx-auto max-w-3xl px-4 pb-8 pt-8 md:px-8">
           <Crumbs items={[["Course", () => setView({ kind: "home" })], [`Module ${m.num}: ${m.title}`, () => setView({ kind: "module", id: m.id })], ["Quiz", null]]} />
           <h1 className="mt-6 font-serif text-3xl font-semibold">Module {m.num} quiz</h1>
@@ -446,4 +466,69 @@ const LEVEL_PHOTOS: Record<string, [string[], string]> = {
 function LevelPhoto({ id }: { id: string }) {
   const p = LEVEL_PHOTOS[id]
   return <div className="hidden md:block">{p && <SitePhoto titles={p[0]} query={p[1]} />}</div>
+}
+
+/* ---------- level certificate ---------- */
+const CERT_NAME = "dealScreener.cert.name"
+function certId(uid: string, lv: string) {
+  let h = 2166136261; for (const ch of uid + lv) { h ^= ch.charCodeAt(0); h = Math.imul(h, 16777619) }
+  return `UD-${lv}-${(h >>> 0).toString(36).toUpperCase().padStart(7, "0").slice(0, 7)}`
+}
+function certHtml(name: string, lv: Level, date: string, id: string, score: number) {
+  const e = (t: string) => t.replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]!))
+  return `<!doctype html><html><head><meta charset="utf-8"><title>Underwriting Desk certificate</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Geist:wght@400;500;600&display=swap" rel="stylesheet">
+<style>@page{size:11in 8.5in;margin:0}*{box-sizing:border-box}body{margin:0;font-family:Geist,system-ui,sans-serif;color:#0f172a;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.c{width:11in;height:8.5in;padding:.55in;background:#fbf8f1}.f{height:100%;border:2px solid #0b1226;padding:.55in .7in;display:flex;flex-direction:column;position:relative}
+.f:before{content:"";position:absolute;inset:8px;border:1px solid #f4b24c}.top{display:flex;align-items:center;gap:12px}.m{width:40px;height:40px;border-radius:8px;background:#f4b24c;display:grid;place-items:center;font-weight:700;color:#1c1305}
+.w{font-family:Fraunces,Georgia,serif;font-size:24px;font-weight:600}.k{margin-top:.55in;font-size:15px;color:#64748b;letter-spacing:.02em}h1{font-family:Fraunces,Georgia,serif;font-weight:600;font-size:54px;line-height:1.05;margin:.12in 0 0}
+.l{margin-top:.25in;font-size:19px;color:#334155;max-width:7.6in;line-height:1.5}.l b{color:#0f172a}.b{margin-top:auto;display:flex;justify-content:space-between;align-items:flex-end;font-size:13px;color:#64748b}
+.s{font-family:Fraunces,Georgia,serif;font-size:22px;color:#0f172a}.ln{border-top:1px solid #94a3b8;padding-top:6px;margin-top:4px;width:2.6in}</style></head>
+<body><div class="c"><div class="f"><div class="top"><div class="m">UD</div><div class="w">Underwriting Desk</div></div>
+<div class="k">This certifies that</div><h1>${e(name || "Your name")}</h1>
+<div class="l">completed <b>Level ${lv.num}: ${e(lv.name)}</b> of the Underwriting Desk real estate underwriting course${lv.checkpoint && score >= 0 ? `, including the timed Deal Check checkpoint with a score of <b>${score}</b>` : ", passing every module quiz"}. ${e(lv.outcome)}</div>
+<div class="b"><div><div class="s">Blake Busboom</div><div class="ln">Founder, Underwriting Desk</div></div><div style="text-align:right"><div>Issued ${e(date)}</div><div>Certificate ID ${e(id)}</div><div>getdealscreener.com</div></div></div>
+</div></div><script>document.fonts.ready.then(()=>setTimeout(()=>print(),300))</script></body></html>`
+}
+function Certificate({ lv, done, score, session, onBack }: { lv: Level; done: boolean; score: number; session: Session | null; onBack: () => void }) {
+  const meta = session?.user.user_metadata || {}
+  const [name, setName] = useState(() => { try { return localStorage.getItem(CERT_NAME) || meta.full_name || "" } catch { return "" } })
+  useEffect(() => { try { localStorage.setItem(CERT_NAME, name) } catch {} }, [name])
+  const now = new Date(), date = now.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })
+  const id = certId(session?.user.id || "local", lv.id)
+  const title = `Underwriting Desk, Level ${lv.num}: ${lv.name}`
+  const linkedIn = "https://www.linkedin.com/profile/add?" + new URLSearchParams({ startTask: "CERTIFICATION_NAME", name: title, organizationName: "Underwriting Desk", issueYear: String(now.getFullYear()), issueMonth: String(now.getMonth() + 1), certUrl: "https://www.getdealscreener.com", certId: id }).toString()
+  const download = () => { const w = open("", "_blank"); if (!w) return; w.document.write(certHtml(name.trim(), lv, date, id, score)); w.document.close() }
+  return (
+    <div className="page-in bg-white">
+      <section className="bg-night text-white"><div className="mx-auto max-w-5xl px-4 pb-10 pt-6 md:px-8">
+        <button className="text-sm text-white/55 hover:text-white" onClick={onBack}>← Level {lv.num}</button>
+        <h1 className="mt-5 font-serif text-4xl font-semibold">Your Level {lv.num} certificate</h1>
+        <p className="mt-2 max-w-xl text-white/65">Check your name, then download it as a PDF or add it to your LinkedIn profile.</p>
+      </div></section>
+      <main className="mx-auto max-w-5xl px-4 py-10 md:px-8">
+        {!done ? <p className="text-lg text-slate-600">Finish every quiz{lv.checkpoint ? ` and score ${CHECKPOINT_PASS} or more on the checkpoint` : ""} in Level {lv.num} to unlock this certificate.</p> : <>
+          <label className="block max-w-sm"><span className="text-sm font-medium text-slate-600">Name on the certificate</span>
+            <input className="mt-1 w-full" value={name} onChange={e => setName(e.target.value)} placeholder="Your full name" /></label>
+          {/* Preview */}
+          <div className="mt-8 overflow-hidden rounded-lg border border-slate-200 bg-[#fbf8f1] p-4 shadow-sm sm:p-6">
+            <div className="relative border-2 border-night p-6 sm:p-10 before:pointer-events-none before:absolute before:inset-1.5 before:border before:border-[#f4b24c]">
+              <div className="flex items-center gap-2.5"><div className="grid h-8 w-8 place-items-center rounded-md bg-[#f4b24c] text-xs font-bold text-[#1c1305]">UD</div><span className="font-serif text-lg font-semibold">Underwriting Desk</span></div>
+              <div className="mt-8 text-sm text-slate-500">This certifies that</div>
+              <div className="mt-1 font-serif text-4xl font-semibold leading-tight sm:text-5xl">{name.trim() || "Your name"}</div>
+              <p className="mt-4 max-w-2xl leading-relaxed text-slate-700">completed <b className="text-ink">Level {lv.num}: {lv.name}</b> of the Underwriting Desk real estate underwriting course{lv.checkpoint && score >= 0 ? <>, including the timed Deal Check checkpoint with a score of <b className="text-ink">{score}</b></> : ", passing every module quiz"}. {lv.outcome}</p>
+              <div className="mt-10 flex flex-wrap items-end justify-between gap-4 text-xs text-slate-500">
+                <div><div className="font-serif text-lg text-ink">Blake Busboom</div><div className="mt-1 w-48 border-t border-slate-400 pt-1">Founder, Underwriting Desk</div></div>
+                <div className="text-right"><div>Issued {date}</div><div>Certificate ID {id}</div></div>
+              </div>
+            </div>
+          </div>
+          <div className="mt-8 flex flex-wrap gap-3">
+            <button className="rounded-md bg-ink px-5 py-2.5 font-semibold text-white hover:bg-slate-800 disabled:opacity-40" disabled={!name.trim()} onClick={download}>Download as PDF</button>
+            <a className={`rounded-md border border-slate-300 px-5 py-2.5 font-semibold hover:border-ink ${!name.trim() ? "pointer-events-none opacity-40" : ""}`} href={linkedIn} target="_blank" rel="noreferrer">Add to LinkedIn</a>
+          </div>
+          <p className="mt-3 text-sm text-slate-500">Download opens the certificate in a new tab with the print window ready. Choose "Save as PDF" as the destination.</p>
+        </>}
+      </main>
+    </div>)
 }

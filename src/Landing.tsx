@@ -217,51 +217,53 @@ const STAGES: StageDef[] = [
     </Panel> },
 ]
 
+/** What's inside: one section, normal scrolling. Pick a feature on the left; its preview shows on the right.
+ *  It cycles on its own until someone clicks, and pauses while the pointer is over it. */
 function Story() {
-  const ref = useRef<HTMLElement>(null), stage = useStage(ref, STAGES.length), phone = useIsPhone()
-  const jump = (i: number) => { const el = ref.current; if (!el) return; const total = el.offsetHeight - innerHeight; scrollTo({ top: el.offsetTop + total * (i + 0.5) / STAGES.length, behavior: "smooth" }) }
-  if (phone) return (
-    <section id="features" className="space-y-20 py-16">
-      {STAGES.map(s => (
-        <div key={s.key} className="lp-stage lp-flat on">
-          <div className="mx-auto w-full max-w-6xl px-5">
-            <div className="text-sm font-semibold uppercase tracking-[.2em]" style={{ color: s.accent }}>{s.tag}</div>
-            <h2 className="serif mt-3 text-3xl font-semibold leading-tight text-white">{s.title}</h2>
-            <p className="mt-3 text-white/70">{s.body}</p>
-            <div className="visual mt-6 flex justify-center">{s.visual}</div>
-          </div>
-        </div>))}
-    </section>)
+  const [i, setI] = useState(0), [auto, setAuto] = useState(true), [hover, setHover] = useState(false)
+  const DUR = 7000
+  useEffect(() => {
+    if (!auto || hover || matchMedia("(prefers-reduced-motion: reduce)").matches) return
+    const t = setTimeout(() => setI(n => (n + 1) % STAGES.length), DUR)
+    return () => clearTimeout(t)
+  }, [i, auto, hover])
+  const pick = (n: number) => { setAuto(false); setI(n) }
+  const s = STAGES[i], name = (x: StageDef) => x.tag.split(" · ")[1] || x.tag
   return (
-    <section ref={ref} id="features" className="relative" style={{ height: `calc(100svh + ${STAGES.length * STAGE_VH}vh)` }}>
-      <div className="sticky top-0 h-[100svh] overflow-hidden">
-        {STAGES.map((s, i) => <div key={s.key} className="lp-stage-bg" style={{ background: s.bg, opacity: i === stage ? 1 : 0, transition: "opacity .5s ease" }} />)}
-        <div className="absolute inset-x-0 top-16 z-10"><div className="lp-progress" /></div>
-        {/* stage list */}
-        <nav className="absolute left-6 top-1/2 z-10 hidden -translate-y-1/2 space-y-3 xl:block">
-          {STAGES.map((s, i) => (
-            <button key={s.key} onClick={() => jump(i)} className="group flex items-center gap-3 text-left text-sm">
-              <span className="h-px transition-all duration-500" style={{ width: i === stage ? 36 : 14, background: i === stage ? s.accent : "#ffffff40" }} />
-              <span className="transition-colors duration-500" style={{ color: i === stage ? s.accent : "#ffffff60" }}>{s.tag.split(" · ")[1]}</span>
-            </button>))}
-        </nav>
-        {STAGES.map((s, i) => (
-          <div key={s.key} className={`lp-stage ${i === stage ? "on" : i < stage ? "past" : ""}`} aria-hidden={i !== stage}>
-            <div className="mx-auto grid w-full max-w-6xl items-center gap-6 px-5 pt-16 md:grid-cols-2 md:gap-12 md:px-8 xl:pl-40">
-              <div>
-                <div className="text-sm font-semibold uppercase tracking-[.2em]" style={{ color: s.accent }}>{s.tag}</div>
-                <h2 className="serif mt-3 text-3xl font-semibold leading-tight text-white md:text-5xl">{s.title}</h2>
-                <p className="mt-4 hidden max-w-lg text-white/70 sm:block md:text-lg">{s.body}</p>
-                <ul className="mt-5 hidden space-y-2 text-white/80 md:block">
-                  {s.bullets.map((b, j) => <li key={b} className="pop flex gap-2" style={{ animationDelay: `${200 + j * 120}ms` }}><span style={{ color: s.accent }}>●</span>{b}</li>)}
-                </ul>
-              </div>
-              <div className="visual"><div className="flex origin-top scale-[.82] justify-center sm:scale-100 md:justify-end">{s.visual}</div></div>
+    <section id="features" className="scroll-mt-16 py-20 md:py-28" onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)}>
+      <div className="mx-auto max-w-6xl px-5 md:px-8">
+        <h2 className="serif text-3xl font-semibold leading-tight text-white md:text-5xl">What's inside</h2>
+        <p className="mt-3 max-w-xl text-lg text-white/60">Five tools, one place. Learn it, practice it on deals built to trick you, then use it on real ones.</p>
+
+        {/* Phone: feature names scroll sideways */}
+        <div className="-mx-5 mt-8 flex gap-2 overflow-x-auto px-5 pb-1 md:hidden">
+          {STAGES.map((x, n) => <button key={x.key} onClick={() => pick(n)} className={`shrink-0 rounded-full px-4 py-2 text-sm font-medium transition ${n === i ? "bg-[#f4b24c] text-[#1c1305]" : "bg-white/10 text-white/70"}`}>{name(x)}</button>)}
+        </div>
+
+        <div className="mt-8 grid gap-10 md:mt-12 md:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] md:items-start">
+          {/* Desktop: the list */}
+          <ol className="hidden space-y-1 md:block">
+            {STAGES.map((x, n) => {
+              const on = n === i
+              return (
+                <li key={x.key}>
+                  <button onClick={() => pick(n)} aria-current={on ? "true" : undefined} className={`relative block w-full overflow-hidden rounded-lg px-5 py-4 text-left transition ${on ? "bg-white/[.06]" : "hover:bg-white/[.03]"}`}>
+                    <div className={`text-sm font-semibold ${on ? "text-[#f4b24c]" : "text-white/45"}`}>{name(x)}</div>
+                    <div className={`serif mt-1 text-xl font-semibold leading-snug ${on ? "text-white" : "text-white/55"}`}>{x.title}</div>
+                    {on && <p className="mt-2 text-[15px] leading-relaxed text-white/65">{x.body}</p>}
+                    {on && auto && <span key={i + (hover ? "h" : "")} className="absolute bottom-0 left-0 h-0.5 bg-[#f4b24c]" style={{ animation: hover ? "none" : `lpfill ${DUR}ms linear forwards`, width: hover ? "0%" : undefined }} />}
+                  </button>
+                </li>)
+            })}
+          </ol>
+          {/* The preview */}
+          <div>
+            <div className="md:hidden">
+              <h3 className="serif text-2xl font-semibold leading-snug text-white">{s.title}</h3>
+              <p className="mt-2 text-white/65">{s.body}</p>
             </div>
-          </div>))}
-        {/* dots on mobile */}
-        <div className="absolute bottom-6 left-1/2 z-10 flex -translate-x-1/2 gap-2 xl:hidden">
-          {STAGES.map((s, i) => <button key={s.key} aria-label={s.tag} onClick={() => jump(i)} className="h-2 rounded-full transition-all duration-500" style={{ width: i === stage ? 24 : 8, background: i === stage ? s.accent : "#ffffff40" }} />)}
+            <div key={s.key} className="visual lp-fade lp-show mt-6 flex justify-center md:sticky md:top-24 md:mt-0 md:justify-end">{s.visual}</div>
+          </div>
         </div>
       </div>
     </section>

@@ -80,3 +80,11 @@
 /* Phones: slides render as normal stacked sections instead of pinned scroll stages. */
 .lp-stage.lp-flat { position: static; display: block; opacity: 1; transform: none; pointer-events: auto; }
 .lp-stage.lp-flat .visual { transform: none; }
+/* What's inside: progress line under the active feature, and the preview fading in. */
+@keyframes lpfill { from { width: 0% } to { width: 100% } }
+.lp .lp-fade { animation: lpfade .45s ease both; }
+@keyframes lpfade { from { opacity: 0; transform: translateY(8px); } }
+.lp .lp-show .pop { opacity: 0; transform: translateY(10px); animation: rise .6s cubic-bezier(.2,.7,.2,1) forwards; }
+.lp .lp-show .bar { transform-origin: left; transform: scaleX(0); animation: bar 1.1s cubic-bezier(.2,.7,.2,1) forwards; }
+.lp .lp-show .mark { background-size: 0% 100%; background-repeat: no-repeat; animation: mark .7s ease forwards; }
+.lp .lp-show .ring { stroke-dasharray: 113; stroke-dashoffset: 0; animation: ring 8s linear forwards; }

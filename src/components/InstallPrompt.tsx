@@ -20,9 +20,9 @@ export default function InstallPrompt({ learnOnly }: { learnOnly: boolean }) {
 
   let body: React.ReactNode
   if (!learnOnly) {
-    body = isPhone()
-      ? <>Learn on the go with the Underwriting Desk app. <a className="font-semibold underline" href="/learn">Open it</a> and add it to your home screen.</>
-      : <>Learn on your phone: open <b>getdealscreener.com/learn</b> on your phone and add it to your home screen. Same account, same progress.</>
+    // On a computer the phone app is linked from the footer; the banner only shows on phones.
+    if (!isPhone()) return null
+    body = <>Learn on the go with the Underwriting Desk app. <a className="font-semibold underline" href="/learn">Open it</a> and add it to your home screen.</>
   } else if (evt) {
     body = <span className="flex flex-wrap items-center gap-3">Install Underwriting Desk on this device for one tap access.
       <button className="btn btn-primary !py-1" onClick={async () => { evt.prompt(); await evt.userChoice.catch(() => {}); setEvt(null); close() }}>Install</button></span>

@@ -3,6 +3,7 @@ import type { Session } from "@supabase/supabase-js"
 import { type Deal, DEFAULTS, PRACTICE, norm, project, monthlyPmt, usd, pct, xx, type Projection } from "./lib/model"
 import { listDeals, saveDeal, type SavedDeal } from "./lib/store"
 import { Card, Field, NumInput } from "./components/ui"
+import { PageHero, SitePhoto } from "./components/Site"
 import AiPanel from "./components/AiPanel"
 import ImportPane from "./components/ImportPane"
 import MarketPane, { StateSelect } from "./components/MarketPane"
@@ -74,21 +75,24 @@ export default function LearnerApp({ session, toast, onOpenInPro }: { session: S
   const loanAt125 = (() => { const maxDs = p.y1.noi / 1.25, perDollar = monthlyPmt(1, deal.rate, deal.amort) * 12; return perDollar > 0 ? maxDs / perDollar : NaN })()
   let body: ReactNode = null
   if (step === 0) body = (
-    <Card title="Pick a deal to work through">
-      <Explain>We'll underwrite a property together, one step at a time: what it earns, what it costs to run, what it's worth, how the loan works and whether it's a good deal. You'll see the math with your own numbers at every step. Ask the Desk anything along the way.</Explain>
-      <div className="grid gap-3 md:grid-cols-3">
-        <button className="rounded-lg border border-slate-200 p-4 text-left hover:border-brand-500" onClick={() => start(PRACTICE)}>
-          <div className="font-semibold">Practice deal</div><div className="note mt-1">Maple Court, a 24 unit apartment building. Best for a first run.</div></button>
-        <button className="rounded-lg border border-slate-200 p-4 text-left hover:border-brand-500" onClick={() => start({ ...DEFAULTS, name: "My deal", units: [{ type: "1 bed", count: 0, rent: 0 }] })}>
-          <div className="font-semibold">My own property</div><div className="note mt-1">Enter the numbers as we go. Missing one? We'll suggest a starting point.</div></button>
-        <button className="rounded-lg border border-slate-200 p-4 text-left hover:border-brand-500" onClick={() => setImporting(v => !v)}>
-          <div className="font-semibold">Upload documents</div><div className="note mt-1">Rent roll, T12 or offering memo. Claude fills in what it finds.</div></button>
-      </div>
-      {importing && <div className="mt-4"><ImportPane deal={{ ...DEFAULTS, name: "" }} onApply={(patch, msg) => { start({ ...DEFAULTS, name: "My deal", ...patch }); toast(msg) }} /></div>}
+    <div>
+      <p className="max-w-2xl text-lg leading-relaxed text-slate-600">We'll underwrite a property together, one step at a time: what it earns, what it costs to run, what it's worth, how the loan works and whether it's a good deal. You'll see the math with your own numbers at every step, and you can ask the Desk anything along the way.</p>
+      <ol className="mt-8 border-t border-slate-200">
+        {([
+          ["Practice deal", "Maple Court, a 24 unit apartment building. Best for a first run.", () => start(PRACTICE)],
+          ["My own property", "Enter the numbers as we go. Missing one? We'll suggest a starting point.", () => start({ ...DEFAULTS, name: "My deal", units: [{ type: "1 bed", count: 0, rent: 0 }] })],
+          ["Upload documents", "Rent roll, T12 or offering memo. Claude fills in what it finds.", () => setImporting(v => !v)],
+        ] as const).map(([t, d, f], i) => (
+          <li key={t} className="border-b border-slate-200"><button className="group grid w-full grid-cols-[40px_1fr_auto] gap-4 py-6 text-left" onClick={f}>
+            <span className="font-serif text-3xl font-semibold leading-none text-slate-300 group-hover:text-[#e0a23a]">{i + 1}</span>
+            <span className="min-w-0"><span className="block font-serif text-2xl font-semibold group-hover:underline group-hover:decoration-slate-300 group-hover:underline-offset-4">{t}</span><span className="mt-1 block text-slate-600">{d}</span></span>
+            <span className="pt-1 text-xl text-slate-300 group-hover:text-ink">→</span></button></li>))}
+      </ol>
+      {importing && <div className="mt-6"><ImportPane deal={{ ...DEFAULTS, name: "" }} onApply={(patch, msg) => { start({ ...DEFAULTS, name: "My deal", ...patch }); toast(msg) }} /></div>}
       {mine.length > 0 && (
-        <div className="mt-6"><div className="card-title">Pick up where you left off</div>
-          <div className="flex flex-wrap gap-2">{mine.map(r => <button key={r.id} className="btn" onClick={() => start(r.data, r.id)}>{r.name}</button>)}</div></div>)}
-    </Card>)
+        <div className="mt-10"><h2 className="font-serif text-2xl font-semibold">Pick up where you left off</h2>
+          <div className="mt-3 flex flex-wrap gap-2">{mine.map(r => <button key={r.id} className="rounded-md border border-slate-300 px-4 py-2 text-sm font-medium hover:border-ink" onClick={() => start(r.data, r.id)}>{r.name}</button>)}</div></div>)}
+    </div>)
   if (step === 1) body = (
     <Card title="Step 1 · Property basics">
       <Explain>Start with what you're buying and what it costs. <b>Price per unit</b> is the first sanity check investors use: it lets you compare buildings of different sizes. Two buildings at the same price aren't the same deal if one has twice the units.</Explain>
@@ -223,14 +227,21 @@ export default function LearnerApp({ session, toast, onOpenInPro }: { session: S
   }
 
   return (
-    <main className="mx-auto max-w-7xl px-4 py-5 md:px-8">
-      <div className="mb-4 flex flex-wrap items-center gap-1.5">
-        {STEPS.map((s, i) => (
-          <button key={s} onClick={() => (i === 0 || valid || i <= 2) && go(i)}
-            className={`rounded-full px-3 py-1 text-xs font-semibold transition ${i === step ? "bg-brand-600 text-white" : i < step ? "bg-brand-100 text-brand-700" : "bg-white text-slate-500 ring-1 ring-slate-200"}`}>
-            {i > 0 ? `${i}. ` : ""}{s}
-          </button>))}
-      </div>
+    <div>
+      <PageHero wide title={step === 0 ? "Practice a deal" : deal.name || "Practice a deal"}
+        intro={step === 0 ? "Underwrite a real property one step at a time, with the math shown at every step." : `Step ${step} of ${STEPS.length - 1}: ${STEPS[step]}.`}
+        aside={step === 0 ? <SitePhoto titles={["File:Sepulveda Rose Apartments Pool.jpg"]} query="apartment complex United States" dark className="aspect-[16/10]" /> : undefined} />
+      {step > 0 && (
+        <div className="border-b border-slate-200 bg-white">
+          <nav className="mx-auto flex max-w-7xl gap-6 overflow-x-auto px-4 text-sm md:px-8" aria-label="Steps">
+            {STEPS.map((s, i) => (
+              <button key={s} onClick={() => (i === 0 || valid || i <= 2) && go(i)} aria-current={i === step ? "step" : undefined}
+                className={`shrink-0 border-b-2 py-3.5 transition ${i === step ? "border-ink font-semibold text-ink" : i < step ? "border-transparent text-slate-600 hover:text-ink" : "border-transparent text-slate-400 hover:text-slate-600"}`}>
+                {i > 0 ? `${i}. ` : ""}{s}{i < step && i > 0 ? " ✓" : ""}
+              </button>))}
+          </nav>
+        </div>)}
+    <main className={`mx-auto max-w-7xl px-4 md:px-8 ${step === 0 ? "py-12" : "py-8"}`}>
       <div className="grid gap-4 lg:grid-cols-[1fr_360px]">
         <div className="space-y-4">
           {body}
@@ -253,5 +264,6 @@ export default function LearnerApp({ session, toast, onOpenInPro }: { session: S
         </aside>
       </div>
     </main>
+    </div>
   )
 }

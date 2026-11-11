@@ -5,6 +5,7 @@ import { PENDING_CHECK, levelForCheck, CHECKPOINT_PASS } from "./levels"
 import { saveCheck, listChecks, type CheckAnswers, type CheckRecord } from "../lib/store"
 import { CHECKS, answerKey, scoreCheck, type Check } from "./checks"
 import { Card } from "../components/ui"
+import { PageHero, SitePhoto, SectionHead } from "../components/Site"
 
 /* An attempt lives in sessionStorage so the clock keeps running if you leave the tab or open the deal in Underwrite. */
 type Attempt = { id: string; start: number; usedWorkspace: boolean }
@@ -39,36 +40,42 @@ export default function DealCheck({ session, onOpenInPro }: { session: Session |
   }
 
   return (
-    <main className="mx-auto max-w-5xl space-y-4 px-4 py-6 md:px-8">
-      <div className="rounded-lg bg-brand-900 p-6 text-white md:p-8">
-        <div className="text-xs font-semibold uppercase tracking-wider text-brand-100">Deal Check</div>
-        <h1 className="mt-1 text-2xl font-bold md:text-3xl">Underwrite a deal against the clock</h1>
-        <p className="mt-2 max-w-2xl text-white/80">You get a broker package. Work out year one NOI, the cap rate and DSCR, then decide whether it clears the buy box. Use paper, a calculator{onOpenInPro ? " or the Underwrite workspace" : ""}. The clock runs until you submit, and your score and time are saved.</p>
-      </div>
-      <div className="grid gap-4 md:grid-cols-3">
-        {CHECKS.map(c => {
-          const best = history.filter(h => h.check_id === c.id).sort((a, b) => b.score - a.score || a.seconds - b.seconds)[0]
-          return (
-            <div key={c.id} className="card flex flex-col">
-              <div className="text-xs font-medium text-slate-500">{levelForCheck(c.id) ? `Level ${levelForCheck(c.id)!.num} checkpoint` : `Level ${c.level}`} · {c.where}</div>
-              <div className="mt-1 font-display text-lg font-semibold">{c.title}</div>
-              <p className="mt-1 flex-1 text-sm text-slate-600">{c.pitch}</p>
-              <div className="mt-3 flex items-center justify-between">
-                <span className="text-xs text-slate-500">{best ? <>Best: <b className="text-ink">{best.score}</b> in {mmss(best.seconds)}</> : "Not tried yet"}</span>
-                <button className="btn btn-primary" onClick={() => start(c)}>Start</button>
+    <div>
+      <PageHero title="Deal Check" intro={<>You get a broker package. Work out year one NOI, the cap rate and DSCR, then decide whether it clears the buy box. Use paper, a calculator{onOpenInPro ? " or the Underwrite workspace" : ""}. The clock runs until you submit, and your score and time are saved.</>}
+        aside={<SitePhoto titles={["File:Colvin Gardens Apartments, Buffalo, New York - 20220902.jpg"]} query="garden apartment complex" dark className="aspect-[16/10]" />} />
+      <div className="bg-white">
+        <div className="mx-auto max-w-6xl px-4 py-12 md:px-8">
+          <SectionHead title="The deals" intro={`Each one closes a level of the course. Score ${CHECKPOINT_PASS} or more to pass it.`} />
+          <ol>
+            {CHECKS.map((c, i) => {
+              const best = history.filter(h => h.check_id === c.id).sort((a, b) => b.score - a.score || a.seconds - b.seconds)[0], lv = levelForCheck(c.id)
+              return (
+                <li key={c.id} className="grid gap-x-6 gap-y-3 border-b border-slate-200 py-7 sm:grid-cols-[48px_1fr_auto]">
+                  <span className="font-serif text-4xl font-semibold leading-none text-slate-300">{i + 1}</span>
+                  <div className="min-w-0">
+                    <div className="text-sm text-slate-500">{lv ? `Level ${lv.num} checkpoint` : `Level ${c.level}`}, {c.where}</div>
+                    <h3 className="mt-0.5 font-serif text-2xl font-semibold">{c.title}</h3>
+                    <p className="mt-1.5 max-w-2xl leading-relaxed text-slate-600">{c.pitch}</p>
+                    <div className="mt-3 text-sm text-slate-400">{best ? <>Best: <b className={best.score >= CHECKPOINT_PASS ? "text-pass-600" : "text-ink"}>{best.score}</b> in {mmss(best.seconds)}{best.score >= CHECKPOINT_PASS ? ", passed" : ""}</> : "Not tried yet"}</div>
+                  </div>
+                  <div className="sm:pt-6"><button className="rounded-md bg-ink px-5 py-2.5 text-sm font-semibold text-white hover:bg-slate-800" onClick={() => start(c)}>{best ? "Try again" : "Start"}</button></div>
+                </li>)
+            })}
+          </ol>
+          {history.length > 0 && (
+            <div className="mt-16">
+              <SectionHead title="Your results" />
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm"><thead><tr className="border-b border-slate-200 text-left text-slate-500"><th className="py-3 font-medium">Deal</th><th className="py-3 text-right font-medium">Score</th><th className="py-3 text-right font-medium">Time</th><th className="py-3 text-right font-medium">Used workspace</th><th className="py-3 text-right font-medium">When</th></tr></thead><tbody>
+                  {history.slice(0, 12).map((h, i) => (
+                    <tr key={i} className="border-b border-slate-100"><td className="py-3">{CHECKS.find(c => c.id === h.check_id)?.title || h.check_id}</td><td className="num py-3 text-right font-semibold">{h.score}</td><td className="num py-3 text-right">{mmss(h.seconds)}</td>
+                      <td className="py-3 text-right">{h.used_workspace ? "Yes" : "No"}</td><td className="py-3 text-right text-slate-500">{new Date(h.created_at).toLocaleDateString()}</td></tr>))}
+                </tbody></table>
               </div>
-            </div>)
-        })}
+            </div>)}
+        </div>
       </div>
-      {history.length > 0 && (
-        <Card title="Your results">
-          <table className="tbl"><thead><tr><th className="text-left">Deal</th><th>Score</th><th>Time</th><th>Used workspace</th><th>When</th></tr></thead><tbody>
-            {history.slice(0, 12).map((h, i) => (
-              <tr key={i}><td>{CHECKS.find(c => c.id === h.check_id)?.title || h.check_id}</td><td className="num text-right">{h.score}</td><td className="num text-right">{mmss(h.seconds)}</td>
-                <td className="text-right">{h.used_workspace ? "Yes" : "No"}</td><td className="text-right text-slate-500">{new Date(h.created_at).toLocaleDateString()}</td></tr>))}
-          </tbody></table>
-        </Card>)}
-    </main>
+    </div>
   )
 }
 

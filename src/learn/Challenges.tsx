@@ -5,6 +5,7 @@ import { type Deal, project, usd, pct, xx } from "../lib/model"
 import { stateBy, taxEstimate } from "../lib/states"
 import { Card, Field, NumInput } from "../components/ui"
 import AiPanel from "../components/AiPanel"
+import { PageHero, SitePhoto, SectionHead } from "../components/Site"
 import { StateSnapshot } from "../components/MarketPane"
 import { TRICKS, DUELS, DUEL_FIELDS, DUEL_LEVEL, fairPrice, trueDeal, rightCall, scoreDuel, type TrickPuzzle, type Duel, type Call, type DuelScore } from "./challenges"
 
@@ -23,43 +24,53 @@ function Home({ prog, open }: { prog: Progress; open: (v: View) => void }) {
   const c = prog.challenges || {}
   const stars = TRICKS.reduce((s, t) => s + (c[t.id]?.best ?? 0), 0)
   const duelPts = DUELS.reduce((s, d) => s + (c[d.id]?.best ?? 0), 0)
+  const row = "group grid w-full gap-x-6 gap-y-2 border-b border-slate-200 py-6 text-left sm:grid-cols-[1fr_auto]"
   return (
-    <div className="space-y-6">
-      <div className="rounded-lg bg-brand-900 px-6 py-5 text-white">
-        <div className="text-xl font-bold">Challenges</div>
-        <p className="mt-1 max-w-2xl text-sm text-brand-100">Short, real situations where you make the call. Catch what sellers hide, decide on deals against the clock, and see what actually happened. Wrong answers are where the learning is.</p>
-        <div className="mt-4 flex flex-wrap gap-6 text-sm">
-          <div><div className="text-2xl font-bold">{stars}<span className="text-base text-brand-100"> / {TRICKS.length * 3}</span></div><div className="text-brand-100">trick stars</div></div>
-          <div><div className="text-2xl font-bold">{duelPts}<span className="text-base text-brand-100"> / {DUELS.length * 100}</span></div><div className="text-brand-100">duel points</div></div>
+    <div>
+      <PageHero title="Challenges" intro="Short, real situations where you make the call. Catch what sellers hide, decide on deals against the clock, and see what actually happened. Wrong answers are where the learning is."
+        aside={<SitePhoto query="apartment building exterior United States" dark className="aspect-[16/10]" />}>
+        <div className="mt-8 flex gap-10">
+          <div><div className="font-serif text-4xl font-semibold">{stars}<span className="text-lg text-white/40"> / {TRICKS.length * 3}</span></div><div className="mt-1 text-sm text-white/55">Trick stars</div></div>
+          <div><div className="font-serif text-4xl font-semibold">{duelPts}<span className="text-lg text-white/40"> / {DUELS.length * 100}</span></div><div className="mt-1 text-sm text-white/55">Duel points</div></div>
+        </div>
+      </PageHero>
+      <div className="bg-white">
+        <div className="mx-auto max-w-6xl space-y-16 px-4 py-12 md:px-8">
+          <section>
+            <SectionHead title="Spot the seller's trick" intro="A real looking document with problems planted in it. Click every line you wouldn't trust, then check. Some odd looking lines are fine, so don't flag everything." />
+            <ol>
+              {TRICKS.map((t, i) => (
+                <li key={t.id}><button onClick={() => open({ k: "trick", id: t.id })} className={row}>
+                  <div className="flex min-w-0 gap-5">
+                    <span className="w-8 shrink-0 font-serif text-3xl font-semibold leading-none text-slate-300 group-hover:text-[#e0a23a]">{i + 1}</span>
+                    <div className="min-w-0">
+                      <div className="text-sm text-slate-500">{t.doc}, {DUEL_LEVEL[t.level].toLowerCase()}</div>
+                      <h3 className="mt-0.5 font-serif text-xl font-semibold group-hover:underline group-hover:decoration-slate-300 group-hover:underline-offset-4">{t.title}</h3>
+                    </div>
+                  </div>
+                  <div className="pl-[52px] text-sm sm:pl-0 sm:pt-5">{c[t.id] ? <Stars n={c[t.id].best} /> : <span className="text-slate-400">Not tried yet</span>}</div>
+                </button></li>))}
+            </ol>
+          </section>
+          <section>
+            <SectionHead title="Deal Duels" intro="A broker pitches you a deal. Read the clues, fix the seller's numbers, then pursue, renegotiate or pass. Scored out of 100 on your assumptions, your call and your offer." />
+            <ol>
+              {DUELS.map((d, i) => (
+                <li key={d.id}><button onClick={() => open({ k: "duel", id: d.id })} className={row}>
+                  <div className="flex min-w-0 gap-5">
+                    <span className="w-8 shrink-0 font-serif text-3xl font-semibold leading-none text-slate-300 group-hover:text-[#e0a23a]">{i + 1}</span>
+                    <div className="min-w-0">
+                      <div className="text-sm text-slate-500">{stateBy(d.state)?.name}, {DUEL_LEVEL[d.level].toLowerCase()}, about {d.minutes} minutes</div>
+                      <h3 className="mt-0.5 font-serif text-xl font-semibold group-hover:underline group-hover:decoration-slate-300 group-hover:underline-offset-4">{d.title}</h3>
+                      <p className="mt-1 text-slate-600">{d.seller.name}, {d.seller.units.reduce((s, u) => s + u.count, 0)} units, asking {usd(d.seller.price)}</p>
+                    </div>
+                  </div>
+                  <div className="pl-[52px] text-sm sm:pl-0 sm:pt-5">{c[d.id] ? <><b className="text-ink">{c[d.id].best}</b><span className="text-slate-400"> / 100 best</span></> : <span className="text-slate-400">Not tried yet</span>}</div>
+                </button></li>))}
+            </ol>
+          </section>
         </div>
       </div>
-
-      <section>
-        <h2 className="text-lg font-bold">Spot the seller's trick</h2>
-        <p className="note mb-3">A real looking document with problems planted in it. Click every line you wouldn't trust, then check. Some odd looking lines are fine, so don't flag everything.</p>
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          {TRICKS.map(t => (
-            <button key={t.id} onClick={() => open({ k: "trick", id: t.id })} className="rounded-lg border border-slate-200 bg-white p-4 text-left shadow-card transition hover:border-brand-500">
-              <div className="flex items-center justify-between text-xs"><span className="rounded bg-slate-100 px-2 py-0.5 font-semibold text-slate-600">{t.doc}</span><span className="text-slate-400">{DUEL_LEVEL[t.level]}</span></div>
-              <div className="mt-2 font-semibold">{t.title}</div>
-              <div className="mt-2 text-sm">{c[t.id] ? <Stars n={c[t.id].best} /> : <span className="text-slate-400">Not tried yet</span>}</div>
-            </button>))}
-        </div>
-      </section>
-
-      <section>
-        <h2 className="text-lg font-bold">Deal Duels</h2>
-        <p className="note mb-3">A broker pitches you a deal. Read the clues, fix the seller's numbers, then pursue, renegotiate or pass. Scored out of 100 on your assumptions, your call and your offer.</p>
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          {DUELS.map(d => (
-            <button key={d.id} onClick={() => open({ k: "duel", id: d.id })} className="rounded-lg border border-slate-200 bg-white p-4 text-left shadow-card transition hover:border-brand-500">
-              <div className="flex items-center justify-between text-xs"><span className="rounded bg-slate-100 px-2 py-0.5 font-semibold text-slate-600">{stateBy(d.state)?.name}</span><span className="text-slate-400">{DUEL_LEVEL[d.level]} · {d.minutes} min</span></div>
-              <div className="mt-2 font-semibold">{d.title}</div>
-              <div className="text-xs text-slate-500">{d.seller.name} · {d.seller.units.reduce((s, u) => s + u.count, 0)} units · {usd(d.seller.price)}</div>
-              <div className="mt-2 text-sm">{c[d.id] ? <><b>{c[d.id].best}</b><span className="text-slate-400"> / 100 best</span></> : <span className="text-slate-400">Not tried yet</span>}</div>
-            </button>))}
-        </div>
-      </section>
     </div>
   )
 }
@@ -298,6 +309,6 @@ export default function Challenges({ session }: { session: Session | null }) {
   } else if (view.k === "duel") {
     const i = DUELS.findIndex(d => d.id === view.id)
     body = <DuelPlayer x={DUELS[i]} onDone={s => done(DUELS[i].id, s)} onBack={() => open({ k: "home" })} onNext={i < DUELS.length - 1 ? () => open({ k: "duel", id: DUELS[i + 1].id }) : undefined} />
-  } else body = <Home prog={prog} open={open} />
+  } else return <Home prog={prog} open={open} />
   return <main className="mx-auto max-w-7xl px-4 py-5 md:px-8">{body}</main>
 }

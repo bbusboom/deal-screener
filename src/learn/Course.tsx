@@ -6,7 +6,8 @@ import { CHECKS } from "./checks"
 import { StateSelect, StateSnapshot } from "../components/MarketPane"
 import { useHomeState, setHomeState } from "../lib/market"
 import { PRACTICE, norm } from "../lib/model"
-import Photo, { load as loadPhotos } from "./Photo"
+import Photo from "./Photo"
+import { SitePhoto } from "../components/Site"
 import Diagram, { DiagramArt } from "./Diagrams"
 import Calc from "./Calc"
 import { withTerms } from "./Terms"
@@ -443,12 +444,6 @@ const LEVEL_PHOTOS: Record<string, [string[], string]> = {
   L4: [["File:Reston, Virginia (14311563988).jpg"], "suburban office building"],
 }
 function LevelPhoto({ id }: { id: string }) {
-  const [img, setImg] = useState<Awaited<ReturnType<typeof loadPhotos>>[number] | null | undefined>(undefined)
-  useEffect(() => { const p = LEVEL_PHOTOS[id]; if (!p) return setImg(null); let on = true; setImg(undefined); loadPhotos(p[0], p[1]).then(r => on && setImg(r[0] || null)).catch(() => on && setImg(null)); return () => { on = false } }, [id])
-  if (img === null) return <div className="hidden md:block" />
-  return (
-    <figure className="hidden md:block">
-      <div className="aspect-[4/3] overflow-hidden rounded-lg bg-slate-100">{img && <img src={img.url} alt="" className="h-full w-full object-cover" loading="lazy" />}</div>
-      {img && <figcaption className="mt-2 text-xs text-slate-400">Photo: <a className="hover:underline" href={img.page} target="_blank" rel="noreferrer">{img.author}</a>, {img.license}</figcaption>}
-    </figure>)
+  const p = LEVEL_PHOTOS[id]
+  return <div className="hidden md:block">{p && <SitePhoto titles={p[0]} query={p[1]} />}</div>
 }

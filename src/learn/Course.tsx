@@ -9,8 +9,9 @@ import Photo from "./Photo"
 import Diagram from "./Diagrams"
 import Calc from "./Calc"
 import AiPanel from "../components/AiPanel"
+import { LEVELS, GUIDE, STEPS, levelOf, type Step } from "./levels"
 
-type View = { kind: "home" } | { kind: "lesson"; id: string } | { kind: "quiz"; id: string } | { kind: "glossary" }
+type View = { kind: "home" } | { kind: "lesson"; id: string } | { kind: "quiz"; id: string } | { kind: "module"; id: string } | { kind: "glossary" }
 const PASS = 0.8
 const VIEW_KEY = "dealScreener.course.view"
 
@@ -58,6 +59,19 @@ function Blocks({ blocks }: { blocks: Block[] }) {
     if (b.t === "state") return <StateBlock key={i} />
     return null
   })}</>
+}
+
+/** The underwriting roadmap with this module's steps lit up. */
+function Roadmap({ steps, compact = false }: { steps: Step[] | "all"; compact?: boolean }) {
+  const on = (k: Step) => steps === "all" || steps.includes(k)
+  return (
+    <ol className={`flex flex-wrap items-center gap-y-2 ${compact ? "text-[11px]" : "text-xs md:text-sm"}`}>
+      {STEPS.map((s, i) => (
+        <li key={s.key} className="flex items-center">
+          <span className={`rounded-full px-2.5 py-1 font-semibold ${on(s.key) ? "bg-brand-700 text-white" : "bg-slate-100 text-slate-400"}`}>{compact ? s.short : s.label}</span>
+          {i < STEPS.length - 1 && <span className={`mx-1 ${on(s.key) && on(STEPS[i + 1].key) ? "text-brand-700" : "text-slate-300"}`}>→</span>}
+        </li>))}
+    </ol>)
 }
 
 function QuizView({ mod, onDone, onBack }: { mod: Module; onDone: (score: number) => void; onBack: () => void }) {
@@ -129,7 +143,7 @@ export default function Course({ session, onPractice }: { session: Session | nul
       <div className="rounded-lg bg-brand-900 p-6 text-white md:p-8">
         <div className="text-xs font-semibold uppercase tracking-wider text-brand-100">Underwriting Desk</div>
         <h1 className="mt-1 text-2xl font-bold md:text-3xl">Learn to underwrite real estate</h1>
-        <p className="mt-2 max-w-2xl text-white/80">Thirteen modules that take you from what investment real estate is to how markets, competition and new supply move a deal, and how an acquisitions team works. Real photos, diagrams, worked examples, a quiz after each module, and Desk AI for any question.</p>
+        <p className="mt-2 max-w-2xl text-white/80">Four levels and thirteen modules: the basics of real estate first, then building the underwriting model step by step, then judging a deal, then how a professional team does it. Real photos, diagrams, worked examples, a quiz after each module, and Desk AI for any question.</p>
         <div className="mt-5 flex flex-wrap items-center gap-4">
           {resume && <button className="btn border-white bg-white text-brand-700 hover:bg-brand-50" onClick={() => setView({ kind: "lesson", id: resume.id })}>{lessonsDone ? "Continue" : "Start"}: {resume.title} →</button>}
           <div className="text-sm text-white/80">{lessonsDone} of {allLessons.length} lessons · {modsDone} of {COURSE.length} modules complete</div>
@@ -144,33 +158,120 @@ export default function Course({ session, onPractice }: { session: Session | nul
             <p className="mt-0.5 text-sm text-ink">“I built Underwriting Desk so junior underwriters can learn the basics quickly, then use their own mistakes to get good fast.” <span className="text-slate-500">· Blake Busboom</span></p>
           </div>
         </div>)}
-      <div className="mt-6 grid gap-4 md:grid-cols-2">
-        {COURSE.map(m => {
-          const done = m.lessons.filter(l => prog.lessons[l.id]).length, qz = prog.quizzes[m.id]
-          return (
-            <div key={m.id} className="card flex flex-col">
-              <div className="flex items-start justify-between gap-3">
-                <div><div className="text-xs font-semibold uppercase tracking-wider text-brand-500">Module {m.num}</div><h2 className="text-lg font-bold">{m.title}</h2></div>
-                {qz?.passed ? <span className="rounded-full bg-pass-50 px-2.5 py-1 text-xs font-semibold text-pass-600">✓ Complete</span> : done ? <span className="rounded-full bg-brand-50 px-2.5 py-1 text-xs font-semibold text-brand-600">In progress</span> : null}
-              </div>
-              <p className="mt-1 text-sm text-slate-500">{m.summary}</p>
-              <ul className="mt-3 flex-1 space-y-1">
-                {m.lessons.map(l => <li key={l.id}><button className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm hover:bg-slate-50" onClick={() => setView({ kind: "lesson", id: l.id })}>
-                  <span className={`grid h-5 w-5 place-items-center rounded-full text-[11px] ${prog.lessons[l.id] ? "bg-pass-600 text-white" : "border border-slate-300 text-slate-400"}`}>{prog.lessons[l.id] ? "✓" : ""}</span>
-                  <span className="flex-1">{l.title}</span><span className="text-xs text-slate-400">{l.minutes} min</span></button></li>)}
-                <li><button className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm font-medium text-brand-600 hover:bg-brand-50" onClick={() => setView({ kind: "quiz", id: m.id })}>
-                  <span className="grid h-5 w-5 place-items-center rounded-full border border-brand-500 text-[11px]">?</span><span className="flex-1">Module quiz</span>
-                  <span className="text-xs text-slate-400">{qz ? `best ${qz.best}/${qz.total}` : `${m.quiz.length} questions`}</span></button></li>
-              </ul>
-            </div>)
-        })}
-        {/* Practice and glossary fill the spot beside the last module when the count is odd; otherwise they get their own row. */}
-        <div className={`flex flex-col gap-4 ${COURSE.length % 2 === 1 ? "" : "md:col-span-2 md:grid md:grid-cols-2"}`}>
-          <button className="card flex-1 text-left hover:border-brand-500" onClick={onPractice}><div className="font-bold">Practice a deal →</div><p className="mt-1 text-sm text-slate-500">Underwrite Maple Court step by step, your own property, or uploaded documents, with the math shown at every step.</p></button>
-          <button className="card flex-1 text-left hover:border-brand-500" onClick={() => setView({ kind: "glossary" })}><div className="font-bold">Glossary →</div><p className="mt-1 text-sm text-slate-500">Every term from the course in one place, {glossary.length} terms.</p></button>
+      {/* The path: four levels, each building on the last. */}
+      <div className="mt-6">
+        <div className="text-xs font-semibold uppercase tracking-wider text-slate-500">Your path</div>
+        <div className="mt-2 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+          {LEVELS.map(lv => {
+            const passed = lv.modules.filter(id => prog.quizzes[id]?.passed).length
+            return (
+              <a key={lv.id} href={"#" + lv.id} onClick={e => { e.preventDefault(); document.getElementById(lv.id)?.scrollIntoView({ behavior: "smooth", block: "start" }) }}
+                className="card !p-4 hover:border-brand-500">
+                <div className="flex items-center justify-between text-xs font-semibold uppercase tracking-wider"><span className="text-brand-500">Level {lv.num}</span><span className="text-slate-400">{lv.tag}</span></div>
+                <div className="mt-0.5 font-bold">{lv.name}</div>
+                <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-slate-100"><div className="h-full bg-pass-600" style={{ width: `${(passed / lv.modules.length) * 100}%` }} /></div>
+                <div className="mt-1 text-xs text-slate-500">{passed} of {lv.modules.length} modules</div>
+              </a>)
+          })}
         </div>
       </div>
+      {LEVELS.map((lv, li) => {
+        const mods = lv.modules.map(id => COURSE.find(m => m.id === id)!).filter(Boolean)
+        const last = li === LEVELS.length - 1
+        return (
+          <section key={lv.id} id={lv.id} className="mt-8 scroll-mt-24">
+            <div className="rounded-lg border border-slate-200 bg-white p-5">
+              <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                <span className="text-xs font-semibold uppercase tracking-wider text-brand-500">Level {lv.num} · {lv.tag}</span>
+                <h2 className="text-xl font-bold">{lv.name}</h2>
+                <span className="text-sm text-slate-500">Modules {mods[0].num} to {mods[mods.length - 1].num}</span>
+              </div>
+              <p className="mt-2 text-[15px] text-ink/90">{lv.about}</p>
+              <div className="mt-3 grid gap-3 text-sm md:grid-cols-2">
+                <div className="rounded-md bg-brand-50 px-3 py-2"><b className="text-brand-700">How it relates to underwriting: </b><span className="text-slate-700">{lv.connects}</span></div>
+                <div className="rounded-md bg-slate-50 px-3 py-2"><b>When you finish: </b><span className="text-slate-700">{lv.outcome}</span></div>
+              </div>
+            </div>
+            <div className="mt-4 grid gap-4 md:grid-cols-2">
+              {mods.map(m => {
+                const done = m.lessons.filter(l => prog.lessons[l.id]).length, qz = prog.quizzes[m.id], g = GUIDE[m.id]
+                return (
+                  <div key={m.id} className="card flex flex-col">
+                    <div className="flex items-start justify-between gap-3">
+                      <button className="text-left" onClick={() => setView({ kind: "module", id: m.id })}>
+                        <div className="text-xs font-semibold uppercase tracking-wider text-brand-500">Module {m.num}</div>
+                        <h3 className="text-lg font-bold hover:text-brand-700">{m.title}</h3>
+                      </button>
+                      {qz?.passed ? <span className="shrink-0 rounded-full bg-pass-50 px-2.5 py-1 text-xs font-semibold text-pass-600">✓ Complete</span> : done ? <span className="shrink-0 rounded-full bg-brand-50 px-2.5 py-1 text-xs font-semibold text-brand-600">In progress</span> : null}
+                    </div>
+                    <p className="mt-1 text-sm text-slate-500">{m.summary}</p>
+                    {g && <p className="mt-2 text-sm text-slate-700"><b>Why it matters: </b>{g.why}</p>}
+                    <button className="mt-2 self-start text-sm font-medium text-brand-600 hover:underline" onClick={() => setView({ kind: "module", id: m.id })}>Module overview →</button>
+                    <ul className="mt-2 flex-1 space-y-1 border-t border-slate-100 pt-2">
+                      {m.lessons.map(l => <li key={l.id}><button className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm hover:bg-slate-50" onClick={() => setView({ kind: "lesson", id: l.id })}>
+                        <span className={`grid h-5 w-5 place-items-center rounded-full text-[11px] ${prog.lessons[l.id] ? "bg-pass-600 text-white" : "border border-slate-300 text-slate-400"}`}>{prog.lessons[l.id] ? "✓" : ""}</span>
+                        <span className="flex-1">{l.title}</span><span className="text-xs text-slate-400">{l.minutes} min</span></button></li>)}
+                      <li><button className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm font-medium text-brand-600 hover:bg-brand-50" onClick={() => setView({ kind: "quiz", id: m.id })}>
+                        <span className="grid h-5 w-5 place-items-center rounded-full border border-brand-500 text-[11px]">?</span><span className="flex-1">Module quiz</span>
+                        <span className="text-xs text-slate-400">{qz ? `best ${qz.best}/${qz.total}` : `${m.quiz.length} questions`}</span></button></li>
+                    </ul>
+                  </div>)
+              })}
+              {/* Practice and glossary fill the spot beside the last module when the count is odd; otherwise they get their own row. */}
+              {last && <div className={`flex flex-col gap-4 ${mods.length % 2 === 1 ? "" : "md:col-span-2 md:grid md:grid-cols-2"}`}>
+                <button className="card flex-1 text-left hover:border-brand-500" onClick={onPractice}><div className="font-bold">Practice a deal →</div><p className="mt-1 text-sm text-slate-500">Underwrite Maple Court step by step, your own property, or uploaded documents, with the math shown at every step.</p></button>
+                <button className="card flex-1 text-left hover:border-brand-500" onClick={() => setView({ kind: "glossary" })}><div className="font-bold">Glossary →</div><p className="mt-1 text-sm text-slate-500">Every term from the course in one place, {glossary.length} terms.</p></button>
+              </div>}
+            </div>
+          </section>)
+      })}
     </main>)
+
+  /* ---------- module overview ---------- */
+  if (view.kind === "module") {
+    const m = COURSE.find(x => x.id === view.id)!, g = GUIDE[m.id], lv = levelOf(m.id)
+    const prevM = COURSE[COURSE.indexOf(m) - 1], nextM = COURSE[COURSE.indexOf(m) + 1]
+    const firstOpen = m.lessons.find(l => !prog.lessons[l.id]) || m.lessons[0]
+    const mins = m.lessons.reduce((a, l) => a + l.minutes, 0), qz = prog.quizzes[m.id]
+    return (
+      <main className="mx-auto max-w-3xl px-4 py-6 md:px-8">
+        <div className="mb-3 flex flex-wrap items-center gap-1 text-sm text-slate-500">
+          <button className="text-brand-600 hover:underline" onClick={() => setView({ kind: "home" })}>Course</button><span>›</span>
+          <span>Level {lv.num}: {lv.name}</span>
+        </div>
+        <div className="card">
+          <div className="text-xs font-semibold uppercase tracking-wider text-brand-500">Module {m.num} overview · Level {lv.num} {lv.name}</div>
+          <h1 className="mt-1 text-2xl font-bold">{m.title}</h1>
+          <p className="mt-2 text-[15.5px] text-ink/90">{m.summary}</p>
+          <div className="mt-1 text-sm text-slate-500">{m.lessons.length} lessons · about {mins} minutes · {m.quiz.length} question quiz{qz?.passed ? " · ✓ complete" : ""}</div>
+
+          <h2 className="mt-6 text-sm font-semibold uppercase tracking-wider text-slate-500">How it relates to underwriting</h2>
+          <p className="mt-1 text-[15px] text-ink/90">{g.why}</p>
+          <div className="mt-3 rounded-lg border border-slate-200 bg-slate-50 p-3">
+            <div className="mb-2 text-xs font-semibold text-slate-500">{g.steps === "all" ? "This module covers the whole roadmap" : g.steps.length ? "Where this module sits on the underwriting roadmap" : "The underwriting roadmap you're working toward"}</div>
+            <Roadmap steps={g.steps} />
+          </div>
+
+          <h2 className="mt-6 text-sm font-semibold uppercase tracking-wider text-slate-500">You'll be able to</h2>
+          <ul className="mt-2 space-y-1.5">{g.learn.map(t => <li key={t} className="flex gap-2 text-[15px]"><span className="text-pass-600">✓</span><span>{t}</span></li>)}</ul>
+
+          <h2 className="mt-6 text-sm font-semibold uppercase tracking-wider text-slate-500">Lessons</h2>
+          <ol className="mt-2 space-y-1">
+            {m.lessons.map((l, i) => <li key={l.id}><button className="flex w-full items-center gap-3 rounded-md px-2 py-2 text-left hover:bg-slate-50" onClick={() => setView({ kind: "lesson", id: l.id })}>
+              <span className={`grid h-6 w-6 shrink-0 place-items-center rounded-full text-xs ${prog.lessons[l.id] ? "bg-pass-600 text-white" : "border border-slate-300 text-slate-500"}`}>{prog.lessons[l.id] ? "✓" : i + 1}</span>
+              <span className="flex-1">{l.title}</span><span className="text-xs text-slate-400">{l.minutes} min</span></button></li>)}
+          </ol>
+          {(prevM || nextM) && <p className="mt-5 border-t border-slate-100 pt-4 text-sm text-slate-500">
+            {prevM && <>Builds on <button className="text-brand-600 hover:underline" onClick={() => setView({ kind: "module", id: prevM.id })}>Module {prevM.num}: {prevM.title}</button>. </>}
+            {nextM && <>Leads into <button className="text-brand-600 hover:underline" onClick={() => setView({ kind: "module", id: nextM.id })}>Module {nextM.num}: {nextM.title}</button>.</>}
+          </p>}
+          <div className="mt-5 flex flex-wrap gap-2">
+            <button className="btn btn-primary" onClick={() => setView({ kind: "lesson", id: firstOpen.id })}>{m.lessons.some(l => prog.lessons[l.id]) ? "Continue" : "Start"}: {firstOpen.title} →</button>
+            <button className="btn" onClick={() => setView({ kind: "quiz", id: m.id })}>Take the quiz</button>
+          </div>
+        </div>
+      </main>)
+  }
 
   /* ---------- glossary ---------- */
   if (view.kind === "glossary") return (
@@ -203,12 +304,13 @@ export default function Course({ session, onPractice }: { session: Session | nul
     <main className="mx-auto max-w-6xl px-4 py-6 md:px-8">
       <div className="mb-3 flex flex-wrap items-center gap-1 text-sm text-slate-500">
         <button className="text-brand-600 hover:underline" onClick={() => setView({ kind: "home" })}>Course</button><span>›</span>
-        <span>Module {l.module.num}: {l.module.title}</span>
+        <span>Level {levelOf(l.module.id).num}</span><span>›</span>
+        <button className="text-brand-600 hover:underline" onClick={() => setView({ kind: "module", id: l.module.id })}>Module {l.module.num}: {l.module.title}</button>
       </div>
       <div className="grid gap-5 lg:grid-cols-[220px_1fr]">
         <aside className="hidden lg:block">
           <div className="sticky top-20 space-y-1 text-sm">
-            <div className="mb-2 text-xs font-semibold uppercase tracking-wider text-slate-500">Module {l.module.num}</div>
+            <button className="mb-2 block text-xs font-semibold uppercase tracking-wider text-slate-500 hover:text-brand-600" onClick={() => setView({ kind: "module", id: l.module.id })}>Module {l.module.num} overview</button>
             {l.module.lessons.map(x => <button key={x.id} onClick={() => setView({ kind: "lesson", id: x.id })}
               className={`block w-full rounded-md px-2 py-1.5 text-left ${x.id === l.id ? "bg-brand-50 font-semibold text-brand-700" : "hover:bg-slate-100"}`}>{prog.lessons[x.id] ? "✓ " : ""}{x.title}</button>)}
             <button className="block w-full rounded-md px-2 py-1.5 text-left text-brand-600 hover:bg-brand-50" onClick={() => setView({ kind: "quiz", id: l.module.id })}>Module quiz</button>

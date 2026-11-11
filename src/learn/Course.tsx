@@ -9,6 +9,7 @@ import { PRACTICE, norm } from "../lib/model"
 import Photo from "./Photo"
 import Diagram, { DiagramArt } from "./Diagrams"
 import Calc from "./Calc"
+import { withTerms } from "./Terms"
 import AiPanel from "../components/AiPanel"
 import { LEVELS, GUIDE, STEPS, LESSON_GOALS, COVER_ART, CHECKPOINT_PASS, PENDING_CHECK, levelOf, type Step, type Level } from "./levels"
 
@@ -41,11 +42,12 @@ function StateBlock() {
 }
 
 function Blocks({ blocks }: { blocks: Block[] }) {
+  const seen = new Set<string>()
   return <>{blocks.map((b, i) => {
-    if (b.t === "p") return <p key={i} className="my-3 text-[15.5px] leading-relaxed text-ink/90">{b.text}</p>
+    if (b.t === "p") return <p key={i} className="my-3 text-[15.5px] leading-relaxed text-ink/90">{withTerms(b.text, seen)}</p>
     if (b.t === "photo") return <Photo key={i} titles={b.titles} query={b.query} caption={b.caption} google={b.google} />
     if (b.t === "diagram") return <Diagram key={i} d={b.d} caption={b.caption} />
-    if (b.t === "tip") return <div key={i} className="my-4 flex gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-[14.5px] text-amber-900"><span className="font-bold">Tip</span><span>{b.text}</span></div>
+    if (b.t === "tip") return <div key={i} className="my-4 flex gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-[14.5px] text-amber-900"><span className="font-bold">Tip</span><span>{withTerms(b.text, seen)}</span></div>
     if (b.t === "formula") return <div key={i} className="my-4 rounded-lg bg-brand-900 px-5 py-4 text-white"><div className="text-xs font-semibold uppercase tracking-wider text-brand-100">{b.name}</div><div className="mt-1 font-mono text-lg">{b.f}</div></div>
     if (b.t === "example") return (
       <div key={i} className="my-4 rounded-lg border border-slate-200 bg-slate-50 p-4">

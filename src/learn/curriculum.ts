@@ -553,8 +553,33 @@ export const COURSE: Module[] = [
 ]
 
 export const allLessons = COURSE.flatMap(m => m.lessons.map(l => ({ ...l, module: m })))
+/** Core terms that appear as formulas rather than in a Key terms box. */
+const CORE_TERMS: [string, string][] = [
+  ["Net operating income (NOI)", "Income left after operating expenses, before any loan payment. Lenders size loans from it and buyers price properties from it."],
+  ["Cap rate", "NOI divided by price. The yield you'd earn in year one paying all cash; a lower cap rate means a higher price for the same income."],
+  ["Debt service coverage ratio (DSCR)", "NOI divided by the yearly loan payment. Lenders usually want at least 1.20 to 1.25."],
+  ["Loan to value (LTV)", "The loan as a share of the purchase price or appraised value."],
+  ["Debt yield", "NOI divided by the loan amount. A lender test that ignores the interest rate and amortization."],
+  ["Gross potential rent (GPR)", "What the property would collect if every unit were leased at market rent for the whole year."],
+  ["Effective gross income (EGI)", "Gross potential rent minus vacancy and credit loss, plus other income. What the property actually collects."],
+  ["Operating expenses", "The costs of running the property day to day: taxes, insurance, utilities, repairs, payroll, management. Not the loan or big capital projects."],
+  ["Expense ratio", "Operating expenses divided by effective gross income. Apartments usually run 35% to 50%."],
+  ["Cash on cash", "Year one cash flow after the loan, divided by the cash you put in."],
+  ["Gross rent multiplier (GRM)", "Price divided by gross yearly rent. A quick comparison, not a valuation."],
+  ["Price per unit", "Price divided by the number of units, used to compare similar buildings."],
+  ["Break even occupancy", "The occupancy at which income just covers operating expenses and the loan payment."],
+  ["Return on cost", "The extra yearly NOI a renovation produces, divided by what it cost."],
+  ["Value add", "A plan to raise income by renovating units or running the property better."],
+  ["Sensitivity table", "A grid showing the result, like IRR, when two inputs change at once."],
+  ["Waterfall", "The order in which cash is split between investors and the sponsor."],
+  ["Depreciation", "A tax deduction for wear on the building, spread over 27.5 years for apartments."],
+  ["Appreciation", "The property becoming worth more over time."],
+  ["Buy box", "The criteria a buyer uses to decide which deals are worth pursuing."],
+]
+
 export const glossary = (() => {
-  const map = new Map<string, string>()
-  COURSE.forEach(m => m.lessons.forEach(l => l.blocks.forEach(b => { if (b.t === "terms") b.items.forEach(([k, v]) => { if (!map.has(k)) map.set(k, v) }) })))
-  return [...map.entries()].sort((a, b) => a[0].localeCompare(b[0]))
+  const map = new Map<string, string>(CORE_TERMS)
+  COURSE.forEach(m => m.lessons.forEach(l => l.blocks.forEach(b => { if (b.t === "terms") b.items.forEach(([k, v]) => { if (!map.has(k) && ![...map.keys()].some(x => x.endsWith(`(${k})`))) map.set(k, v) }) })))
+  const keys = [...map.keys()]
+  return [...map.entries()].filter(([k]) => !keys.some(x => x !== k && x.endsWith(`(${k})`))).sort((a, b) => a[0].localeCompare(b[0]))
 })()

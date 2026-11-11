@@ -153,6 +153,7 @@ export default function Course({ session, onPractice, onCheck }: { session: Sess
   useEffect(() => { scrollTo({ top: 0 }) }, [view])
   const [lvSel, setLvSel] = useState<{ id: string; back: boolean } | null>(() => { try { const id = sessionStorage.getItem(LEVEL_KEY); return id ? { id, back: false } : null } catch { return null } })
   const pickLevel = (id: string, back: boolean) => { setLvSel({ id, back }); try { sessionStorage.setItem(LEVEL_KEY, id) } catch {} }
+  const [askOpen, setAskOpen] = useState(false)
   const update = (fn: (p: Progress) => Progress) => setProg(p => { const n = fn(p); saveProgress(session, n); return n })
 
   const lessonsDone = allLessons.filter(l => prog.lessons[l.id]).length
@@ -400,7 +401,7 @@ export default function Course({ session, onPractice, onCheck }: { session: Sess
       </div>)
   }
 
-  /* ---------- lesson: a reading page ---------- */
+  /* ---------- lesson: a focused reading page; the lesson fills the screen, Desk AI opens on demand ---------- */
   const l = lesson as Lesson & { module: Module }
   const idx = allLessons.findIndex(x => x.id === l.id), inM = l.module.lessons.findIndex(x => x.id === l.id)
   const prev = allLessons[idx - 1], next = allLessons[idx + 1]
@@ -408,50 +409,53 @@ export default function Course({ session, onPractice, onCheck }: { session: Sess
   const finish = (go: View) => { update(p => ({ ...p, lessons: { ...p.lessons, [l.id]: true }, last: next?.id })); setView(go) }
   const lv = levelOf(l.module.id)
   return (
-    <div key={l.id} className="page-in bg-white">
-      <section className="border-b border-slate-200 bg-[#f6f6f3]">
-        <div className="mx-auto max-w-6xl px-4 pb-10 pt-6 md:px-8">
-          <nav className="flex flex-wrap items-center gap-x-1.5 text-sm text-slate-500" aria-label="Breadcrumb">
-            <button className="hover:text-ink" onClick={() => setView({ kind: "home" })}>Course</button><span className="text-slate-300">/</span>
-            <button className="hover:text-ink" onClick={() => { pickLevel(lv.id, false); setView({ kind: "home" }) }}>Level {lv.num}</button><span className="text-slate-300">/</span>
-            <button className="hover:text-ink" onClick={() => setView({ kind: "module", id: l.module.id })}>Module {l.module.num}: {l.module.title}</button>
-          </nav>
-          <div className="mt-8 max-w-3xl">
-            <div className="text-sm text-slate-500">Lesson {inM + 1} of {l.module.lessons.length}, {l.minutes} minute read</div>
-            <h1 className="mt-2 font-serif text-4xl font-semibold leading-tight tracking-tight md:text-[2.75rem]">{l.title}</h1>
-            {LESSON_GOALS[l.id] && <p className="mt-3 text-lg text-slate-600">{LESSON_GOALS[l.id]}</p>}
-          </div>
+    <div key={l.id} className={`bg-white transition-[padding] duration-300 ${askOpen ? "xl:pr-[420px]" : ""}`}>
+      {/* Slim lesson bar: where you are, the module's lessons, and Ask the Desk. */}
+      <div className="sticky top-16 z-10 border-b border-slate-200 bg-white/95 backdrop-blur">
+        <div className="mx-auto flex h-14 max-w-6xl items-center gap-4 px-4 md:px-8">
+          <button className="shrink-0 text-sm text-slate-500 hover:text-ink" onClick={() => setView({ kind: "module", id: l.module.id })}>← <span className="hidden sm:inline">Module {l.module.num}: </span>{l.module.title}</button>
+          <ol className="hidden min-w-0 flex-1 items-center justify-center gap-1.5 md:flex" aria-label="Lessons in this module">
+            {l.module.lessons.map((x, i) => (
+              <li key={x.id}><button title={x.title} onClick={() => setView({ kind: "lesson", id: x.id })}
+                className={`flex h-7 min-w-7 items-center justify-center rounded-full px-2 text-xs font-semibold transition ${x.id === l.id ? "bg-ink text-white" : prog.lessons[x.id] ? "bg-pass-50 text-pass-600 hover:bg-pass-100" : "bg-slate-100 text-slate-500 hover:bg-slate-200"}`}>{prog.lessons[x.id] && x.id !== l.id ? "✓" : i + 1}</button></li>))}
+            <li><button title="Module quiz" onClick={() => setView({ kind: "quiz", id: l.module.id })} className="flex h-7 items-center rounded-full bg-slate-100 px-3 text-xs font-semibold text-slate-500 hover:bg-slate-200">Quiz</button></li>
+          </ol>
+          <button className={`ml-auto shrink-0 rounded-md px-3 py-1.5 text-sm font-semibold transition md:ml-0 ${askOpen ? "bg-ink text-white" : "border border-slate-300 text-ink hover:border-ink"}`} onClick={() => setAskOpen(o => !o)}>Ask the Desk</button>
         </div>
-      </section>
-      <div className="mx-auto grid max-w-6xl gap-10 px-4 py-10 md:px-8 lg:grid-cols-[200px_minmax(0,1fr)] xl:grid-cols-[200px_minmax(0,1fr)_300px]">
-        <aside className="hidden lg:block">
-          <div className="sticky top-24 text-sm">
-            <button className="font-semibold text-ink hover:underline" onClick={() => setView({ kind: "module", id: l.module.id })}>Module {l.module.num}</button>
-            <ol className="mt-3 space-y-1 border-l border-slate-200">
-              {l.module.lessons.map(x => <li key={x.id}><button onClick={() => setView({ kind: "lesson", id: x.id })}
-                className={`-ml-px block w-full border-l-2 py-1.5 pl-3 text-left ${x.id === l.id ? "border-ink font-semibold text-ink" : "border-transparent text-slate-500 hover:text-ink"}`}>{x.title}{prog.lessons[x.id] ? " ✓" : ""}</button></li>)}
-              <li><button className="-ml-px block w-full border-l-2 border-transparent py-1.5 pl-3 text-left text-slate-500 hover:text-ink" onClick={() => setView({ kind: "quiz", id: l.module.id })}>Module quiz</button></li>
-            </ol>
-          </div>
-        </aside>
-        <article className="min-w-0 max-w-[44rem] [&_h2]:font-serif">
+        <div className="h-0.5 bg-slate-100"><div className="h-full bg-[#f4b24c] transition-all" style={{ width: `${((inM + 1) / (l.module.lessons.length + 1)) * 100}%` }} /></div>
+      </div>
+
+      <article className="page-in mx-auto max-w-[50rem] px-5 pb-16 pt-10 md:pt-14">
+        <div className="text-sm text-slate-500">Level {lv.num}, Module {l.module.num}, lesson {inM + 1} of {l.module.lessons.length}. About {l.minutes} minutes.</div>
+        <h1 className="mt-3 font-serif text-4xl font-semibold leading-tight tracking-tight md:text-5xl">{l.title}</h1>
+        {LESSON_GOALS[l.id] && <p className="mt-4 text-xl leading-relaxed text-slate-500">{LESSON_GOALS[l.id]}</p>}
+        <div className="mt-8 border-t border-slate-200 pt-2 [&_p]:!text-[18.5px] [&_p]:!leading-[1.8]">
           <Blocks blocks={l.blocks} />
-          <div className="mt-10 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-6">
-            {prev ? <button className="text-sm text-slate-500 hover:text-ink" onClick={() => setView({ kind: "lesson", id: prev.id })}>← {prev.title}</button> : <span />}
-            {lastInModule
-              ? <button className="rounded-md bg-ink px-5 py-2.5 font-semibold text-white hover:bg-slate-800" onClick={() => finish({ kind: "quiz", id: l.module.id })}>Done. Take the module {l.module.num} quiz →</button>
-              : <button className="rounded-md bg-ink px-5 py-2.5 font-semibold text-white hover:bg-slate-800" onClick={() => finish({ kind: "lesson", id: next!.id })}>Next: {next!.title} →</button>}
+        </div>
+        <div className="mt-12 flex flex-col-reverse items-stretch justify-between gap-3 border-t border-slate-200 pt-6 sm:flex-row sm:items-center">
+          {prev ? <button className="text-left text-sm text-slate-500 hover:text-ink" onClick={() => setView({ kind: "lesson", id: prev.id })}>← {prev.title}</button> : <span />}
+          {lastInModule
+            ? <button className="rounded-md bg-ink px-6 py-3 font-semibold text-white hover:bg-slate-800" onClick={() => finish({ kind: "quiz", id: l.module.id })}>Done. Take the module {l.module.num} quiz →</button>
+            : <button className="rounded-md bg-ink px-6 py-3 font-semibold text-white hover:bg-slate-800" onClick={() => finish({ kind: "lesson", id: next!.id })}>Next: {next!.title} →</button>}
+        </div>
+      </article>
+
+      {/* Desk AI slides in from the right only when asked for. */}
+      {askOpen && <>
+        <div className="fixed inset-0 z-30 bg-ink/20 md:hidden" onClick={() => setAskOpen(false)} />
+        <aside className="fixed bottom-0 right-0 top-16 z-50 flex w-full flex-col border-l border-slate-200 bg-white shadow-xl sm:w-[420px]">
+          <div className="flex items-center justify-between border-b border-slate-200 px-5 py-3">
+            <div className="font-serif text-lg font-semibold">Ask the Desk</div>
+            <button className="text-slate-400 hover:text-ink" aria-label="Close" onClick={() => setAskOpen(false)}>✕</button>
           </div>
-        </article>
-        <aside className="min-w-0 lg:col-span-2 xl:col-span-1">
-          <div className="xl:sticky xl:top-24">
-            <AiPanel key={l.id} storeKey={"lesson." + l.id} deal={norm(PRACTICE)} fixedRoute="learner" compact title="Ask the Desk about this lesson" context={ctx}
+          <div className="min-h-0 flex-1 overflow-y-auto p-4">
+            <AiPanel key={l.id} storeKey={"lesson." + l.id} deal={norm(PRACTICE)} fixedRoute="learner" compact title={`About "${l.title}"`} context={ctx}
               greeting={`Questions about "${l.title}"? Ask anything, like "why do we subtract vacancy?" or "explain this like I'm new."`}
               reviewLabel="Explain this lesson another way" reviewPrompt={`Explain the main idea of the lesson "${l.title}" in a different way than the lesson did, with a simple everyday example, in under 150 words.`}
               onDeal={() => {}} />
           </div>
         </aside>
-      </div>
+      </>}
     </div>
   )
 }

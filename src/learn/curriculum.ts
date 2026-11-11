@@ -10,6 +10,7 @@ export type Block =
   | { t: "example"; title: string; rows: [string, string, boolean?][] }
   | { t: "terms"; items: [string, string][] }
   | { t: "tip"; text: string }
+  | { t: "find"; what: string; steps: [string, string][]; note?: string }
   | { t: "formula"; name: string; f: string; parts?: [string, string][]; say?: string }
   | { t: "calc"; c: "cap" | "dscr" | "coc" | "noi" }
   | { t: "state" }

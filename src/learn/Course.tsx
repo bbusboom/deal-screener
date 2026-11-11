@@ -24,6 +24,7 @@ function blockText(b: Block): string {
   if (b.t === "p" || b.t === "tip") return b.text
   if (b.t === "formula") return `${b.name}: ${b.f}` + (b.parts ? ". Parts: " + b.parts.map(([k, v]) => `${k} = ${v}`).join("; ") : "") + (b.say ? ". " + b.say : "")
   if (b.t === "example") return `${b.title}: ` + b.rows.map(r => `${r[0]} ${r[1]}`).join("; ")
+  if (b.t === "find") return `How to find ${b.what}: ` + b.steps.map(([k, v], i) => `${i + 1}. ${k}: ${v}`).join(" ") + (b.note ? " " + b.note : "")
   if (b.t === "terms") return b.items.map(([k, v]) => `${k}: ${v}`).join(" ")
   if (b.t === "photo") return `Photo: ${b.caption}`
   if (b.t === "state") return "Interactive card showing the user's home state: property tax rate, income tax, rent regulation, reassessment after a sale, and owner groups."
@@ -50,6 +51,13 @@ function Blocks({ blocks }: { blocks: Block[] }) {
     if (b.t === "photo") return <Photo key={i} titles={b.titles} query={b.query} caption={b.caption} google={b.google} />
     if (b.t === "diagram") return <Diagram key={i} d={b.d} caption={b.caption} />
     if (b.t === "tip") return <div key={i} className="my-6 border-l-4 border-[#f4b24c] bg-[#fff8eb] px-5 py-4 text-[16px] leading-relaxed text-[#5c3d0a]"><span className="mr-2 font-semibold">Tip:</span><span>{withTerms(b.text, seen)}</span></div>
+    if (b.t === "find") return (
+      <div key={i} className="my-7 rounded-lg border border-slate-200 bg-white">
+        <div className="flex items-baseline gap-2 border-b border-slate-200 px-5 py-3"><span className="text-xs font-semibold uppercase tracking-wider text-[#a86400]">How to find it</span><span className="font-serif text-lg font-semibold text-night">{b.what}</span></div>
+        <ol className="divide-y divide-slate-100">{b.steps.map(([k, v], j) => (
+          <li key={j} className="flex gap-4 px-5 py-3.5"><span className="mt-0.5 font-mono text-sm font-semibold text-slate-400">{j + 1}</span><div><div className="font-semibold text-night">{k}</div><p className="mt-0.5 text-[16px] leading-relaxed text-slate-600">{withTerms(v, seen)}</p></div></li>))}</ol>
+        {b.note && <p className="border-t border-slate-200 bg-slate-50 px-5 py-3 text-[15px] leading-relaxed text-slate-600">{withTerms(b.note, seen)}</p>}
+      </div>)
     if (b.t === "formula") return (
       <div key={i} className="my-7 overflow-hidden rounded-lg border border-slate-200">
         <div className="bg-night px-5 py-4 text-white"><div className="text-sm text-white/60">Formula: {b.name}</div><div className="mt-1 font-mono text-lg leading-snug md:text-xl">{b.f}</div></div>

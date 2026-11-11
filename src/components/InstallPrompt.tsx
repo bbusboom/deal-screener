@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react"
+import { XIcon } from "./Site"
 
 const DISMISS = "dealScreener.install.dismissed"
 const standalone = () => matchMedia("(display-mode: standalone)").matches || (navigator as any).standalone === true
@@ -34,7 +35,7 @@ export default function InstallPrompt({ learnOnly }: { learnOnly: boolean }) {
     <div className="border-b border-white/10 bg-night text-white/75">
       <div className="mx-auto flex max-w-7xl items-center gap-3 px-4 py-2 text-sm md:px-8 [&_a]:text-[#f4b24c] [&_b]:text-white [&_.btn]:!border-[#f4b24c] [&_.btn]:!bg-[#f4b24c] [&_.btn]:!text-[#1c1305]">
         <div className="flex-1">{body}</div>
-        <button className="text-white/40 hover:text-white" onClick={close} aria-label="Dismiss">✕</button>
+        <button className="text-white/40 hover:text-white" onClick={close} aria-label="Dismiss"><XIcon className="h-5 w-5" /></button>
       </div>
     </div>
   )

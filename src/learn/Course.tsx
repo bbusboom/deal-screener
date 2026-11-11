@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import type { Session } from "@supabase/supabase-js"
 import { COURSE, allLessons, glossary, type Block, type Module, type Lesson } from "./curriculum"
 import { getProgress, saveProgress, getSession, listChecks, type Progress, type CheckRecord } from "../lib/store"
@@ -7,10 +7,11 @@ import { StateSelect, StateSnapshot } from "../components/MarketPane"
 import { useHomeState, setHomeState } from "../lib/market"
 import { PRACTICE, norm } from "../lib/model"
 import Photo from "./Photo"
-import { SitePhoto } from "../components/Site"
+import { SitePhoto, CheckIcon, StarIcon, QuizIcon, XIcon } from "../components/Site"
 import Diagram, { DiagramArt } from "./Diagrams"
 import Calc from "./Calc"
 import { withTerms } from "./Terms"
+import Search, { type Hit } from "./Search"
 import AiPanel from "../components/AiPanel"
 import { LEVELS, GUIDE, STEPS, LESSON_GOALS, COVER_ART, CHECKPOINT_PASS, PENDING_CHECK, levelOf, type Step, type Level } from "./levels"
 
@@ -163,6 +164,20 @@ export default function Course({ session, onPractice, onCheck }: { session: Sess
   const [lvSel, setLvSel] = useState<{ id: string; back: boolean } | null>(() => { try { const id = sessionStorage.getItem(LEVEL_KEY); return id ? { id, back: false } : null } catch { return null } })
   const pickLevel = (id: string, back: boolean) => { setLvSel({ id, back }); try { sessionStorage.setItem(LEVEL_KEY, id) } catch {} }
   const [askOpen, setAskOpen] = useState(false)
+  const [searchOpen, setSearchOpen] = useState(false)
+  const [termFocus, setTermFocus] = useState<string | null>(null)
+  useEffect(() => {
+    const open = () => setSearchOpen(true)
+    const key = (e: KeyboardEvent) => {
+      const typing = /^(INPUT|TEXTAREA|SELECT)$/.test((e.target as HTMLElement)?.tagName) || (e.target as HTMLElement)?.isContentEditable
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") { e.preventDefault(); setSearchOpen(o => !o); return }
+      if (typing || e.metaKey || e.ctrlKey || e.altKey) return
+      if (e.key === "/") { e.preventDefault(); setSearchOpen(true) }
+      else if (e.key === "ArrowRight" || e.key === "ArrowLeft") document.dispatchEvent(new CustomEvent("ud:arrow", { detail: e.key }))
+    }
+    addEventListener("keydown", key); addEventListener("ud:search", open)
+    return () => { removeEventListener("keydown", key); removeEventListener("ud:search", open) }
+  }, [])
   const update = (fn: (p: Progress) => Progress) => setProg(p => { const n = fn(p); saveProgress(session, n); return n })
 
   const lessonsDone = allLessons.filter(l => prog.lessons[l.id]).length
@@ -179,6 +194,25 @@ export default function Course({ session, onPractice, onCheck }: { session: Sess
         {go ? <button className="hover:text-white" onClick={go}>{t}</button> : <span className="text-white/80">{t}</span>}</span>)}
     </nav>)
 
+  const navRef = useRef<(dir: string) => void>(() => {})
+  navRef.current = dir => {
+    if (view.kind !== "lesson" || askOpen || searchOpen) return
+    const i = allLessons.findIndex(x => x.id === view.id), cur = allLessons[i], nx = allLessons[i + 1], pv = allLessons[i - 1]
+    if (dir === "ArrowLeft" && pv) setView({ kind: "lesson", id: pv.id })
+    if (dir === "ArrowRight") {
+      update(p => ({ ...p, lessons: { ...p.lessons, [cur.id]: true }, last: nx?.id }))
+      setView(!nx || nx.module.id !== cur.module.id ? { kind: "quiz", id: cur.module.id } : { kind: "lesson", id: nx.id })
+    }
+  }
+  useEffect(() => { const f = (e: Event) => navRef.current((e as CustomEvent).detail); document.addEventListener("ud:arrow", f); return () => document.removeEventListener("ud:arrow", f) }, [])
+  useEffect(() => { if (view.kind === "glossary" && termFocus) setTimeout(() => document.getElementById("term-" + termFocus)?.scrollIntoView({ block: "center" }), 50) }, [view, termFocus])
+  const pickHit = (h: Hit) => {
+    if (h.kind === "lesson") setView({ kind: "lesson", id: h.id })
+    else if (h.kind === "module") setView({ kind: "module", id: h.id })
+    else { setTermFocus(h.id); setView({ kind: "glossary" }) }
+  }
+  const palette = searchOpen ? <Search onClose={() => setSearchOpen(false)} onPick={pickHit} /> : null
+
   /* ---------- home: where you are, then one level at a time ---------- */
   if (view.kind === "home") {
     const cur = resume || allLessons[allLessons.length - 1]
@@ -190,6 +224,7 @@ export default function Course({ session, onPractice, onCheck }: { session: Sess
     const qd = quizzesDone(lv), ck = lv.checkpoint ? CHECKS.find(c => c.id === lv.checkpoint) : undefined, best = bestCheck(lv.checkpoint), lvDone = levelDone(lv)
     return (
       <div>
+        {palette}
         {/* Full width band: the course and the one lesson to do next. */}
         <section className="bg-night text-white">
           <div className="mx-auto grid max-w-6xl gap-10 px-4 pb-12 pt-10 md:grid-cols-[1.1fr_1fr] md:px-8 md:pb-16 md:pt-14">
@@ -260,7 +295,7 @@ export default function Course({ session, onPractice, onCheck }: { session: Sess
                           <p className={`mt-1.5 max-w-xl leading-relaxed ${ahead ? "text-slate-400" : "text-slate-600"}`}>{m.summary}</p>
                           <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-slate-400">
                             <span>{m.lessons.length} lessons and a quiz</span><span>{mins} minutes</span>
-                            {status && <span className={qz?.passed ? "font-medium text-pass-600" : here ? "font-medium text-[#b7791f]" : ""}>{qz?.passed ? "✓ " : ""}{status}</span>}
+                            {status && <span className={`inline-flex items-center gap-1 ${qz?.passed ? "font-medium text-pass-600" : here ? "font-medium text-[#b7791f]" : ""}`}>{qz?.passed && <CheckIcon className="h-3.5 w-3.5" />}{status}</span>}
                           </div>
                         </div>
                         {COVER_ART[m.id] && <div aria-hidden className={`pointer-events-none hidden h-28 items-center justify-center overflow-hidden rounded-md bg-slate-50 p-3 sm:flex [&_svg]:max-h-full [&_svg]:w-auto [&_svg]:max-w-full ${ahead ? "opacity-50 grayscale" : ""}`}><DiagramArt d={COVER_ART[m.id]} /></div>}
@@ -270,7 +305,7 @@ export default function Course({ session, onPractice, onCheck }: { session: Sess
                 {/* The level checkpoint closes the list. */}
                 <li className="py-7">
                   <div className="grid gap-x-6 gap-y-3 sm:grid-cols-[72px_1fr_200px]">
-                    <div className={`grid h-12 w-12 place-items-center rounded-full text-lg font-bold ${lvDone ? "bg-pass-600 text-white" : "bg-[#f4b24c] text-[#1c1305]"}`}>{lvDone ? "✓" : "★"}</div>
+                    <div className={`grid h-12 w-12 place-items-center rounded-full text-lg font-bold ${lvDone ? "bg-pass-600 text-white" : "bg-[#f4b24c] text-[#1c1305]"}`}>{lvDone ? <CheckIcon className="h-6 w-6" /> : <StarIcon className="h-5 w-5" />}</div>
                     <div className="min-w-0">
                       <div className="text-sm font-medium text-[#b7791f]">Level {lv.num} checkpoint</div>
                       <h3 className="mt-0.5 font-serif text-2xl font-semibold leading-snug">{ck ? `Deal Check: ${ck.title}` : `Pass the Module ${lv.modules.map(id => COURSE.find(m => m.id === id)!.num).join(" and ")} quizzes`}</h3>
@@ -318,6 +353,7 @@ export default function Course({ session, onPractice, onCheck }: { session: Sess
     const mins = m.lessons.reduce((a, l) => a + l.minutes, 0), qz = prog.quizzes[m.id]
     return (
       <div key={m.id} className="page-in">
+        {palette}
         <section className="bg-night text-white">
           <div className="mx-auto max-w-6xl px-4 pb-12 pt-8 md:px-8">
             <Crumbs items={[["Course", () => setView({ kind: "home" })], [`Level ${lv.num}: ${lv.name}`, () => { pickLevel(lv.id, false); setView({ kind: "home" }) }], [`Module ${m.num}`, null]]} />
@@ -349,11 +385,11 @@ export default function Course({ session, onPractice, onCheck }: { session: Sess
               <h2 className="mt-12 font-serif text-2xl font-semibold">Lessons</h2>
               <ol className="mt-4 border-t border-slate-200">
                 {m.lessons.map((l, i) => <li key={l.id} className="border-b border-slate-200"><button className="group grid w-full grid-cols-[40px_1fr_auto] gap-4 py-5 text-left" onClick={() => setView({ kind: "lesson", id: l.id })}>
-                  <span className={`font-serif text-2xl font-semibold ${prog.lessons[l.id] ? "text-pass-600" : "text-slate-300"}`}>{prog.lessons[l.id] ? "✓" : i + 1}</span>
+                  <span className={`font-serif text-2xl font-semibold ${prog.lessons[l.id] ? "text-pass-600" : "text-slate-300"}`}>{prog.lessons[l.id] ? <CheckIcon className="h-6 w-6" /> : i + 1}</span>
                   <span className="min-w-0"><span className="block text-lg font-semibold group-hover:underline group-hover:underline-offset-4">{l.title}</span>{LESSON_GOALS[l.id] && <span className="mt-1 block leading-relaxed text-slate-600">{LESSON_GOALS[l.id]}</span>}</span>
                   <span className="pt-1 text-sm text-slate-400">{l.minutes} min</span></button></li>)}
                 <li className="border-b border-slate-200"><button className="group grid w-full grid-cols-[40px_1fr_auto] gap-4 py-5 text-left" onClick={() => setView({ kind: "quiz", id: m.id })}>
-                  <span className={`font-serif text-2xl font-semibold ${qz?.passed ? "text-pass-600" : "text-slate-300"}`}>{qz?.passed ? "✓" : "?"}</span>
+                  <span className={`font-serif text-2xl font-semibold ${qz?.passed ? "text-pass-600" : "text-slate-300"}`}>{qz?.passed ? <CheckIcon className="h-6 w-6" /> : <QuizIcon className="h-6 w-6" />}</span>
                   <span className="min-w-0"><span className="block text-lg font-semibold group-hover:underline group-hover:underline-offset-4">Module quiz</span><span className="mt-1 block text-slate-600">{m.quiz.length} questions, each with an explanation. Score {Math.ceil(m.quiz.length * PASS)} or more to complete the module.</span></span>
                   <span className="pt-1 text-sm text-slate-400">{qz ? `best ${qz.best}/${qz.total}` : ""}</span></button></li>
               </ol>
@@ -362,7 +398,7 @@ export default function Course({ session, onPractice, onCheck }: { session: Sess
               <div>
                 <h3 className="font-semibold text-ink">Level {lv.num}: {lv.name}</h3>
                 <ol className="mt-3 space-y-2">{lv.modules.map(id => { const x = COURSE.find(c => c.id === id)!; return (
-                  <li key={id}><button className={`text-left ${x.id === m.id ? "font-semibold text-ink" : "text-slate-500 hover:text-ink"}`} onClick={() => setView({ kind: "module", id })}>{x.num}. {x.title}{prog.quizzes[id]?.passed ? " ✓" : ""}</button></li>) })}</ol>
+                  <li key={id}><button className={`text-left ${x.id === m.id ? "font-semibold text-ink" : "text-slate-500 hover:text-ink"}`} onClick={() => setView({ kind: "module", id })}>{x.num}. {x.title}{prog.quizzes[id]?.passed && <CheckIcon className="ml-1 h-3.5 w-3.5 text-pass-600" />}</button></li>) })}</ol>
               </div>
               <div className="space-y-2 border-t border-slate-200 pt-6">
                 {prevM && <button className="block text-left text-slate-500 hover:text-ink" onClick={() => setView({ kind: "module", id: prevM.id })}>← Builds on Module {prevM.num}: {prevM.title}</button>}
@@ -377,19 +413,20 @@ export default function Course({ session, onPractice, onCheck }: { session: Sess
   /* ---------- certificate ---------- */
   if (view.kind === "cert") {
     const lv = LEVELS.find(x => x.id === view.id)!
-    return <Certificate key={lv.id} lv={lv} done={levelDone(lv)} score={bestCheck(lv.checkpoint)} session={session}
-      onBack={() => { pickLevel(lv.id, false); setView({ kind: "home" }) }} />
+    return <>{palette}<Certificate key={lv.id} lv={lv} done={levelDone(lv)} score={bestCheck(lv.checkpoint)} session={session}
+      onBack={() => { pickLevel(lv.id, false); setView({ kind: "home" }) }} /></>
   }
 
   /* ---------- glossary ---------- */
   if (view.kind === "glossary") return (
     <div className="page-in bg-white">
+      {palette}
       <section className="bg-night text-white"><div className="mx-auto max-w-4xl px-4 pb-10 pt-8 md:px-8">
         <Crumbs items={[["Course", () => setView({ kind: "home" })], ["Glossary", null]]} />
         <h1 className="mt-6 font-serif text-4xl font-semibold">Glossary</h1>
         <p className="mt-2 text-white/65">Every term from the course, {glossary.length} in all.</p>
       </div></section>
-      <dl className="mx-auto max-w-4xl divide-y divide-slate-200 px-4 py-8 md:px-8">{glossary.map(([k, v]) => <div key={k} className="grid gap-1 py-4 sm:grid-cols-[240px_1fr] sm:gap-6"><dt className="font-serif text-lg font-semibold">{k}</dt><dd className="leading-relaxed text-slate-600">{v}</dd></div>)}</dl>
+      <dl className="mx-auto max-w-4xl divide-y divide-slate-200 px-4 py-8 md:px-8">{glossary.map(([k, v]) => <div key={k} id={"term-" + k} className={`grid scroll-mt-32 gap-1 py-4 sm:grid-cols-[240px_1fr] sm:gap-6 ${termFocus === k ? "-mx-3 rounded-md bg-[#fff8eb] px-3" : ""}`}><dt className="font-serif text-lg font-semibold">{k}</dt><dd className="leading-relaxed text-slate-600">{v}</dd></div>)}</dl>
     </div>)
 
   /* ---------- quiz ---------- */
@@ -397,6 +434,7 @@ export default function Course({ session, onPractice, onCheck }: { session: Sess
     const m = COURSE.find(x => x.id === view.id)!
     return (
       <div className="page-in bg-white">
+        {palette}
         <section className="bg-night text-white"><div className="mx-auto max-w-3xl px-4 pb-8 pt-8 md:px-8">
           <Crumbs items={[["Course", () => setView({ kind: "home" })], [`Module ${m.num}: ${m.title}`, () => setView({ kind: "module", id: m.id })], ["Quiz", null]]} />
           <h1 className="mt-6 font-serif text-3xl font-semibold">Module {m.num} quiz</h1>
@@ -419,6 +457,7 @@ export default function Course({ session, onPractice, onCheck }: { session: Sess
   const lv = levelOf(l.module.id)
   return (
     <div key={l.id} className={`bg-white transition-[padding] duration-300 ${askOpen ? "xl:pr-[420px]" : ""}`}>
+      {palette}
       {/* Slim lesson bar: where you are, the module's lessons, and Ask the Desk. */}
       <div className="sticky top-16 z-10 border-b border-slate-200 bg-white/95 backdrop-blur">
         <div className="mx-auto flex h-14 max-w-6xl items-center gap-4 px-4 md:px-8">
@@ -426,7 +465,7 @@ export default function Course({ session, onPractice, onCheck }: { session: Sess
           <ol className="hidden min-w-0 flex-1 items-center justify-center gap-1.5 md:flex" aria-label="Lessons in this module">
             {l.module.lessons.map((x, i) => (
               <li key={x.id}><button title={x.title} onClick={() => setView({ kind: "lesson", id: x.id })}
-                className={`flex h-7 min-w-7 items-center justify-center rounded-full px-2 text-xs font-semibold transition ${x.id === l.id ? "bg-ink text-white" : prog.lessons[x.id] ? "bg-pass-50 text-pass-600 hover:bg-pass-100" : "bg-slate-100 text-slate-500 hover:bg-slate-200"}`}>{prog.lessons[x.id] && x.id !== l.id ? "✓" : i + 1}</button></li>))}
+                className={`flex h-7 min-w-7 items-center justify-center rounded-full px-2 text-xs font-semibold transition ${x.id === l.id ? "bg-ink text-white" : prog.lessons[x.id] ? "bg-pass-50 text-pass-600 hover:bg-pass-100" : "bg-slate-100 text-slate-500 hover:bg-slate-200"}`}>{prog.lessons[x.id] && x.id !== l.id ? <CheckIcon className="h-3.5 w-3.5" /> : i + 1}</button></li>))}
             <li><button title="Module quiz" onClick={() => setView({ kind: "quiz", id: l.module.id })} className="flex h-7 items-center rounded-full bg-slate-100 px-3 text-xs font-semibold text-slate-500 hover:bg-slate-200">Quiz</button></li>
           </ol>
           <button className={`ml-auto shrink-0 rounded-md px-3 py-1.5 text-sm font-semibold transition md:ml-0 ${askOpen ? "bg-ink text-white" : "border border-slate-300 text-ink hover:border-ink"}`} onClick={() => setAskOpen(o => !o)}>Ask the Desk</button>
@@ -455,7 +494,7 @@ export default function Course({ session, onPractice, onCheck }: { session: Sess
         <aside className="fixed bottom-0 right-0 top-16 z-50 flex w-full flex-col border-l border-slate-200 bg-white shadow-xl sm:w-[420px]">
           <div className="flex items-center justify-between border-b border-slate-200 px-5 py-3">
             <div className="font-serif text-lg font-semibold">Ask the Desk</div>
-            <button className="text-slate-400 hover:text-ink" aria-label="Close" onClick={() => setAskOpen(false)}>✕</button>
+            <button className="text-slate-400 hover:text-ink" aria-label="Close" onClick={() => setAskOpen(false)}><XIcon className="h-5 w-5" /></button>
           </div>
           <div className="min-h-0 flex-1 overflow-y-auto p-4">
             <AiPanel key={l.id} storeKey={"lesson." + l.id} deal={norm(PRACTICE)} fixedRoute="learner" compact title={`About "${l.title}"`} context={ctx}

@@ -1,4 +1,5 @@
 import { useState } from "react"
+import { XIcon } from "./Site"
 import type { Session } from "@supabase/supabase-js"
 import { sendFeedback } from "../lib/store"
 
@@ -17,7 +18,7 @@ export default function Feedback({ session, page, lift }: { session: Session | n
       {open ? (
         <div className="w-[min(20rem,calc(100vw-2rem))] rounded-lg border border-[#e4e4de] bg-white p-4 shadow-lg">
           {state === "sent" ? <div className="py-6 text-center text-sm font-medium text-pass-600">Thanks, sent.</div> : <>
-            <div className="flex items-center"><div className="font-semibold text-ink">Send feedback</div><button className="ml-auto text-slate-400 hover:text-ink" onClick={() => setOpen(false)} aria-label="Close">✕</button></div>
+            <div className="flex items-center"><div className="font-semibold text-ink">Send feedback</div><button className="ml-auto text-slate-400 hover:text-ink" onClick={() => setOpen(false)} aria-label="Close"><XIcon className="h-5 w-5" /></button></div>
             <p className="mt-1 text-xs text-slate-500">Something confusing, broken or missing on this page? Say what you were trying to do.</p>
             <textarea className="mt-3 h-28 w-full resize-none" value={msg} maxLength={4000} autoFocus onChange={e => setMsg(e.target.value)} placeholder="e.g. I couldn't find where to enter the loan rate" />
             <button className="btn btn-primary mt-2 w-full" disabled={!msg.trim() || state === "sending"} onClick={send}>{state === "sending" ? "Sending…" : "Send"}</button>

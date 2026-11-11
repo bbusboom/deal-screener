@@ -55,7 +55,7 @@ export default function Photo({ titles, query, caption, google }: { titles: stri
 
   return (
     <figure className="my-5 overflow-hidden rounded-lg border border-slate-200 bg-white">
-      {imgs === null ? <div className="grid h-64 place-items-center bg-slate-100 text-sm text-slate-400">Loading photo…</div>
+      {imgs === null ? <div className="h-64 animate-pulse bg-slate-100" aria-label="Loading photo" />
         : cur ? (
           <div className="relative bg-slate-900">
             <img src={cur.url} alt={caption} loading="lazy" className="mx-auto max-h-[420px] w-full object-contain"

@@ -2,6 +2,7 @@
 // Cinematic night skyline, a pinned scroll story where each use of the site slides in, and reveal animations.
 // Numbers in the mockups come from the course's Oak Ridge example and the Cedar Ridge challenge, so they're real model output.
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react"
+import { CheckIcon, StarIcon } from "./components/Site"
 import "./landing.css"
 
 type Go = (mode: "signin" | "signup") => void
@@ -119,7 +120,7 @@ function HeroMock() {
         <div className="mt-1 flex justify-between text-[10px] text-slate-400"><span>Cash flow years 1 to 5</span><span>Sale</span></div>
       </div>
       <div className="card-white absolute -bottom-8 -left-8 hidden w-64 rounded-xl p-3 text-sm shadow-2xl sm:block" style={{ boxShadow: "0 16px 40px -20px #000000aa" }}>
-        <div className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-amber-600">Desk AI</div>
+        <div className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-amber-600">Flagged</div>
         <p className="text-slate-700">The seller's taxes are from 2009. On your price, budget about <b>$32,600</b>, not $14,200.</p>
       </div>
     </div>
@@ -134,16 +135,16 @@ export const Panel = ({ children }: { children: ReactNode; glow?: string }) =>
 const STAGES: StageDef[] = [
   { key: "learn", tag: "01 · Learn", title: "Start with what NOI is. End up reading a T12 the way a lender does.",
     body: "Thirteen modules. One deal follows you through the early ones, from rent and expenses to cap rate, loan size and IRR, and each module ends with a short quiz.",
-    bullets: ["Lessons run 5 to 9 minutes", "Stuck? Ask the AI about the lesson you're on"],
+    bullets: ["Lessons run 5 to 9 minutes", "Every formula broken down, one step at a time"],
     accent: "#f4b24c", bg: "transparent",
     visual: <Panel glow="#2f6bffcc">
-      <div className="text-xs font-semibold uppercase tracking-wide text-brand-500">Module 3 · Net operating income</div>
+      <div className="text-xs font-semibold uppercase tracking-wide text-brand-500">Module 5 · Net operating income</div>
       <div className="mt-3 space-y-2 font-mono text-sm">
         {[["Gross potential rent", "$264,000"], ["less vacancy 5%", "−$13,200"], ["plus other income", "$9,600"], ["Effective gross income", "$260,400"], ["less operating expenses", "−$122,960"]].map(([l, v], i) =>
           <div key={l} className="pop flex justify-between border-b border-slate-100 pb-1" style={{ animationDelay: `${150 + i * 140}ms` }}><span className="font-sans text-slate-600">{l}</span><span>{v}</span></div>)}
         <div className="pop flex justify-between pt-1 text-base font-bold" style={{ animationDelay: "900ms" }}><span className="font-sans">Net operating income</span><span className="text-pass-600">$137,440</span></div>
       </div>
-      <div className="pop mt-4 rounded-lg bg-pass-50 px-3 py-2 text-sm text-pass-600" style={{ animationDelay: "1150ms" }}>✓ Quiz: correct. Debt service is not an operating expense.</div>
+      <div className="pop mt-4 rounded-lg bg-pass-50 px-3 py-2 text-sm text-pass-600" style={{ animationDelay: "1150ms" }}>Quiz: correct. Debt service is not an operating expense.</div>
     </Panel> },
   { key: "trick", tag: "02 · Spot the trick", title: "The seller's T12 isn't the deal.",
     body: "Each challenge hands you a T12 or rent roll with something wrong in it: no vacancy, a tax bill from 2009, a one time payment counted as income. Miss it and you see what it would have cost you.",
@@ -159,7 +160,7 @@ const STAGES: StageDef[] = [
         <tr><td><span className="mark rounded px-1" style={{ backgroundImage: "linear-gradient(#fecaca,#fecaca)", animationDelay: "1100ms" }}>Management fee</span></td><td className="num">$0</td><td className="pop text-right text-xs font-semibold text-fail-600" style={{ animationDelay: "1300ms" }}>✗ missed</td></tr>
         <tr className="total"><td>Net operating income</td><td className="num">$247,800</td><td /></tr>
       </tbody></table>
-      <div className="pop mt-3 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-800" style={{ animationDelay: "1500ms" }}><b>★★☆</b> Real NOI is $191,701. Those lines hid about <b>$863,000</b> of value.</div>
+      <div className="pop mt-3 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-800" style={{ animationDelay: "1500ms" }}><b className="inline-flex align-[-2px]"><StarIcon className="h-4 w-4" /><StarIcon className="h-4 w-4" /><StarIcon className="h-4 w-4 text-amber-300" filled={false} /></b> Real NOI is $191,701. Those lines hid about <b>$863,000</b> of value.</div>
     </Panel> },
   { key: "duel", tag: "03 · Deal Duels", title: "A broker calls with a deal. Make the call.",
     body: "Fix the seller's numbers before the clock runs out, then pursue, go in lower, or pass. Afterward you see what the deal was really worth.",
@@ -273,13 +274,13 @@ const COMPARE: [string, string, string, string][] = [
   ["Timed Deal Checks scored against an answer key", "✓", "—", "—"],
   ["Practice on realistic deals with seller traps built in", "✓", "Sometimes", "—"],
   ["Learn and underwrite live deals in the same tool", "✓", "—", "—"],
-  ["AI tutor that knows the lesson and your deal", "✓", "—", "—"],
+  ["Questions answered about the lesson or your deal", "✓", "—", "—"],
   ["Upload real documents and model them", "✓", "—", "✓"],
   ["State tax, rent law and market data built in", "✓", "—", "Paid add-on"],
   ["Free to start", "✓", "Rarely", "Rarely"],
 ]
 const TEAMS: [string, string, boolean][] = [
-  ["The basics, in order", "Thirteen modules from rent rolls to IRR. The AI tutor knows which lesson they're on, so questions get answered in context.", false],
+  ["The basics, in order", "Thirteen modules, from reading a rent roll to IRR, with every formula worked out on the same example property.", false],
   ["A score, not a feeling", "Deal Check times each person on a broker package and scores NOI, cap rate, DSCR and the call, so readiness is a number, not a guess.", false],
   ["Your firm's standards", "Load your own buy box and expense assumptions so new hires learn your way, and see the whole team's progress in one view.", true],
 ]
@@ -347,7 +348,7 @@ export default function Landing({ go }: { go: Go }) {
             <div>
               <div className="text-sm font-semibold uppercase tracking-[.2em] text-[#f4b24c]">Why I built this</div>
               <blockquote className="serif mt-4 text-3xl font-semibold leading-snug text-white md:text-4xl">“I was thrown into the work fast, and half the language went over my head.”</blockquote>
-              <p className="mt-5 max-w-2xl text-white/75 md:text-lg">When I started underwriting, there was no simple path to learn it. I was thrown into the work fast, and half the language went over my head. I built Underwriting Desk so junior underwriters can learn the basics quickly, then use their own mistakes, with help from AI, to get good fast.</p>
+              <p className="mt-5 max-w-2xl text-white/75 md:text-lg">When I started underwriting, there was no simple path to learn it. I was thrown into the work fast, and half the language went over my head. I built Underwriting Desk so junior underwriters can learn the basics quickly, then use their own mistakes to get good fast.</p>
               <div className="mt-5 text-sm text-white/60"><span className="font-semibold text-white">Blake Busboom</span>, founder · junior underwriter</div>
             </div>
           </Reveal>
@@ -384,8 +385,7 @@ export default function Landing({ go }: { go: Go }) {
               </tr></thead>
               <tbody>{COMPARE.map(([f, a, b, c]) => (
                 <tr key={f} className="border-b border-white/5 last:border-0">
-                  <td className="px-5 py-3.5 text-white/85">{f}</td><td className="px-5 py-3.5 text-center font-semibold text-white">{a}</td>
-                  <td className="px-5 py-3.5 text-center text-white/45">{b}</td><td className="px-5 py-3.5 text-center text-white/45">{c}</td>
+                  <td className="px-5 py-3.5 text-white/85">{f}</td>{[a, b, c].map((v, k) => <td key={k} className={`px-5 py-3.5 text-center ${k ? "text-white/45" : "font-semibold text-white"}`}>{v === "✓" ? <CheckIcon className={`h-5 w-5 ${k ? "" : "text-[#f4b24c]"}`} label="Yes" /> : v === "—" ? <span aria-label="No">–</span> : v}</td>)}
                 </tr>))}</tbody>
             </table>
           </Reveal>

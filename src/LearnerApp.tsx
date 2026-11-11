@@ -3,7 +3,7 @@ import type { Session } from "@supabase/supabase-js"
 import { type Deal, DEFAULTS, PRACTICE, norm, project, monthlyPmt, usd, pct, xx, type Projection } from "./lib/model"
 import { listDeals, saveDeal, type SavedDeal } from "./lib/store"
 import { Card, Field, NumInput } from "./components/ui"
-import { PageHero, SitePhoto } from "./components/Site"
+import { PageHero, SitePhoto, CheckIcon } from "./components/Site"
 import AiPanel from "./components/AiPanel"
 import ImportPane from "./components/ImportPane"
 import MarketPane, { StateSelect } from "./components/MarketPane"
@@ -81,7 +81,7 @@ export default function LearnerApp({ session, toast, onOpenInPro }: { session: S
         {([
           ["Practice deal", "Maple Court, a 24 unit apartment building. Best for a first run.", () => start(PRACTICE)],
           ["My own property", "Enter the numbers as we go. Missing one? We'll suggest a starting point.", () => start({ ...DEFAULTS, name: "My deal", units: [{ type: "1 bed", count: 0, rent: 0 }] })],
-          ["Upload documents", "Rent roll, T12 or offering memo. Claude fills in what it finds.", () => setImporting(v => !v)],
+          ["Upload documents", "Rent roll, T12 or offering memo. The site fills in what it finds, and you check each number.", () => setImporting(v => !v)],
         ] as const).map(([t, d, f], i) => (
           <li key={t} className="border-b border-slate-200"><button className="group grid w-full grid-cols-[40px_1fr_auto] gap-4 py-6 text-left" onClick={f}>
             <span className="font-serif text-3xl font-semibold leading-none text-slate-300 group-hover:text-[#e0a23a]">{i + 1}</span>
@@ -237,7 +237,7 @@ export default function LearnerApp({ session, toast, onOpenInPro }: { session: S
             {STEPS.map((s, i) => (
               <button key={s} onClick={() => (i === 0 || valid || i <= 2) && go(i)} aria-current={i === step ? "step" : undefined}
                 className={`shrink-0 border-b-2 py-3.5 transition ${i === step ? "border-ink font-semibold text-ink" : i < step ? "border-transparent text-slate-600 hover:text-ink" : "border-transparent text-slate-400 hover:text-slate-600"}`}>
-                {i > 0 ? `${i}. ` : ""}{s}{i < step && i > 0 ? " ✓" : ""}
+                <span className="inline-flex items-center gap-1">{i > 0 ? `${i}. ` : ""}{s}{i < step && i > 0 && <CheckIcon className="h-3.5 w-3.5 text-pass-600" />}</span>
               </button>))}
           </nav>
         </div>)}

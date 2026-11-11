@@ -5,7 +5,7 @@ import { PENDING_CHECK, levelForCheck, CHECKPOINT_PASS } from "./levels"
 import { saveCheck, listChecks, type CheckAnswers, type CheckRecord } from "../lib/store"
 import { CHECKS, answerKey, scoreCheck, type Check } from "./checks"
 import { Card } from "../components/ui"
-import { PageHero, SitePhoto, SectionHead, WorkBar } from "../components/Site"
+import { PageHero, SitePhoto, SectionHead, WorkBar, CheckIcon, XIcon } from "../components/Site"
 
 /* An attempt lives in sessionStorage so the clock keeps running if you leave the tab or open the deal in Underwrite. */
 type Attempt = { id: string; start: number; usedWorkspace: boolean }
@@ -187,11 +187,11 @@ function Result({ r, onBack, onRetry }: { r: CheckRecord; onBack: () => void; on
         <div className="num mt-1 text-4xl font-semibold text-ink">{r.score}<span className="text-lg text-slate-400"> / 100</span></div>
         <div className="mt-1 text-sm text-slate-600">in {mmss(r.seconds)}{r.used_workspace ? ", using the workspace" : ""}</div>
         {levelForCheck(c.id) && <div className={`mx-auto mt-3 inline-block rounded-full px-3 py-1 text-sm font-semibold ${r.score >= CHECKPOINT_PASS ? "bg-pass-50 text-pass-600" : "bg-amber-50 text-amber-800"}`}>
-          {r.score >= CHECKPOINT_PASS ? `✓ Level ${levelForCheck(c.id)!.num} checkpoint passed` : `Level ${levelForCheck(c.id)!.num} checkpoint needs ${CHECKPOINT_PASS} or more`}</div>}
+          {r.score >= CHECKPOINT_PASS ? `Level ${levelForCheck(c.id)!.num} checkpoint passed` : `Level ${levelForCheck(c.id)!.num} checkpoint needs ${CHECKPOINT_PASS} or more`}</div>}
       </div>
       <Card title="Your answers vs the key">
         <table className="tbl"><thead><tr><th className="text-left" /><th>You</th><th>Key</th><th /></tr></thead><tbody>
-          {rows.map(([k, a, b, ok]) => <tr key={k}><td>{k}</td><td className="num text-right">{a}</td><td className="num text-right">{b}</td><td className={`text-right font-semibold ${ok ? "text-pass-600" : "text-fail-600"}`}>{ok ? "✓" : "✕"}</td></tr>)}
+          {rows.map(([k, a, b, ok]) => <tr key={k}><td>{k}</td><td className="num text-right">{a}</td><td className="num text-right">{b}</td><td className={`text-right font-semibold ${ok ? "text-pass-600" : "text-fail-600"}`}>{ok ? <CheckIcon className="ml-auto h-4 w-4" label="Correct" /> : <XIcon className="ml-auto h-4 w-4" label="Wrong" />}</td></tr>)}
         </tbody></table>
         <p className="note mt-2">Full marks need NOI within 2%, cap rate within 0.10 points and DSCR within 0.03.</p>
       </Card>

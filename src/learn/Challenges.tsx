@@ -5,14 +5,14 @@ import { type Deal, project, usd, pct, xx } from "../lib/model"
 import { stateBy, taxEstimate } from "../lib/states"
 import { Card, Field, NumInput } from "../components/ui"
 import AiPanel from "../components/AiPanel"
-import { PageHero, SitePhoto, SectionHead, WorkBar } from "../components/Site"
+import { PageHero, SitePhoto, SectionHead, WorkBar, StarIcon, CheckIcon, XIcon, FlagIcon } from "../components/Site"
 import { StateSnapshot } from "../components/MarketPane"
 import { TRICKS, DUELS, DUEL_FIELDS, DUEL_LEVEL, fairPrice, trueDeal, rightCall, scoreDuel, type TrickPuzzle, type Duel, type Call, type DuelScore } from "./challenges"
 
 type View = { k: "home" } | { k: "trick"; id: string } | { k: "duel"; id: string }
 
 const Stars = ({ n, of = 3 }: { n: number; of?: number }) =>
-  <span className="tracking-wider text-amber-500" aria-label={`${n} of ${of} stars`}>{"★".repeat(n)}<span className="text-slate-300">{"★".repeat(Math.max(0, of - n))}</span></span>
+  <span className="inline-flex gap-0.5 text-amber-500" aria-label={`${n} of ${of} stars`}>{Array.from({ length: of }, (_, i) => <StarIcon key={i} className={`h-4 w-4 ${i < n ? "" : "text-slate-300"}`} filled={i < n} />)}</span>
 
 function record(p: Progress, id: string, score: number): Progress {
   const prev = p.challenges?.[id]
@@ -104,8 +104,8 @@ function TrickPlayer({ t, onDone, onBack, onNext }: { t: TrickPuzzle; onDone: (s
                 {t.rows.map((r, i) => {
                   const flagged = flags.has(i)
                   const state = !checked ? (flagged ? "bg-amber-50" : "") : r.trap ? (flagged ? "bg-pass-50" : "bg-fail-50") : flagged ? "bg-amber-50" : ""
-                  const tag = !checked ? (flagged ? <span className="text-amber-700">⚑ flagged</span> : null)
-                    : r.trap ? (flagged ? <span className="text-pass-600">✓ caught</span> : <span className="text-fail-600">✗ missed</span>)
+                  const tag = !checked ? (flagged ? <span className="inline-flex items-center gap-1 text-amber-700"><FlagIcon className="h-3.5 w-3.5" />flagged</span> : null)
+                    : r.trap ? (flagged ? <span className="inline-flex items-center gap-1 text-pass-600"><CheckIcon className="h-3.5 w-3.5" />caught</span> : <span className="inline-flex items-center gap-1 text-fail-600"><XIcon className="h-3.5 w-3.5" />missed</span>)
                     : flagged ? <span className="text-amber-700">fine</span> : null
                   return (
                     <tr key={i} onClick={() => toggle(i)} className={`${r.total ? "total" : checked ? "" : "cursor-pointer hover:bg-slate-50"} ${state}`}>
@@ -131,7 +131,7 @@ function TrickPlayer({ t, onDone, onBack, onNext }: { t: TrickPuzzle; onDone: (s
                 <div className="card-title !mb-2">What each line was hiding</div>
                 <ul className="space-y-2 text-sm">
                   {t.rows.map((r, i) => (r.trap || flags.has(i)) && !r.total ? (
-                    <li key={i} className="flex gap-2"><span className={r.trap ? (flags.has(i) ? "text-pass-600" : "text-fail-600") : "text-amber-700"}>{r.trap ? (flags.has(i) ? "✓" : "✗") : "○"}</span>
+                    <li key={i} className="flex gap-2"><span className={r.trap ? (flags.has(i) ? "text-pass-600" : "text-fail-600") : "text-amber-700"}>{r.trap ? (flags.has(i) ? <CheckIcon className="mt-0.5 h-4 w-4" /> : <XIcon className="mt-0.5 h-4 w-4" />) : <FlagIcon className="mt-0.5 h-4 w-4" />}</span>
                       <span><b>{r.cells[0]}{t.doc === "Rent roll" ? ` (${r.cells[1]})` : ""}.</b> {r.trap || r.note}</span></li>) : null)}
                 </ul>
               </div>
@@ -223,7 +223,7 @@ function DuelPlayer({ x, onDone, onBack, onNext }: { x: Duel; onDone: (pts: numb
                 return (
                   <Field key={f.k} label={f.label}>
                     <NumInput value={mine[f.k] as number} step={f.step} disabled={step === "reveal"} onChange={v => setMine(m => ({ ...m, [f.k]: v }))} className={changed ? "!border-brand-500" : ""} />
-                    <span className="font-normal text-slate-400">Seller: {f.pct ? x.seller[f.k] + "%" : usd(x.seller[f.k] as number)}{step === "reveal" && score && score.fieldHits[f.k] !== undefined ? (score.fieldHits[f.k] ? " · ✓ close to reality" : ` · ✗ reality ${f.pct ? truth[f.k] + "%" : usd(truth[f.k] as number)}`) : ""}</span>
+                    <span className="font-normal text-slate-400">Seller: {f.pct ? x.seller[f.k] + "%" : usd(x.seller[f.k] as number)}{step === "reveal" && score && score.fieldHits[f.k] !== undefined ? (score.fieldHits[f.k] ? ", close to reality" : `, reality was ${f.pct ? truth[f.k] + "%" : usd(truth[f.k] as number)}`) : ""}</span>
                   </Field>)
               })}
             </div>

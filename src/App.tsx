@@ -1,4 +1,5 @@
 import { Icon } from "./components/Icons"
+import { Skeleton } from "./components/Site"
 import { syncTemplates } from "./lib/templates"
 import { useEffect, useState } from "react"
 import type { Session } from "@supabase/supabase-js"
@@ -83,7 +84,15 @@ export default function App({ learnOnly = false }: { learnOnly?: boolean }) {
     setProKey(k => k + 1); pick("pro"); setToast("Opened in the Pro workspace")
   }
 
-  if (!ready) return <div className="grid min-h-screen place-items-center text-slate-400">Loading…</div>
+  if (!ready) return (
+    <div className="min-h-screen" aria-busy="true" aria-label="Loading">
+      <div className="h-16 bg-night" />
+      <div className="h-56 bg-night/95" />
+      <div className="mx-auto max-w-6xl space-y-4 px-4 py-10 md:px-8">
+        <Skeleton className="h-8 w-64" /><Skeleton className="h-4 w-full max-w-2xl" /><Skeleton className="h-4 w-full max-w-xl" />
+        <div className="grid gap-4 pt-6 md:grid-cols-3"><Skeleton className="h-28" /><Skeleton className="h-28" /><Skeleton className="h-28" /></div>
+      </div>
+    </div>)
   if (recovery) return <Auth initial="newpass" onDone={() => setRecovery(false)} />
   if (accountsEnabled && !session) {
     if (learnOnly) return <Auth app key={authMode || "signup"} initial={authMode || "signup"} onSignedUp={() => { try { localStorage.setItem(HAS_ACCOUNT, "1") } catch {} }} />
@@ -109,6 +118,11 @@ export default function App({ learnOnly = false }: { learnOnly?: boolean }) {
                   className={`border-b-2 pt-0.5 transition ${learnTab === k ? "border-[#f4b24c] font-semibold text-white" : "border-transparent text-white/60 hover:text-white"}`}>{label}</button>))}
             </nav>)}
           <div className="ml-auto flex items-center gap-4 text-sm">
+            {path === "learner" && !choosing && (
+              <button className="hidden items-center gap-2 rounded-md border border-white/15 px-2.5 py-1.5 text-white/60 hover:border-white/30 hover:text-white lg:flex" aria-label="Search the course"
+                onClick={() => { setLearnTab("course"); setTimeout(() => dispatchEvent(new Event("ud:search")), 0) }}>
+                <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden><circle cx="11" cy="11" r="7" /><path d="M20 20l-3.5-3.5" strokeLinecap="round" /></svg>
+                Search <kbd className="rounded bg-white/10 px-1.5 text-[11px]">⌘K</kbd></button>)}
             {path && !choosing && !learnOnly && (
               <button className="hidden font-medium text-[#f4b24c] hover:text-white sm:inline" onClick={() => pick(path === "learner" ? "pro" : "learner")}>
                 {path === "learner" ? "Underwrite a deal →" : "← Back to Learn"}</button>)}

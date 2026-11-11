@@ -54,3 +54,18 @@ export function WorkBar({ back, onBack, eyebrow, title, right }: { back: string;
       </div>
     </section>)
 }
+
+/* Small drawn icons, used instead of text symbols like ✓ and ★. */
+const svg = (cls: string, d: ReactNode, label?: string) =>
+  <svg viewBox="0 0 24 24" className={`inline-block shrink-0 ${cls}`} fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round" role={label ? "img" : undefined} aria-label={label} aria-hidden={label ? undefined : true}>{d}</svg>
+export const CheckIcon = ({ className = "h-4 w-4", label }: { className?: string; label?: string }) => svg(className, <path d="M5 12.5l4.5 4.5L19 7.5" />, label)
+export const XIcon = ({ className = "h-4 w-4", label }: { className?: string; label?: string }) => svg(className, <path d="M6 6l12 12M18 6L6 18" />, label)
+export const QuizIcon = ({ className = "h-4 w-4" }: { className?: string }) => svg(className, <><path d="M9.2 9.3a2.9 2.9 0 015.6.9c0 2-2.8 2.6-2.8 4.3" /><path d="M12 17.6v.1" /></>)
+export const FlagIcon = ({ className = "h-4 w-4" }: { className?: string }) => svg(className, <><path d="M5 21V4" /><path d="M5 4h11l-2 4 2 4H5" /></>)
+export const StarIcon = ({ className = "h-4 w-4", filled = true }: { className?: string; filled?: boolean }) =>
+  <svg viewBox="0 0 24 24" className={`inline-block shrink-0 ${className}`} aria-hidden fill={filled ? "currentColor" : "none"} stroke="currentColor" strokeWidth={1.6} strokeLinejoin="round"><path d="M12 3.5l2.6 5.4 5.9.8-4.3 4.1 1 5.8L12 16.8l-5.2 2.8 1-5.8-4.3-4.1 5.9-.8z" /></svg>
+
+/** Gray placeholder blocks shown while something loads. */
+export function Skeleton({ className = "" }: { className?: string }) {
+  return <div className={`animate-pulse rounded-md bg-slate-200/70 ${className}`} />
+}
